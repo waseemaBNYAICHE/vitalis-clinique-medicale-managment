@@ -75,5 +75,11 @@ vitalis/
 │   └── workflows/  # Pipelines CI/CD
 ├── docs/           # Documentation du projet README.md
 └── .gitignore
-## Jira Integration Test NUMERO2
-Test de liaison entre (Jira & Github).
+## Jira Integration Test 
+Test de liaison entre Jira & Github.
+
+### Responsabilités GitHub
+
+La répartition détaillée des responsabilités GitHub de l’équipe est disponible dans :
+
+`docs/GITHUB_RESPONSIBILITIES.md`
