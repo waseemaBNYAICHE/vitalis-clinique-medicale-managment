@@ -75,5 +75,5 @@ vitalis/
 │   └── workflows/  # Pipelines CI/CD
 ├── docs/           # Documentation du projet README.md
 └── .gitignore
-## Jira Integration Test
+## Jira Integration Test NUMERO2
 Test de liaison entre (Jira & Github).
