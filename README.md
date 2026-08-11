@@ -73,7 +73,7 @@ vitalis/
 ├── docker/         # Configuration Docker
 ├── .github/
 │   └── workflows/  # Pipelines CI/CD
-├── docs/           # Documentation du projet
-├── README.md
+├── docs/           # Documentation du projet README.md
 └── .gitignore
-
+## Jira Integration Test
+Test de liaison entre Jira et Github.
