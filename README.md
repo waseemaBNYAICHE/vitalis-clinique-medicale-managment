@@ -76,4 +76,4 @@ vitalis/
 ├── docs/           # Documentation du projet README.md
 └── .gitignore
 ## Jira Integration Test
-Test de liaison entre (Jira et Github).
+Test de liaison entre (Jira & Github).
