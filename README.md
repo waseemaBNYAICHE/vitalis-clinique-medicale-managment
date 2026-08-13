@@ -1,6 +1,6 @@
 SCRUM-163-configurer-github
 # vitalis-clinique-medicale-managment
-Application web de gestion d’un cabinet médical développée avec Laravel, Vue.js, Machine Learning et une approche DevSecOps.
+Application web de gestion d’un cabinet clinique développée avec Laravel, Vue.js, Machine Learning et une approche DevSecOps.
 
 ## Configuration GitHub
 - Dépôt GitHub configuré et connecté à Jira.
