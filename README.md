@@ -86,9 +86,23 @@ vitalis/
 ├── docker/         # Configuration Docker
 ├── .github/
 │   └── workflows/  # Pipelines CI/CD
-├── docs/           # Documentation du projet
-├── README.md
+├── docs/           # Documentation du projet README.md
 └── .gitignore
+## Jira Integration Test 
+Test de liaison entre Jira & Github.
+
+### Responsabilités GitHub
+
+La répartition détaillée des responsabilités GitHub de l’équipe est disponible dans :
+
+`docs/GITHUB_RESPONSIBILITIES.md`
+
+## Documentation Frontend
+
+Les prérequis nécessaires au développement Frontend sont disponibles dans :
+
+`docs/FRONTEND_PREREQUISITES.md`
+
 
 ## Jira Integration Test
 Test de liaison entre Jira et Github.

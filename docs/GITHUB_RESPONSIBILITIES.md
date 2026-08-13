@@ -49,4 +49,3 @@ Tous les membres doivent :
 - maintenir le code à jour avant de commencer un développement ;
 - résoudre les conflits Git avant le merge ;
 - respecter les conventions du dépôt ;
-- ne jamais publier de secrets ou identifiants sensibles.
