@@ -16,3 +16,9 @@ Informations du patient + Symptômes
 → Maladie prédite
 → Spécialité médicale
 → Médecin recommandé
+## Environnement Python
+
+Python est installé et sa version a été vérifiée.
+
+- Version Python utilisée : 3.10.11
+- Commande de vérification : `python --version`
