@@ -1,5 +1,5 @@
 SCRUM-163-configurer-github
-# gestion-medicale-project-v2
+# vitalis-clinique-medicale-managment
 Application web de gestion d’un cabinet médical développée avec Laravel, Vue.js, Machine Learning et une approche DevSecOps.
 
 ## Configuration GitHub
