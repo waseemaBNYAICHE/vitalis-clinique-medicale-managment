@@ -30,3 +30,11 @@ les dépendances du module Machine Learning.
 - Environnement : `.venv`
 - Python : 3.10.11
 - Emplacement : `AI/.venv/`
+## Bibliothèques Machine Learning
+
+Les bibliothèques nécessaires au module Machine Learning ont été
+installées dans l'environnement virtuel.
+
+- pandas : 2.3.3
+- numpy : 2.2.6
+- scikit-learn : 1.7.2
