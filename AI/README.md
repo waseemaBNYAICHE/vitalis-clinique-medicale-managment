@@ -38,3 +38,13 @@ installées dans l'environnement virtuel.
 - pandas : 2.3.3
 - numpy : 2.2.6
 - scikit-learn : 1.7.2
+## Vérification de l'environnement
+
+L'environnement Machine Learning a été vérifié avec succès.
+
+- Python : 3.10.11
+- Environnement virtuel : `AI/.venv/`
+- pandas : 2.3.3
+- numpy : 2.2.6
+- scikit-learn : 1.7.2
+- Test d'importation des bibliothèques : réussi
