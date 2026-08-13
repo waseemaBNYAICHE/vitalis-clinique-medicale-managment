@@ -22,3 +22,11 @@ Python est installé et sa version a été vérifiée.
 
 - Version Python utilisée : 3.10.11
 - Commande de vérification : `python --version`
+## Environnement virtuel
+
+Un environnement virtuel Python a été créé pour isoler
+les dépendances du module Machine Learning.
+
+- Environnement : `.venv`
+- Python : 3.10.11
+- Emplacement : `AI/.venv/`
