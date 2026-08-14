@@ -1,168 +1,109 @@
-# Laravel + Vue Docker Development Environment
+SCRUM-163-configurer-github
+# vitalis-clinique-medicale-managment
+Application web de gestion d’un cabinet clinique développée avec Laravel, Vue.js, Machine Learning et une approche DevSecOps.
 
-Laravel API behind Nginx, a Vue 3 / Vite dev server, PostgreSQL, and Redis for
-cache, sessions and queues — all wired up with Docker Compose.
+## Configuration GitHub
+- Dépôt GitHub configuré et connecté à Jira.
+- Branche de travail : SCRUM-163-configurer-github.
+- Convention de branches :
+  - main : version stable
+  - develop : intégration
+  - feature/SCRUM-163-configurer-github : développement des fonctionnalités
+  
+=======
+# vitalis-clinique-medicale-managment
 
-| Service    | Image / stack            | URL                                              |
-| ---------- | ------------------------ | ------------------------------------------------ |
-| `nginx`    | nginx 1.29 alpine        | <http://localhost:8000> (Laravel API)            |
-| `app`      | PHP 8.4 FPM + Laravel 13 | internal (`app:9000`)                            |
-| `queue`    | same image as `app`      | internal — `php artisan queue:work redis`        |
-| `frontend` | Node 22 + Vue 3 + Vite 8 | <http://localhost:5173>                          |
-| `postgres` | PostgreSQL 17 alpine     | internal only — **not published to the host**    |
-| `redis`    | Redis 8 alpine           | internal only — **not published to the host**    |
+VITALIS est une application de gestion de clinique médicale développée avec Laravel et Vue.js. Elle intègre des fonctionnalités de Machine Learning, un système de contrôle d’accès basé sur les rôles (RBAC), ainsi qu’une approche DevSecOps assurant un pipeline complet d’intégration, de sécurité et de déploiement continus (CI/CD).
 
-## Quick start
+## Organisation du dépôt GitHub
 
-```bash
-docker compose up --build -d
-```
+Le dépôt du projet VITALIS est organisé afin de faciliter le travail collaboratif, le suivi des tâches Jira et l’intégration continue.
 
-That single command is all a new developer needs. On first boot the `app`
-container copies `backend/.env.example` to `backend/.env`, generates an
-`APP_KEY`, waits for PostgreSQL to become healthy, and runs the migrations.
+### Branches principales
 
-Then open:
+- `main` : contient la version stable et validée du projet.
+- `develop` : contient les développements intégrés avant leur passage en production.
 
-- API — <http://localhost:8000/api/health>
-- Frontend — <http://localhost:5173>
+### Branches de développement
 
-To override any default, copy the root env file first (optional):
+Chaque fonctionnalité ou tâche est développée dans une branche dédiée.
 
-```bash
-cp .env.example .env
-```
+Format utilisé :
 
-## Project layout
+`feature/SCRUM-XXX-description`
 
-```
-.
-├── docker-compose.yml            # service, volume and network definitions
-├── .env.example                  # compose-level overrides (ports, DB creds)
-├── .gitignore / .dockerignore / .gitattributes
-├── docker/
-│   └── nginx/
-│       ├── default.conf          # server block: PHP-FPM upstream, Laravel rewrites
-│       └── upstream.conf         # php-fpm -> app:9000
-├── backend/                      # Laravel 13
-│   ├── Dockerfile                # PHP 8.4-fpm + pgsql/redis extensions + composer
-│   ├── .dockerignore
-│   ├── .env.example              # Laravel env template (no secrets)
-│   ├── config/cors.php           # allows the Vite origin to call /api/*
-│   ├── routes/api.php            # GET /api/health smoke test
-│   └── docker/
-│       ├── entrypoint.sh         # first-boot setup + migrations
-│       ├── php.ini
-│       └── www.conf              # php-fpm pool
-└── frontend/                     # Vue 3 + Vite
-    ├── Dockerfile                # Node 22 alpine
-    ├── .dockerignore
-    ├── .env.example              # VITE_API_URL
-    ├── vite.config.js            # host 0.0.0.0, port 5173, polling watcher
-    └── docker/entrypoint.sh      # keeps the node_modules volume in sync
-```
+Exemple :
 
-## Configuration
+`feature/SCRUM-164-api-connexion`
 
-Laravel reads its config from the compose `environment:` block, which takes
-precedence over `backend/.env`. The defaults are:
+Pour les corrections :
 
-| Variable            | Value                       |
-| ------------------- | --------------------------- |
-| `DB_CONNECTION`     | `pgsql`                     |
-| `DB_HOST` / `PORT`  | `postgres` / `5432`         |
-| `REDIS_HOST`/`PORT` | `redis` / `6379`            |
-| `REDIS_CLIENT`      | `phpredis`                  |
-| `CACHE_STORE`       | `redis`                     |
-| `SESSION_DRIVER`    | `redis`                     |
-| `QUEUE_CONNECTION`  | `redis`                     |
-| `VITE_API_URL`      | `http://localhost:8000/api` |
+`fix/SCRUM-XXX-description`
 
-### Secrets
+Exemple :
 
-No secrets are committed. `.env` files are git-ignored; only `.env.example`
-templates are tracked. `APP_KEY` is generated inside the container on first
-boot. The PostgreSQL password defaults to `secret` — a local development
-placeholder. Override it in `.env` and use a real secret store outside your
-laptop.
+`fix/SCRUM-210-correction-login`
 
-### Ports
+### Convention des commits
 
-PostgreSQL and Redis use `expose:` rather than `ports:`, so they are reachable
-only from other containers on the `backend` network — never from the host or
-the wider network.
+Chaque commit doit contenir la référence du ticket Jira correspondant.
 
-## Volumes
+Exemple :
 
-| Volume                  | Purpose                                          |
-| ----------------------- | ------------------------------------------------ |
-| `postgres-data`         | PostgreSQL data directory (survives rebuilds)    |
-| `redis-data`            | Redis AOF persistence                            |
-| `frontend-node-modules` | `node_modules`, kept out of the host bind mount  |
-| `backend-vendor`        | Composer `vendor/`, Linux-native binaries        |
+`SCRUM-164 Développer l'API de connexion`
 
-`./backend` and `./frontend` are bind-mounted, so edits on the host apply
-immediately — PHP through opcache revalidation, Vue through Vite HMR.
+Cette convention permet de synchroniser automatiquement les commits avec Jira.
 
-## Health checks
+### Pull Requests
 
-`postgres` (`pg_isready`) and `redis` (`redis-cli ping`) both declare health
-checks, and `app` waits on `condition: service_healthy` for both before it
-starts. `nginx` and `frontend` have HTTP checks of their own.
+Une Pull Request doit être créée avant de fusionner une branche dans `develop` ou `main`.
 
-```bash
-docker compose ps
-```
+Le titre doit également contenir la clé Jira.
 
-## Common commands
+Exemple :
 
-```bash
-# lifecycle
-docker compose up --build -d          # build + start everything
-docker compose ps                     # status and health
-docker compose logs -f app            # follow one service
-docker compose down                   # stop (volumes kept)
-docker compose down -v                # stop and wipe all data
+`SCRUM-164 - Développer l'API de connexion`
 
-# laravel
-docker compose exec app php artisan migrate
-docker compose exec app php artisan migrate:fresh --seed
-docker compose exec app php artisan tinker
-docker compose exec app php artisan queue:work redis
-docker compose exec app composer require <package>
+### Workflow Git
 
-# database / redis (no host port — go through the container)
-docker compose exec postgres psql -U laravel -d laravel
-docker compose exec redis redis-cli
+Ticket Jira
+→ Création de branche
+→ Développement
+→ Commit
+→ Push
+→ Pull Request
+→ Revue du code
+→ Merge dans develop
+→ Validation
+→ Merge dans main
 
-# frontend
-docker compose exec frontend npm install <package>
-docker compose exec frontend npm run build
-```
+### Structure générale du dépôt
 
-## Verifying the stack
+vitalis/
+├── backend/        # Application Laravel
+├── frontend/       # Application Vue.js
+├── database/       # Scripts et documentation PostgreSQL
+├── docker/         # Configuration Docker
+├── .github/
+│   └── workflows/  # Pipelines CI/CD
+├── docs/           # Documentation du projet README.md
+└── .gitignore
+## Jira Integration Test 
+Test de liaison entre Jira & Github.
 
-```bash
-curl http://localhost:8000/api/health
-# {"status":"ok","services":{"database":"ok","redis":"ok"},"timestamp":"..."}
-```
+### Responsabilités GitHub
 
-The Vue page at <http://localhost:5173> calls that same endpoint and renders the
-result, which confirms the browser → Vite → API → PostgreSQL/Redis path end to
-end.
+La répartition détaillée des responsabilités GitHub de l’équipe est disponible dans :
 
-## Troubleshooting
+`docs/GITHUB_RESPONSIBILITIES.md`
 
-- **Port already in use** — set `NGINX_PORT` or `VITE_PORT` in `.env`.
-- **Dependencies out of date after pulling** — `docker compose down -v` then
-  `docker compose up --build -d` recreates the `vendor` and `node_modules`
-  volumes.
-- **Migrations did not run** — check `docker compose logs app`; set
-  `RUN_MIGRATIONS=false` in `.env` to disable auto-migration.
-- **HMR not firing on Windows/WSL** — the Vite watcher already polls
-  (`usePolling: true` in `frontend/vite.config.js`); raise `interval` if CPU use
-  is high.
-- **IDE cannot resolve Laravel classes** — `vendor/` lives in a named volume, so
-  the host copy is an empty mount point. Populate one for indexing with
-  `docker run --rm -v "$PWD/backend:/app" -w /app composer:2 install`; it is
-  git-ignored and containers keep using the volume.
+## Documentation Frontend
+
+Les prérequis nécessaires au développement Frontend sont disponibles dans :
+
+`docs/FRONTEND_PREREQUISITES.md`
+
+
+## Jira Integration Test
+Test de liaison entre Jira et Github.
+ develop
