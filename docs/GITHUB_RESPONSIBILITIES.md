@@ -49,4 +49,7 @@ Tous les membres doivent :
 - maintenir le code à jour avant de commencer un développement ;
 - résoudre les conflits Git avant le merge ;
 - respecter les conventions du dépôt ;
+ feature/SCRUM-426-ai-preparation
 - ne jamais publier de secrets ou identifiants sensibles.
+=======
+ main

@@ -64,3 +64,17 @@ Les éléments suivants ne doivent jamais être envoyés dans le dépôt :
 - tokens
 - secrets
 - identifiants PostgreSQL
+feature/SCRUM-426-ai-preparation
+=======
+
+## Sécurité
+
+Les éléments suivants ne doivent jamais être envoyés dans le dépôt :
+
+- fichier `.env`
+- mots de passe
+- clés API
+- tokens
+- secrets
+- identifiants PostgreSQL
+ main
