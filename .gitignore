@@ -63,4 +63,18 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 Homestead.json
+feature/SCRUM-426-ai-preparation
+/.vagrant
+.phpunit.result.cache
+
+/public/build
+/storage/pail
+.env.backup
+.env.production
+.phpactor.json
+auth.json
+# Python virtual environment
+AI/.venv/
+=======
 Homestead.yaml
+main
