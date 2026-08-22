@@ -65,3 +65,61 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+  backend-postgresql:
+    name: Backend Laravel - PostgreSQL
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: laravel
+          POSTGRES_USER: laravel
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U laravel -d laravel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_pgsql, pgsql
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Create environment file
+        run: cp .env.example .env
+
+      - name: Run migrations on PostgreSQL
+        run: php artisan migrate --force
+
+      - name: Run Laravel tests with PostgreSQL
+        run: php artisan test
