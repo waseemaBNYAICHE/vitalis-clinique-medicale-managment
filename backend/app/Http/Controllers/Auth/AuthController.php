@@ -88,4 +88,77 @@ class AuthController extends Controller
             'user' => $request->user(),
         ], 200);
     }
+        /**
+     * Demander un lien de réinitialisation de mot de passe
+     */
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Erreur de validation',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+            return response()->json([
+                'message' => 'Lien de réinitialisation envoyé',
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Impossible d\'envoyer le lien de réinitialisation',
+        ], 400);
+    }
+
+    /**
+     * Réinitialiser le mot de passe avec le token
+     */
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => ['required', 'string'],
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Erreur de validation',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $status = \Illuminate\Support\Facades\Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user) use ($request) {
+                $user->forceFill([
+                    'password' => Hash::make($request->password),
+                ])->setRememberToken(\Illuminate\Support\Str::random(60));
+
+                $user->save();
+
+                // Révoquer tous les tokens existants après reset
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status === \Illuminate\Support\Facades\Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Mot de passe réinitialisé avec succès',
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Token invalide ou expiré',
+        ], 400);
+    }
 }
