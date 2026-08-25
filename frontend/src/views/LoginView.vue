@@ -21,6 +21,10 @@ const login = async () => {
       password: password.value
     })
 
+    // Sauvegarder le token et l'utilisateur
+    localStorage.setItem('token', response.data.token)
+    localStorage.setItem('user', JSON.stringify(response.data.user))
+
     successMessage.value = response.data?.message || 'Connexion réussie'
   } catch (error) {
     if (error.response?.status === 401) {
