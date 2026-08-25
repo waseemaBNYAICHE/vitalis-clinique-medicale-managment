@@ -64,3 +64,9 @@ pnpm-debug.log*
 Thumbs.db
 Homestead.json
 Homestead.yaml
+
+# ------------------------------------------------------------------------ AI
+/AI/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
