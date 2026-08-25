@@ -1,15 +1,11 @@
-// Single place the API base URL is read from. Set via VITE_API_URL
-// (docker-compose.yml, or frontend/.env when running outside Docker).
-export const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+import axios from 'axios'
 
-export async function apiGet(path) {
-  const response = await fetch(`${apiUrl}${path}`, {
-    headers: { Accept: 'application/json' },
-  })
-
-  if (!response.ok && response.status !== 503) {
-    throw new Error(`${response.status} ${response.statusText}`)
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
   }
+})
 
-  return response.json()
-}
+export default api
