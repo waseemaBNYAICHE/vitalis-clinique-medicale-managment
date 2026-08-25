@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { apiUrl } from './api.js'
+import { apiUrl, apiPost } from './api.js'
 
 const email = ref('')
 const password = ref('')
@@ -57,7 +57,13 @@ async function login() {
   }
 }
 
-function logout() {
+async function logout() {
+  try {
+    await apiPost('/logout', {})
+  } catch (e) {
+    console.warn('Erreur lors de la déconnexion:', e.message)
+  }
+
   localStorage.removeItem('token')
   localStorage.removeItem('user')
 
