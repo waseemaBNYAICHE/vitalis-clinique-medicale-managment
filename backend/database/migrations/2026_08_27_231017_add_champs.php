@@ -21,12 +21,7 @@ return new class extends Migration
         $table->string('photo_profil')->nullable();
         $table->timestamp('derniere_connexion')->nullable();
 
-        $table->unsignedBigInteger('id_patient')->nullable();
         $table->unsignedBigInteger('id_medecin')->nullable();
-
-        $table->foreign('id_patient')
-            ->references('id_patient')
-            ->on('patients');
 
         $table->foreign('id_medecin')
             ->references('id_medecin')
@@ -40,7 +35,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-        $table->dropForeign(['id_patient']);
         $table->dropForeign(['id_medecin']);
 
         $table->dropColumn([
@@ -52,7 +46,6 @@ return new class extends Migration
             'statut',
             'photo_profil',
             'derniere_connexion',
-            'id_patient',
             'id_medecin',
         ]);
         });
