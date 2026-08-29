@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('resultats', function (Blueprint $table) {
+            $table->id('id_resultat');
+
+            $table->date('date_resultat');
+            $table->text('resultat_detaille');
+            $table->text('conclusion');
+            $table->text('valeurs_mesurees');
+            $table->string('fichier_resultat');
+            $table->string('image_resultat');
+            $table->text('observations');
+
+            $table->unsignedBigInteger('id_demande_examen');
+
+            $table->foreign('id_demande_examen')
+                ->references('id_demande_examen')
+                ->on('demandes_examen');
+
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('resultats');
+    }
+};
