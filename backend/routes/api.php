@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\PatientController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -21,34 +20,13 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 
 
-// Routes accessibles uniquement aux utilisateurs authentifies
+// Routes accessibles uniquement aux utilisateurs authentifiés
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Gestion des patients
-    |--------------------------------------------------------------------------
-    */
-
-    // Consulter la liste des patients
-    Route::get('/patients', [PatientController::class, 'index']);
-    // Ajouter un nouveau patient
-    Route::post('/patients', [PatientController::class, 'store']);
-     // consulter un patient
-    Route::get('/patients/{id}', [PatientController::class, 'show']);
-    // Modifier un patient
-    Route::put('/patients/{id}', [PatientController::class, 'update']);
-    // Supprimer un patient
-    Route::delete('/patients/{id}', [PatientController::class, 'destroy']);
-    /*
-    |--------------------------------------------------------------------------
-    | Routes reservees a l'administrateur
-    |--------------------------------------------------------------------------
-    */
-
+    // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
 
         // Consulter les roles disponibles
@@ -56,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Attribuer ou modifier le role d'un utilisateur
         Route::put('/users/{user}/role', [RoleController::class, 'update']);
+
     });
 });
 
