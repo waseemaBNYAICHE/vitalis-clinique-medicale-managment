@@ -27,4 +27,14 @@ class PatientController extends Controller
         'patient' => $patient
     ], 201);
     }
+
+    public function show($id)
+    {
+        $patient = Patient::findOrFail($id);
+
+       return response()->json([
+        'patient' => $patient
+       ], 200);
+    } 
+
 }

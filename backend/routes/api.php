@@ -33,9 +33,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
    Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
    Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
-  Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
+   Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
    // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
+    // Charger les données d'un patient
+    Route::get('/patients/{id}', [PatientController::class, 'show']);
 
     // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
