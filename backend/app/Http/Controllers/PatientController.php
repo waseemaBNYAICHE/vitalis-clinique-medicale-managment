@@ -9,20 +9,22 @@ class PatientController extends Controller
 {
      public function store(Request $request)
     {
-        $patient = Patient::create([
-            'nom' => $request->nom,
-            'prenom' => $request->prenom,
-            'date_naissance' => $request->date_naissance,
-            'sexe' => $request->sexe,
-            'cin' => $request->cin,
-            'telephone' => $request->telephone,
-            'email' => $request->email,
-            'groupe_sanguin' => $request->groupe_sanguin,
+        $validated = $request->validate([
+        'nom' => ['required', 'string', 'max:255'],
+        'prenom' => ['required', 'string', 'max:255'],
+        'date_naissance' => ['required', 'date', 'before:today'],
+        'sexe' => ['required', 'string', 'max:20'],
+        'cin' => ['required', 'string', 'max:50', 'unique:patients,cin'],
+        'telephone' => ['required', 'string', 'max:20'],
+        'email' => ['required', 'email', 'max:255', 'unique:patients,email'],
+        'groupe_sanguin' => ['nullable', 'string', 'max:10'],
         ]);
 
-        return response()->json([
-            'message' => 'Patient ajouté avec succès',
-            'patient' => $patient
-        ], 201);
+    $patient = Patient::create($validated);
+
+    return response()->json([
+        'message' => 'Patient ajouté avec succès',
+        'patient' => $patient
+    ], 201);
     }
 }
