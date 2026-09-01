@@ -28,7 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/dashboard/patients-count', [DashboardController::class, 'nombrePatients']);
-
+    Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
+    
     // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
 

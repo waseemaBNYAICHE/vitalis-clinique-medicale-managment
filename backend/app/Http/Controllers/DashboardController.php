@@ -153,4 +153,10 @@ class DashboardController extends Controller
         'total_patients' => DB::table('patients')->count(),
     ]);
 }
+public function nombreRendezVous(Request $request): JsonResponse
+{
+    return response()->json([
+        'total_rendez_vous' => DB::table('rendez_vous')->count(),
+    ]);
+}
 }
