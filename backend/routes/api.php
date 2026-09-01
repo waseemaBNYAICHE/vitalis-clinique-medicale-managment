@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
     Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
     Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
+   Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
+   
     // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
 

@@ -174,4 +174,21 @@ public function chiffreAffaires(Request $request): JsonResponse
         'chiffre_affaires' => number_format($total, 0, ',', ' ') . ' DH',
     ]);
 }
+
+public function rendezVousDuJour(Request $request): JsonResponse
+{
+    $rendezVous = DB::table('rendez_vous')
+        ->join('patients', 'rendez_vous.id_patient', '=', 'patients.id_patient')
+        ->whereDate('rendez_vous.date_rendez_vous', now()->toDateString())
+        ->orderBy('rendez_vous.heure_debut')
+        ->select(
+            'rendez_vous.heure_debut',
+            'rendez_vous.motif',
+            'rendez_vous.statut',
+            DB::raw("CONCAT(patients.prenom, ' ', patients.nom) as patient")
+        )
+        ->get();
+
+    return response()->json(['rendez_vous' => $rendezVous]);
+}
 }
