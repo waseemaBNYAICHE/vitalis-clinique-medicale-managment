@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
     Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
    Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
-   
+   Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
     // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
 
