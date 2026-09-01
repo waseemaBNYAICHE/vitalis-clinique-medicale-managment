@@ -3,8 +3,15 @@
 .env
 .env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
+# Conteneurs de cles / certificats contenant du materiel prive (SCRUM-478).
+# Les certificats publics (*.crt, *.cer, *.pub) restent versionnables.
+*.p12
+*.pfx
+*.jks
+*.keystore
 auth.json
 
 # ------------------------------------------------------------------ backend
