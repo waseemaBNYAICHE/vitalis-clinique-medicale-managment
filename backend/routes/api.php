@@ -5,6 +5,7 @@ use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PatientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,12 +20,14 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 
-
 // Routes accessibles uniquement aux utilisateurs authentifiés
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // Ajoute d'un patient
+    Route::post('/patients', [PatientController::class, 'store']);
 
     // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
