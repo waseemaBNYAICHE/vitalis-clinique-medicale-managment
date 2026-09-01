@@ -165,4 +165,13 @@ public function nombreConsultations(Request $request): JsonResponse
         'total_consultations' => DB::table('consultations')->count(),
     ]);
 }
+/// chiffre Affaires
+public function chiffreAffaires(Request $request): JsonResponse
+{
+    $total = DB::table('factures')->sum('montant_net');
+
+    return response()->json([
+        'chiffre_affaires' => number_format($total, 0, ',', ' ') . ' DH',
+    ]);
+}
 }
