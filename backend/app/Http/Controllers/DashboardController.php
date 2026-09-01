@@ -191,4 +191,13 @@ public function rendezVousDuJour(Request $request): JsonResponse
 
     return response()->json(['rendez_vous' => $rendezVous]);
 }
+////
+public function examensEnAttente(Request $request): JsonResponse
+{
+    $count = DB::table('demandes_examen')
+        ->where('statut', 'en_attente')
+        ->count();
+
+    return response()->json(['examens_en_attente' => $count]);
+}
 }
