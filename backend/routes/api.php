@@ -38,6 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/patients', [PatientController::class, 'store']);
     // Charger les données d'un patient
     Route::get('/patients/{id}', [PatientController::class, 'show']);
+    // Modifier les données d'un patient
+    Route::put('/patients/{id}', [PatientController::class, 'update']);
 
     // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
