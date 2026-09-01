@@ -159,4 +159,10 @@ public function nombreRendezVous(Request $request): JsonResponse
         'total_rendez_vous' => DB::table('rendez_vous')->count(),
     ]);
 }
+public function nombreConsultations(Request $request): JsonResponse
+{
+    return response()->json([
+        'total_consultations' => DB::table('consultations')->count(),
+    ]);
+}
 }
