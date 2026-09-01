@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\Role;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class DashboardController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $data = match ($user->role) {
+            Role::ADMINISTRATEUR->value => $this->adminDashboard(),
+            Role::MEDECIN->value        => $this->medecinDashboard($user),
+            Role::SECRETAIRE->value     => $this->secretaireDashboard(),
+            Role::INFIRMIER->value      => $this->infirmierDashboard(),
+            Role::PATIENT->value        => $this->patientDashboard($user),
+            default => [],
+        };
+
+        return response()->json([
+            'role' => $user->role,
+            'data' => $data,
+        ]);
+    }
+
+    private function adminDashboard(): array
+    {
+        return [
+            'total_patients'            => DB::table('patients')->count(),
+            'total_medecins'            => DB::table('medecins')->count(),
+            'rendez_vous_aujourdhui'    => DB::table('rendez_vous')
+                ->whereDate('date_rendez_vous', now()->toDateString())
+                ->count(),
+            'hospitalisations_en_cours' => DB::table('hospitalisations')
+                ->whereNull('date_sortie')
+                ->count(),
+            'factures_impayees'         => DB::table('factures')
+                ->where('statut_paiement', '!=', 'payee')
+                ->count(),
+            'revenu_total'               => DB::table('factures')->sum('montant_net'),
+        ];
+    }
+
+        private function medecinDashboard(User $user): array
+    {
+        if (! $user->id_medecin) {
+            return ['message' => 'Aucun profil médecin associé à cet utilisateur'];
+        }
+
+        $today = now()->toDateString();
+
+        $rendezVousAujourdhui = DB::table('rendez_vous')
+            ->join('patients', 'rendez_vous.id_patient', '=', 'patients.id_patient')
+            ->where('rendez_vous.id_medecin', $user->id_medecin)
+            ->whereDate('rendez_vous.date_rendez_vous', $today)
+            ->orderBy('rendez_vous.heure_debut')
+            ->select(
+                'rendez_vous.heure_debut',
+                'rendez_vous.motif',
+                'rendez_vous.statut',
+                DB::raw("CONCAT(patients.prenom, ' ', patients.nom) as patient")
+            )
+            ->get();
+
+        $consultationsAujourdhui = DB::table('consultations')
+            ->join('rendez_vous', 'consultations.id_rendez_vous', '=', 'rendez_vous.id_rendez_vous')
+            ->where('rendez_vous.id_medecin', $user->id_medecin)
+            ->whereDate('rendez_vous.date_rendez_vous', $today)
+            ->count();
+
+        $chiffreAffaires = DB::table('factures')
+            ->join('consultations', 'factures.id_consultation', '=', 'consultations.id_consultation')
+            ->join('rendez_vous', 'consultations.id_rendez_vous', '=', 'rendez_vous.id_rendez_vous')
+            ->where('rendez_vous.id_medecin', $user->id_medecin)
+            ->whereDate('factures.date_facture', $today)
+            ->sum('factures.montant_net');
+
+        return [
+            'stats' => [
+                'patients' => $rendezVousAujourdhui->count(),
+                'rendezVous' => $rendezVousAujourdhui->count(),
+                'consultations' => $consultationsAujourdhui,
+                'chiffreAffaires' => number_format($chiffreAffaires, 0, ',', ' ') . ' DH',
+            ],
+            'rendezVous' => $rendezVousAujourdhui->map(fn ($rdv) => [
+                'heure' => substr($rdv->heure_debut, 0, 5),
+                'patient' => $rdv->patient,
+                'motif' => $rdv->motif,
+                'statut' => $rdv->statut,
+            ]),
+        ];
+    }
+
+    private function secretaireDashboard(): array
+    {
+        return [
+            'rendez_vous_aujourdhui' => DB::table('rendez_vous')
+                ->whereDate('date_rendez_vous', now()->toDateString())
+                ->count(),
+            'rendez_vous_en_attente' => DB::table('rendez_vous')
+                ->where('statut', 'en_attente')
+                ->count(),
+            'total_patients' => DB::table('patients')->count(),
+        ];
+    }
+
+    private function infirmierDashboard(): array
+    {
+        return [
+            'hospitalisations_en_cours' => DB::table('hospitalisations')
+                ->whereNull('date_sortie')
+                ->count(),
+            'entrees_aujourdhui' => DB::table('hospitalisations')
+                ->whereDate('date_entree', now()->toDateString())
+                ->count(),
+        ];
+    }
+
+    private function patientDashboard(User $user): array
+    {
+        if (! $user->id_patient) {
+            return ['message' => 'Aucun profil patient associé à cet utilisateur'];
+        }
+
+        return [
+            'prochains_rendez_vous' => DB::table('rendez_vous')
+                ->where('id_patient', $user->id_patient)
+                ->where('date_rendez_vous', '>=', now()->toDateString())
+                ->orderBy('date_rendez_vous')
+                ->get(),
+            'hospitalisation_en_cours' => DB::table('hospitalisations')
+                ->where('id_patient', $user->id_patient)
+                ->whereNull('date_sortie')
+                ->exists(),
+            'factures_impayees' => DB::table('factures')
+                ->join('consultations', 'factures.id_consultation', '=', 'consultations.id_consultation')
+                ->join('rendez_vous', 'consultations.id_rendez_vous', '=', 'rendez_vous.id_rendez_vous')
+                ->where('rendez_vous.id_patient', $user->id_patient)
+                ->where('factures.statut_paiement', '!=', 'payee')
+                ->count(),
+        ];
+    }
+}
