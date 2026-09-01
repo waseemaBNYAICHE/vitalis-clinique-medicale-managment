@@ -60,4 +60,15 @@ class PatientController extends Controller
     ], 200);
 }
 
+   public function destroy($id)
+   {
+    $patient = Patient::findOrFail($id);
+
+    $patient->delete();
+
+    return response()->json([
+        'message' => 'Patient supprimé avec succès'
+    ], 200);
+   }
+
 }

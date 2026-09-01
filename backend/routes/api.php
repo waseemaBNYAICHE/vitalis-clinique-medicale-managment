@@ -40,6 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patients/{id}', [PatientController::class, 'show']);
     // Modifier les données d'un patient
     Route::put('/patients/{id}', [PatientController::class, 'update']);
+    // Supprimer un patient
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy']);
 
     // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
