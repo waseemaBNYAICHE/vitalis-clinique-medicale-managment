@@ -1,0 +1,117 @@
+name: VITALIS Security
+
+# SCRUM-479 - Ajouter les controles de securite (DevSecOps)
+# Automatise en CI les controles issus de :
+#   SCRUM-476 : audit des dependances backend (Composer)
+#   SCRUM-477 : audit des dependances frontend (npm)
+#   SCRUM-478 : protection des secrets et des fichiers sensibles
+# Workflow separe de ci.yml, qui reste inchange.
+
+on:
+  push:
+    branches:
+      - develop
+
+  pull_request:
+    branches:
+      - develop
+      - main
+
+  workflow_dispatch:
+
+# Permissions minimales : lecture du code uniquement (moindre privilege).
+permissions:
+  contents: read
+
+jobs:
+  # --------------------------------------------------------- SCRUM-476 backend
+  backend-dependencies:
+    name: Audit des dependances backend (Composer)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_pgsql
+          coverage: none
+
+      - name: Verifier que composer.lock correspond a composer.json
+        run: composer validate --no-check-all --no-check-publish
+
+      - name: Auditer les dependances verrouillees (composer.lock)
+        # --locked : audite exactement les versions du composer.lock commite,
+        # sans installer le dossier vendor.
+        # La commande retourne un code d'erreur si une vulnerabilite est trouvee,
+        # ce qui fait echouer le job.
+        run: composer audit --locked --no-interaction
+
+  # -------------------------------------------------------- SCRUM-477 frontend
+  frontend-dependencies:
+    name: Audit des dependances frontend (npm)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Installer les dependances npm
+        run: npm ci
+
+      - name: Auditer les dependances npm
+        # Echoue uniquement si une vulnerabilite high ou critical est detectee.
+        run: npm audit --audit-level=high
+
+  # --------------------------------------------------------- SCRUM-478 secrets
+  secrets-check:
+    name: Verification des fichiers sensibles
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Verifier qu'aucun fichier .env reel n'est versionne
+        # Les fichiers *.example sont autorises : ce sont des modeles sans secret.
+        # On liste uniquement des NOMS de fichiers, jamais leur contenu.
+        run: |
+          FICHIERS=$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.example$' || true)
+          if [ -n "$FICHIERS" ]; then
+            echo "Fichiers d'environnement sensibles versionnes :"
+            echo "$FICHIERS"
+            echo "Retirer le fichier du suivi (git rm --cached) ET faire tourner les secrets."
+            exit 1
+          fi
+          echo "OK : aucun fichier .env reel n'est versionne."
+
+      - name: Verifier qu'aucune cle privee n'est versionnee
+        # Conteneurs de materiel prive uniquement.
+        # Les certificats publics (*.crt, *.cer, *.pub) restent autorises.
+        run: |
+          FICHIERS=$(git ls-files | grep -E '\.(pem|key|p12|pfx|jks|keystore)$' || true)
+          if [ -n "$FICHIERS" ]; then
+            echo "Fichiers de cles ou conteneurs d'identifiants versionnes :"
+            echo "$FICHIERS"
+            echo "Retirer le fichier du suivi (git rm --cached) ET regenerer la cle."
+            exit 1
+          fi
+          echo "OK : aucune cle privee n'est versionnee."
