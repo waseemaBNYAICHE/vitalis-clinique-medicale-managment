@@ -232,4 +232,43 @@ public function statistiquesMensuelles(Request $request): JsonResponse
 
     return response()->json(['statistiques' => $stats]);
 }
+public function exportStatistiques(Request $request): JsonResponse
+{
+    $mois = collect(range(0, 5))->map(function ($i) {
+        $date = now()->subMonths($i);
+        return [
+            'mois' => $date->translatedFormat('F Y'),
+            'annee' => $date->year,
+            'numero_mois' => $date->month,
+        ];
+    })->reverse()->values();
+
+    $stats = $mois->map(function ($m) {
+        return [
+            'mois' => $m['mois'],
+            'patients' => DB::table('patients')
+                ->whereYear('created_at', $m['annee'])
+                ->whereMonth('created_at', $m['numero_mois'])
+                ->count(),
+            'consultations' => DB::table('consultations')
+                ->whereYear('created_at', $m['annee'])
+                ->whereMonth('created_at', $m['numero_mois'])
+                ->count(),
+            'revenus' => DB::table('factures')
+                ->whereYear('date_facture', $m['annee'])
+                ->whereMonth('date_facture', $m['numero_mois'])
+                ->sum('montant_net'),
+        ];
+    });
+
+    $csv = "Mois,Patients,Consultations,Revenus\n";
+    foreach ($stats as $s) {
+        $csv .= "{$s['mois']},{$s['patients']},{$s['consultations']},{$s['revenus']}\n";
+    }
+
+    return response($csv, 200, [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => 'attachment; filename="statistiques.csv"',
+    ]);
+}
 }

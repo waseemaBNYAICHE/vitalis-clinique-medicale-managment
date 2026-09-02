@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
    Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
    Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
   Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
+  Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
    // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
 
