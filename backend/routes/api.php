@@ -36,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
    Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
    // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
+    // Recherche d'un patient
+    Route::get('/patients/search', [PatientController::class, 'search']);
     // Charger les données d'un patient
     Route::get('/patients/{id}', [PatientController::class, 'show']);
     // Modifier les données d'un patient

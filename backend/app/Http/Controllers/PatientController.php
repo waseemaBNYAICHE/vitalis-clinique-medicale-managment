@@ -71,4 +71,23 @@ class PatientController extends Controller
     ], 200);
    }
 
+   public function search(Request $request)
+   {
+    $query = Patient::query();
+
+    if ($request->filled('cin')) {
+        $query->where('cin', $request->cin);
+    }
+
+    if ($request->filled('date_naissance')) {
+        $query->where('date_naissance', $request->date_naissance);
+    }
+
+    $patients = $query->get();
+
+    return response()->json([
+        'patients' => $patients
+    ], 200);
+   }
+
 }
