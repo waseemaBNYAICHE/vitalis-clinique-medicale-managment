@@ -6,7 +6,17 @@ use App\Models\Patient;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
-{
+{   
+
+    public function index()
+   {
+    $patients = Patient::all();
+
+    return response()->json([
+        'patients' => $patients
+    ], 200);
+   }    
+
      public function store(Request $request)
     {
         $validated = $request->validate([
