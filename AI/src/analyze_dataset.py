@@ -5,9 +5,7 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATASET_PATH = BASE_DIR / "data" / "disease_dataset.csv"
 
-df = pd.read_csv(DATASET_PATH)
-
-
+df = pd.read_csv(DATASET_PATH) 
 print("=" * 50)
 print("DATASET INFORMATION")
 print("=" * 50)

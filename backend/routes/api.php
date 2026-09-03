@@ -33,10 +33,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
    Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
    Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
-  Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
-  Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
+   ///confli mergr
+   Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
+   Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
+   // Consulter les patients
+   Route::get('/patients', [PatientController::class, 'index']);
+ ///confli mergr
    // Ajoute d'un patient
     Route::post('/patients', [PatientController::class, 'store']);
+    // Recherche d'un patient
+    Route::get('/patients/search', [PatientController::class, 'search']);
+    // Charger les données d'un patient
+    Route::get('/patients/{id}', [PatientController::class, 'show']);
+    // Modifier les données d'un patient
+    Route::put('/patients/{id}', [PatientController::class, 'update']);
+    // Supprimer un patient
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy']);
 
     // Routes reservees a l'administrateur
     Route::middleware('role:administrateur')->group(function () {
