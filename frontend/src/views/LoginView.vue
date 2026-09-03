@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../api'
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -14,18 +17,18 @@ const login = async () => {
   errorMessage.value = ''
   successMessage.value = ''
   loading.value = true
-
   try {
     const response = await api.post('/login', {
       email: email.value,
       password: password.value
     })
-
     // Sauvegarder le token et l'utilisateur
     localStorage.setItem('token', response.data.token)
     localStorage.setItem('user', JSON.stringify(response.data.user))
-
     successMessage.value = response.data?.message || 'Connexion réussie'
+
+    // Rediriger vers le dashboard après connexion réussie
+    router.push('/dashboard')
   } catch (error) {
     if (error.response?.status === 401) {
       errorMessage.value = 'Email ou mot de passe incorrect.'
@@ -38,30 +41,22 @@ const login = async () => {
   }
 }
 </script>
-
 <template>
   <main class="login-page">
     <section class="visual-side">
       <img src="/images/login.jpg" alt="Réception VITALIS" class="reception-image" />
-
-    
     </section>
-
     <div class="diagonal-line"></div>
-
     <section class="form-side">
       <div class="login-form">
         <h1>Connexion</h1>
         <p class="subtitle">Connectez-vous à votre compte</p>
-
         <div v-if="errorMessage" class="message error-message">
           {{ errorMessage }}
         </div>
-
         <div v-if="successMessage" class="message success-message">
           {{ successMessage }}
         </div>
-
         <form @submit.prevent="login">
           <div class="field">
             <label for="email">Email</label>
@@ -77,7 +72,6 @@ const login = async () => {
               />
             </div>
           </div>
-
           <div class="field">
             <label for="password">Mot de passe</label>
             <div class="input-wrapper">
@@ -100,23 +94,18 @@ const login = async () => {
               </button>
             </div>
           </div>
-
           <div class="options">
             <label class="remember">
               <input v-model="remember" type="checkbox" />
               <span>Se souvenir de moi</span>
             </label>
-
             <a href="#" @click.prevent>Mot de passe oublié ?</a>
           </div>
-
           <button type="submit" class="login-button" :disabled="loading">
             {{ loading ? 'Connexion...' : 'Se connecter' }}
           </button>
         </form>
-
         <div class="separator"><span>ou</span></div>
-
         <p class="contact">
           Vous n'avez pas de compte ?
           <a href="#" @click.prevent>Contacter l'administrateur</a>
@@ -125,5 +114,4 @@ const login = async () => {
     </section>
   </main>
 </template>
-
 <style src="../styles/login.css"></style>
