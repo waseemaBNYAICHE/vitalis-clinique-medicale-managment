@@ -70,3 +70,4 @@ Homestead.yaml
 **/__pycache__/
 *.pyc
 *.pyo
+statistiques.csv
