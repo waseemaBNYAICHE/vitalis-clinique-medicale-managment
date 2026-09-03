@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
 
 class DashboardController extends Controller
 {
@@ -232,7 +233,7 @@ public function statistiquesMensuelles(Request $request): JsonResponse
 
     return response()->json(['statistiques' => $stats]);
 }
-public function exportStatistiques(Request $request): JsonResponse
+public function exportStatistiques(Request $request): Response
 {
     $mois = collect(range(0, 5))->map(function ($i) {
         $date = now()->subMonths($i);
