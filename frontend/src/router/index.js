@@ -4,6 +4,7 @@ import ResetPasswordView from '../views/ResetPasswordView.vue'
 
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import PatientCreateView from '../views/patients/PatientCreateView.vue'
 
 const routes = [
   {
@@ -15,6 +16,7 @@ const routes = [
     name: 'login',
     component: LoginView
   },
+  
   {
   path: '/reset-password',
   name: 'reset-password',
@@ -29,8 +31,14 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView
-  }
+  },
+  {
+  path: '/patients/new',
+  name: 'patient-create',
+  component: PatientCreateView
+}
 ]
+
 
 const router = createRouter({
   history: createWebHistory(),
