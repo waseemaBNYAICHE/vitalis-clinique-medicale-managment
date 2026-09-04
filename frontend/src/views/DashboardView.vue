@@ -67,11 +67,10 @@ const fetchDashboard = async () => {
       rendezVous.value = []
     }
   } catch (error) {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      router.push('/login')
-    } else {
+    // SCRUM-14 : le cas 401 (session expirée ou invalide) est traité une seule
+    // fois, dans l'intercepteur de réponse d'api.js, qui nettoie la session et
+    // redirige vers la connexion. Ici on ne gère que les autres erreurs.
+    if (error.response?.status !== 401) {
       errorMessage.value = "Impossible de charger les données du tableau de bord."
     }
   } finally {
