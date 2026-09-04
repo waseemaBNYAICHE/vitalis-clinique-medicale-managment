@@ -31,3 +31,4 @@ tests/coverage
 Dockerfile
 .dockerignore
 README.md
+Dockerfile.prod
