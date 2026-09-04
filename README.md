@@ -297,9 +297,11 @@ npm run dev
 
 ## 🐳 Docker
 
-Le projet utilise Docker afin de fournir un environnement de développement reproductible.
+Le projet fournit un environnement de développement Docker complet : PostgreSQL,
+Redis, Laravel (PHP-FPM), un worker de files d'attente, Nginx et le serveur de
+développement Vite.
 
-Lorsque la configuration Docker est disponible :
+Démarrer la pile :
 
 ```bash
 docker compose up -d --build
@@ -311,11 +313,24 @@ Vérifier les conteneurs :
 docker compose ps
 ```
 
-Arrêter les conteneurs :
+Arrêter les conteneurs en conservant les données :
 
 ```bash
 docker compose down
 ```
+
+Une fois la pile démarrée :
+
+| URL | Contenu |
+|-----|---------|
+| <http://localhost:5173/> | Application Vue |
+| <http://localhost:8000/api/health> | État de PostgreSQL et Redis |
+
+L'architecture des services, les volumes, les variables d'environnement et les
+limites connues sont détaillés dans [docs/DOCKER.md](docs/DOCKER.md).
+
+> `docker compose down -v` supprime le volume `postgres-data` et donc toutes les
+> données locales. Ne pas utiliser `-v` pour un simple arrêt.
 
 ---
 
