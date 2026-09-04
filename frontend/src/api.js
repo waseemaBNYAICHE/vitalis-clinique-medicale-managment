@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getToken } from './auth.js'
+import { getToken, clearSession } from './auth.js'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
@@ -26,10 +26,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('user')
+      // SCRUM-15 : un seul point d'effacement de la session.
+      clearSession()
 
       // Import differe : le routeur importe les vues, qui importent ce
       // fichier. Charger le routeur ici evite cette dependance circulaire.
