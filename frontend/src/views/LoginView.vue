@@ -22,9 +22,18 @@ const login = async () => {
       email: email.value,
       password: password.value
     })
-    // Sauvegarder le token et l'utilisateur
-    localStorage.setItem('token', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data.user))
+    
+    // Sauvegarder la session selon "Se souvenir de moi"
+    const storage = remember.value ? localStorage : sessionStorage
+
+    storage.setItem('token', response.data.token)
+    storage.setItem('user', JSON.stringify(response.data.user))
+
+    // Nettoyer l'autre stockage pour éviter les conflits
+    const otherStorage = remember.value ? sessionStorage : localStorage
+    otherStorage.removeItem('token')
+    otherStorage.removeItem('user')
+    
     successMessage.value = response.data?.message || 'Connexion réussie'
 
     // Rediriger vers le dashboard après connexion réussie
