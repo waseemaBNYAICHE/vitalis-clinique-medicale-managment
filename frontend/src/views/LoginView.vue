@@ -108,7 +108,9 @@ const login = async () => {
               <input v-model="remember" type="checkbox" />
               <span>Se souvenir de moi</span>
             </label>
-            <a href="#" @click.prevent>Mot de passe oublié ?</a>
+            <RouterLink to="/forgot-password">
+              Mot de passe oublié ?
+            </RouterLink>
           </div>
           <button type="submit" class="login-button" :disabled="loading">
             {{ loading ? 'Connexion...' : 'Se connecter' }}
