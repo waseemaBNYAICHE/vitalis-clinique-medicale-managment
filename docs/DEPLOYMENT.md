@@ -173,7 +173,57 @@ Tant que ces éléments n'existent pas, ajouter un job de déploiement reviendra
 
 ---
 
-## 5. Ce qui n'est pas couvert
+## 5. Vérifier un déploiement
+
+[`scripts/verify-deployment.sh`](../scripts/verify-deployment.sh) contrôle une
+pile de production déjà démarrée. Il est **en lecture seule** : il ne démarre,
+n'arrête, ne migre et ne supprime rien.
+
+```bash
+# pile locale : contrôles HTTP + assertions dans les conteneurs
+scripts/verify-deployment.sh
+
+# instance distante : contrôles HTTP uniquement
+scripts/verify-deployment.sh --remote   --api-url https://api.example --web-url https://example
+```
+
+Il vérifie que l'API répond, que `/api/health` déclare PostgreSQL et Redis
+joignables, que le frontend sert bien un build (assets hachés) avec son repli
+SPA, qu'aucune trace de débogage ne fuit dans une réponse d'erreur, que les six
+conteneurs tournent, que les réglages de production sont effectifs, qu'aucune
+migration n'est en attente, et qu'aucune erreur fatale n'apparaît dans les
+journaux récents.
+
+Il renvoie 0 si tout passe, 1 sinon — utilisable comme porte de sortie après un
+déploiement.
+
+> À ne pas confondre avec
+> [`scripts/docker-smoke-test.sh`](../scripts/docker-smoke-test.sh), qui vise la
+> pile de **développement** et qui, lui, construit et démarre.
+
+### Piège rencontré : changer un mot de passe sur un volume existant
+
+PostgreSQL n'applique `POSTGRES_PASSWORD` qu'à la **première initialisation** du
+volume. Redémarrer la pile avec un nouveau `DB_PASSWORD` sur un
+`postgres-data` déjà initialisé laisse l'ancien mot de passe en place, et le
+conteneur `app` boucle sur :
+
+```
+SQLSTATE[08006] FATAL: password authentication failed for user "vitalis"
+```
+
+Changer le mot de passe se fait dans la base, pas dans la variable :
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production   exec postgres psql -U "$DB_USERNAME" -c "ALTER USER \"$DB_USERNAME\" WITH PASSWORD '...';"
+```
+
+puis mettre `.env.production` en accord. Supprimer le volume fonctionne aussi,
+mais **détruit toutes les données**.
+
+---
+
+## 6. Ce qui n'est pas couvert
 
 Honnêtement, et par ordre d'importance si ce projet devait servir réellement :
 
