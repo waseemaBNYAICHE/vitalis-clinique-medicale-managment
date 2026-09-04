@@ -1,39 +1,107 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '../api'
+
+const router = useRouter()
+
+const loading = ref(true)
+const errorMessage = ref('')
+const role = ref('')
+const userName = ref('')
 
 const stats = ref({
-  patients: 32,
-  rendezVous: 18,
-  consultations: 15,
-  chiffreAffaires: '12 450 DH'
+  patients: 0,
+  rendezVous: 0,
+  consultations: 0,
+  chiffreAffaires: '0 DH'
 })
 
-const rendezVous = ref([
-  {
-    heure: '09:00',
-    patient: 'Fatima Zahra',
-    motif: 'Consultation générale',
-    statut: 'Confirmé'
-  },
-  {
-    heure: '10:30',
-    patient: 'Mohamed Ali',
-    motif: 'Suivi',
-    statut: 'Confirmé'
-  },
-  {
-    heure: '11:00',
-    patient: 'Sara El Amrani',
-    motif: 'Consultation générale',
-    statut: 'En cours'
-  },
-  {
-    heure: '14:00',
-    patient: 'Youssef El Khatib',
-    motif: 'Consultation générale',
-    statut: 'Confirmé'
+const rendezVous = ref([])
+const examensEnAttente = ref(0)
+
+// Données brutes pour les rôles autres que médecin (admin, secretaire, infirmier, patient)
+const rawData = ref(null)
+
+const fetchDashboard = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
+  const token = localStorage.getItem('token')
+  const storedUser = localStorage.getItem('user')
+
+  if (!token) {
+    router.push('/login')
+    return
   }
-])
+
+  if (storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser)
+      userName.value = `${parsedUser.name || ''}`.trim()
+    } catch {
+      userName.value = ''
+    }
+  }
+
+  try {
+    const response = await api.get('/dashboard', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
+    role.value = response.data.role
+    const data = response.data.data
+    rawData.value = data
+
+    if (role.value === 'medecin' && data.stats) {
+      // Le backend renvoie déjà le format attendu par l'UI pour les médecins
+      stats.value = data.stats
+      rendezVous.value = data.rendezVous || []
+      examensEnAttente.value = data.examensEnAttente ?? 0
+    } else if (role.value === 'administrateur') {
+      // Adapter les clés admin (total_patients, etc.) au format des cartes
+      stats.value = {
+        patients: data.total_patients ?? 0,
+        rendezVous: data.rendez_vous_aujourdhui ?? 0,
+        consultations: data.total_medecins ?? 0,
+        chiffreAffaires: `${data.revenu_total ?? 0} DH`
+      }
+      rendezVous.value = []
+    } else {
+      // Autres rôles (secretaire, infirmier, patient) : affichage minimal
+      rendezVous.value = []
+    }
+  } catch (error) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      router.push('/login')
+    } else {
+      errorMessage.value = "Impossible de charger les données du tableau de bord."
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const logout = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    if (token) {
+      await api.post('/logout', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    }
+  } catch {
+    // Même si l'appel échoue, on déconnecte localement
+  } finally {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    router.push('/login')
+  }
+}
+
+onMounted(fetchDashboard)
 </script>
 
 <template>
@@ -61,7 +129,7 @@ const rendezVous = ref([
         <a>⚙ Paramètres</a>
       </nav>
 
-      <div class="logout">
+      <div class="logout" @click="logout" style="cursor: pointer;">
         Déconnexion
       </div>
     </aside>
@@ -72,91 +140,91 @@ const rendezVous = ref([
       <header class="dashboard-header">
         <div>
           <h1>Tableau de bord</h1>
-          <p>Bonjour Dr. Ahmed Benali 👋</p>
+          <p v-if="userName">Bonjour {{ userName }} 👋</p>
         </div>
 
         <div class="profile">
           <div>
-            <strong>Dr. Ahmed Benali</strong>
-            <small>Médecin</small>
+            <strong>{{ userName || 'Utilisateur' }}</strong>
+            <small>{{ role }}</small>
           </div>
         </div>
       </header>
 
-      <!-- STATISTIQUES -->
-      <section class="stats-grid">
+      <div v-if="loading">Chargement du tableau de bord...</div>
+      <div v-else-if="errorMessage" class="alert">{{ errorMessage }}</div>
 
-        <div class="stat-card">
-          <span>Patients aujourd'hui</span>
-          <h2>{{ stats.patients }}</h2>
-          <small>+5% vs hier</small>
-        </div>
+      <template v-else>
+        <!-- STATISTIQUES -->
+        <section class="stats-grid">
 
-        <div class="stat-card">
-          <span>Rendez-vous</span>
-          <h2>{{ stats.rendezVous }}</h2>
-          <small>+3% vs hier</small>
-        </div>
-
-        <div class="stat-card">
-          <span>Consultations</span>
-          <h2>{{ stats.consultations }}</h2>
-          <small>+8% vs hier</small>
-        </div>
-
-        <div class="stat-card">
-          <span>Chiffre d'affaires</span>
-          <h2>{{ stats.chiffreAffaires }}</h2>
-          <small>+12%</small>
-        </div>
-
-      </section>
-
-      <!-- PARTIE CENTRALE -->
-      <section class="dashboard-grid">
-
-        <div class="panel">
-          <div class="panel-title">
-            <h3>Rendez-vous du jour</h3>
-            <a href="#">Voir tous les rendez-vous</a>
+          <div class="stat-card">
+            <span>Patients aujourd'hui</span>
+            <h2>{{ stats.patients }}</h2>
           </div>
 
-          <table>
-            <tbody>
-              <tr v-for="rdv in rendezVous" :key="rdv.heure">
-                <td>{{ rdv.heure }}</td>
-                <td><strong>{{ rdv.patient }}</strong></td>
-                <td>{{ rdv.motif }}</td>
-                <td>
-                  <span
-                    class="status"
-                    :class="rdv.statut === 'Confirmé'
-                      ? 'confirmed'
-                      : 'progress'"
-                  >
-                    {{ rdv.statut }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="panel">
-          <h3>Activité rapide</h3>
-
-          <button>＋ Nouveau rendez-vous</button>
-          <button>＋ Nouveau patient</button>
-          <button>＋ Consultation rapide</button>
-          <button>＋ Demande d'examen</button>
-
-          <div class="alert">
-            ⚠ 3 résultats d'examens en attente
+          <div class="stat-card">
+            <span>Rendez-vous</span>
+            <h2>{{ stats.rendezVous }}</h2>
           </div>
-        </div>
 
-      </section>
+          <div class="stat-card">
+            <span>Consultations</span>
+            <h2>{{ stats.consultations }}</h2>
+          </div>
+
+          <div class="stat-card">
+            <span>Chiffre d'affaires</span>
+            <h2>{{ stats.chiffreAffaires }}</h2>
+          </div>
+
+        </section>
+
+        <!-- PARTIE CENTRALE -->
+        <section class="dashboard-grid">
+
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Rendez-vous du jour</h3>
+              <a href="#">Voir tous les rendez-vous</a>
+            </div>
+
+            <table v-if="rendezVous.length">
+              <tbody>
+                <tr v-for="rdv in rendezVous" :key="rdv.heure + rdv.patient">
+                  <td>{{ rdv.heure }}</td>
+                  <td><strong>{{ rdv.patient }}</strong></td>
+                  <td>{{ rdv.motif }}</td>
+                  <td>
+                    <span
+                      class="status"
+                      :class="rdv.statut === 'Confirmé' ? 'confirmed' : 'progress'"
+                    >
+                      {{ rdv.statut }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-else>Aucun rendez-vous pour le moment.</p>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="panel">
+            <h3>Activité rapide</h3>
+
+            <button>＋ Nouveau rendez-vous</button>
+            <button>＋ Nouveau patient</button>
+            <button>＋ Consultation rapide</button>
+            <button>＋ Demande d'examen</button>
+
+            <div class="alert" v-if="examensEnAttente > 0">
+              ⚠ {{ examensEnAttente }} résultats d'examens en attente
+            </div>
+          </div>
+
+        </section>
+      </template>
 
     </main>
   </div>
