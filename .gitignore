@@ -3,6 +3,9 @@
 .env
 .env.*
 !.env.example
+# Templates only (.env.production.example). The filled-in files they describe
+# still match `.env.*` above and stay ignored.
+!.env.*.example
 *.pem
 *.key
 auth.json

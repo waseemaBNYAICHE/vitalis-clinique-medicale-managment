@@ -387,6 +387,27 @@ Déploiement
 
 ---
 
+## 📦 Déploiement
+
+Une pile de production conteneurisée est fournie
+([`docker-compose.prod.yml`](docker-compose.prod.yml)) : assets Vue compilés et
+servis en statique, dépendances Composer sans paquets de développement, erreurs
+journalisées et non affichées, `APP_KEY` exigée depuis l'environnement.
+
+```bash
+cp .env.production.example .env.production
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Les variables requises, la distinction entre valeurs publiques et secrètes, et
+les points non couverts (TLS, sauvegardes, supervision) sont détaillés dans
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+Aucune infrastructure cible n'est rattachée au projet : cette pile a été
+construite et démarrée localement, elle n'a été déployée sur aucun serveur.
+
+---
+
 ## 🧪 Tests
 
 Le projet prévoit plusieurs niveaux de tests :
