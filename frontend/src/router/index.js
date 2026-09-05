@@ -1,14 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
-
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+
+import MainLayout from '../layouts/MainLayout.vue'
+import PatientCreateView from '../views/patients/PatientCreateView.vue'
+import PatientsView from '../views/patients/PatientsView.vue'
+
 import { resolveNavigation } from './guards'
 
-// SCRUM-13 - Chaque route declare si elle est protegee via `meta.requiresAuth`.
-// Une nouvelle page est ainsi protegee en ajoutant une seule ligne, sans
-// dupliquer de verification dans les composants.
+// SCRUM-13 - Chaque route déclare si elle est protégée via meta.requiresAuth.
+
 const routes = [
   {
     path: '/',
@@ -21,20 +25,39 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-  path: '/reset-password',
-  name: 'reset-password',
-  component: ResetPasswordView
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPasswordView,
+    meta: { requiresAuth: false }
   },
   {
-  path: '/forgot-password',
-  name: 'forgot-password',
-  component: ForgotPasswordView
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false }
   },
   {
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'patients',
+        name: 'patients',
+        component: PatientsView
+      },
+      {
+        path: 'patients/new',
+        name: 'patient-create',
+        component: PatientCreateView
+      }
+    ]
   }
 ]
 
@@ -43,9 +66,6 @@ const router = createRouter({
   routes
 })
 
-// Garde de navigation globale : elle s'applique a la navigation interne, a
-// l'ouverture directe d'une URL et au rafraichissement de la page, puisque le
-// routeur rejoue la navigation a chaque demarrage de l'application.
 router.beforeEach(resolveNavigation)
 
 export default router
