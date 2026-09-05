@@ -130,7 +130,50 @@ docker compose -f docker-compose.prod.yml --env-file .env.production down
 
 ---
 
-## 4. Ce qui n'est pas couvert
+## 4. Automatisation
+
+Deux workflows GitHub Actions, aux rôles distincts :
+
+| Workflow | Déclencheurs | Rôle |
+|---|---|---|
+| [`ci.yml`](../.github/workflows/ci.yml) | push et PR sur `develop` | Installe les dépendances backend et frontend |
+| [`deploy.yml`](../.github/workflows/deploy.yml) | push et PR sur `develop` (chemins Docker / backend / frontend), et `workflow_dispatch` | Construit la pile de production, la démarre et vérifie qu'elle répond |
+
+`deploy.yml` **ne déploie nulle part** : il n'existe aucune cible. Il vérifie ce
+qui est vérifiable sans serveur — que les images de production se construisent,
+que la pile démarre, que l'API et le frontend répondent, et que les réglages de
+production sont bien effectifs (`display_errors` désactivé, `APP_DEBUG` à
+`false`, `APP_ENV` à `production`, caches construits, dépendances de
+développement absentes, aucune migration en attente).
+
+Il n'utilise **aucun secret de dépôt**. Les mots de passe qu'il génère sont
+éphémères, propres au conteneur jetable du runner, et ne protègent rien de réel.
+Ses permissions sont réduites à `contents: read` : il ne publie rien et n'écrit
+nulle part.
+
+### Pour brancher un déploiement réel
+
+Il manque, dans l'ordre :
+
+1. **Une cible** : serveur, plateforme managée ou cluster, avec sa méthode
+   d'accès (SSH, API du fournisseur, `kubectl`).
+2. **Un registre d'images**, pour que la cible tire les images plutôt que de les
+   reconstruire (GHCR est disponible sans secret supplémentaire pour un dépôt
+   GitHub).
+3. **Les secrets**, déclarés en *GitHub Actions secrets* et jamais dans le
+   dépôt : au minimum `APP_KEY`, `DB_PASSWORD`, `REDIS_PASSWORD`, plus les
+   identifiants d'accès à la cible.
+4. **Un environnement GitHub protégé** (`environment: production`), pour exiger
+   une approbation manuelle avant que le job de déploiement ne démarre.
+5. **Une stratégie de retour arrière** : conserver l'image précédente et savoir
+   la remettre en service.
+
+Tant que ces éléments n'existent pas, ajouter un job de déploiement reviendrait
+à écrire des étapes qui ne peuvent pas s'exécuter.
+
+---
+
+## 5. Ce qui n'est pas couvert
 
 Honnêtement, et par ordre d'importance si ce projet devait servir réellement :
 
