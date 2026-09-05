@@ -1,5 +1,31 @@
 name: ${COMPOSE_PROJECT_NAME:-anas}
 
+# `app` and `queue` run the same codebase from the same image; sharing these
+# fragments keeps them from drifting apart when one of them is edited.
+x-backend-build: &backend-build
+  context: ./backend
+  dockerfile: Dockerfile
+  args:
+    UID: ${UID:-1000}
+    GID: ${GID:-1000}
+
+x-backend-env: &backend-env
+  APP_ENV: ${APP_ENV:-local}
+  APP_DEBUG: ${APP_DEBUG:-true}
+  APP_URL: http://localhost:${NGINX_PORT:-8000}
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_DATABASE: ${DB_DATABASE:-laravel}
+  DB_USERNAME: ${DB_USERNAME:-laravel}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  CACHE_STORE: redis
+  SESSION_DRIVER: redis
+  QUEUE_CONNECTION: redis
+
 services:
   # ---------------------------------------------------------------- PostgreSQL
   # Internal only: no `ports:` mapping, so it is unreachable from the host.
@@ -45,32 +71,16 @@ services:
 
   # ------------------------------------------------------------ Laravel (fpm)
   app:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
+    # Explicit shared tag: `app` and `queue` build an identical image, and
+    # without it Compose produces (and exports) two separate ones.
+    image: ${COMPOSE_PROJECT_NAME:-anas}-backend
+    build: *backend-build
     restart: unless-stopped
     environment:
+      <<: *backend-env
       CONTAINER_ROLE: app
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: http://localhost:${NGINX_PORT:-8000}
       FRONTEND_URL: http://localhost:${VITE_PORT:-5173}
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_DATABASE: ${DB_DATABASE:-laravel}
-      DB_USERNAME: ${DB_USERNAME:-laravel}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      REDIS_CLIENT: phpredis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CACHE_STORE: redis
-      SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
     volumes:
       - ./backend:/var/www/html
       # Keep container-managed dependencies out of the host bind mount.
@@ -93,31 +103,13 @@ services:
 
   # ------------------------------------------------------- Laravel queue worker
   queue:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
+    image: ${COMPOSE_PROJECT_NAME:-anas}-backend
+    build: *backend-build
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "redis", "--tries=3", "--sleep=3", "--max-time=3600"]
     environment:
+      <<: *backend-env
       CONTAINER_ROLE: queue
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: http://localhost:${NGINX_PORT:-8000}
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_DATABASE: ${DB_DATABASE:-laravel}
-      DB_USERNAME: ${DB_USERNAME:-laravel}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      REDIS_CLIENT: phpredis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CACHE_STORE: redis
-      SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
     volumes:
       - ./backend:/var/www/html
       - backend-vendor:/var/www/html/vendor
@@ -172,6 +164,10 @@ services:
     depends_on:
       nginx:
         condition: service_started
+    # Liveness only: this proves the Vite server answers, not that the app
+    # compiles. A node_modules volume left behind by a dependency change still
+    # reports healthy while module resolution fails in the browser. Rebuild with
+    # `docker compose up -d --build` after pulling a package.json change.
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/ || exit 1"]
       interval: 10s
