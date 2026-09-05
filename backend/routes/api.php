@@ -48,18 +48,32 @@ Route::middleware('auth:sanctum')->group(function () {
    // Gestion des patients - reservee au personnel medical/administratif
    
    
-   Route::middleware('role:administrateur,medecin,secretaire,infirmier')->group(function () {
-       Route::get('/patients', [PatientController::class, 'index']);
-       Route::post('/patients', [PatientController::class, 'store']);
-       Route::get('/patients/search', [PatientController::class, 'search']);
-       Route::get('/patients/{id}', [PatientController::class, 'show']);
-       Route::put('/patients/{id}', [PatientController::class, 'update']);
-       Route::delete('/patients/{id}', [PatientController::class, 'destroy']);
-   });
+   // SCRUM-518 : chaque route exige une PERMISSION plutot qu'une liste de
+   // roles ecrite en dur. La correspondance role -> permissions est definie
+   // une seule fois dans App\Enums\Role, et les Gates correspondantes dans
+   // AppServiceProvider. Ajouter ou retirer un role a une operation ne
+   // demande donc plus de modifier ce fichier.
+   Route::get('/patients', [PatientController::class, 'index'])
+       ->middleware('can:patients.read');
+   Route::get('/patients/search', [PatientController::class, 'search'])
+       ->middleware('can:patients.read');
+   Route::get('/patients/{id}', [PatientController::class, 'show'])
+       ->middleware('can:patients.read');
+
+   Route::post('/patients', [PatientController::class, 'store'])
+       ->middleware('can:patients.create');
+
+   Route::put('/patients/{id}', [PatientController::class, 'update'])
+       ->middleware('can:patients.update');
+
+   // Suppression d'un dossier medical : reservee a l'administrateur.
+   Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
+       ->middleware('can:patients.delete');
 
    
-    // Routes reservees a l'administrateur
-    Route::middleware('role:administrateur')->group(function () {
+    // Gestion des roles : permission 'roles.manage', accordee au seul
+    // administrateur (SCRUM-518).
+    Route::middleware('can:roles.manage')->group(function () {
 
         // Consulter les roles disponibles
         Route::get('/roles', [RoleController::class, 'index']);
