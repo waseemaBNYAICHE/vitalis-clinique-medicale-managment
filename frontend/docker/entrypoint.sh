@@ -5,12 +5,14 @@ set -e
 
 cd /app
 
+# `npm ci` rather than `npm install`: /app is bind-mounted from the repository,
+# and `npm install` would be free to rewrite the tracked package-lock.json there.
 if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
     echo "[entrypoint] node_modules empty, installing dependencies"
-    npm install --no-audit --no-fund
+    npm ci --no-audit --no-fund
 elif [ package.json -nt node_modules ]; then
     echo "[entrypoint] package.json changed, syncing dependencies"
-    npm install --no-audit --no-fund
+    npm ci --no-audit --no-fund
 fi
 
 exec "$@"
