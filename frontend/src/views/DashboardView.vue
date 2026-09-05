@@ -27,13 +27,9 @@ const fetchDashboard = async () => {
   loading.value = true
   errorMessage.value = ''
 
-  const token = localStorage.getItem('token')
-  const storedUser = localStorage.getItem('user')
-
-  if (!token) {
-    router.push('/login')
-    return
-  }
+  // SCRUM-13 : l'acces a cette page est garanti par la garde du routeur,
+  // il n'y a plus de verification d'authentification dupliquee ici.
+  const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
 
   if (storedUser) {
     try {
@@ -45,9 +41,8 @@ const fetchDashboard = async () => {
   }
 
   try {
-    const response = await api.get('/dashboard', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    // L'en-tete Authorization est ajoute par l'intercepteur d'api.js.
+    const response = await api.get('/dashboard')
 
     role.value = response.data.role
     const data = response.data.data
