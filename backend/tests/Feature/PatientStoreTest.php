@@ -13,8 +13,8 @@ class PatientStoreTest extends TestCase
 
     public function test_un_patient_peut_etre_enregistre(): void
     {
-        $user = User::factory()->create();
-
+   $user = User::factory()->create(['role' => 'medecin']);
+   
         Sanctum::actingAs($user);
 
         $response = $this->postJson('/api/patients', [

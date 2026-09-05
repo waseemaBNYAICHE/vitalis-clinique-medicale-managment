@@ -14,7 +14,7 @@ class PatientUpdateTest extends TestCase
 
     public function test_un_patient_peut_etre_modifie(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'medecin']);
 
         Sanctum::actingAs($user);
 

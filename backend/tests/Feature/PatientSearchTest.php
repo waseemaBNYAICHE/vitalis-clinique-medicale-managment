@@ -14,7 +14,7 @@ class PatientSearchTest extends TestCase
 
     public function test_recherche_patient_par_cin(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'medecin']);
 
         Sanctum::actingAs($user);
 
@@ -44,7 +44,7 @@ class PatientSearchTest extends TestCase
 
     public function test_recherche_patient_par_date_de_naissance(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'medecin']);
 
         Sanctum::actingAs($user);
 

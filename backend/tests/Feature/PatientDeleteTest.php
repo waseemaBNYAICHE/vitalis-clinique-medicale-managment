@@ -14,7 +14,7 @@ class PatientDeleteTest extends TestCase
 
     public function test_un_patient_peut_etre_supprime(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         Sanctum::actingAs($user);
 
