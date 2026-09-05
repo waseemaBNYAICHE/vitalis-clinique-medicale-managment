@@ -9,16 +9,51 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    /**
+     * SCRUM-511 - Regles de validation d'une adresse email.
+     *
+     * `max:255` correspond a la taille de la colonne en base et evite qu'une
+     * requete transporte une chaine de taille arbitraire.
+     *
+     * @return array<int, string>
+     */
+    private function reglesEmail(): array
+    {
+        return ['required', 'string', 'email', 'max:255'];
+    }
+
+    /**
+     * SCRUM-511 - Regles d'un NOUVEAU mot de passe (inscription, reinitialisation).
+     *
+     * Au moins 8 caracteres, avec des lettres et des chiffres : cela ecarte les
+     * mots de passe les plus faciles a deviner. La borne haute evite un envoi
+     * de taille arbitraire (bcrypt ne prend de toute facon en compte que les
+     * 72 premiers octets).
+     *
+     * @return array<int, mixed>
+     */
+    private function reglesNouveauMotDePasse(): array
+    {
+        return [
+            'required',
+            'string',
+            'max:255',
+            'confirmed',
+            Password::min(8)->letters()->numbers(),
+        ];
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => [...$this->reglesEmail(), 'unique:users,email'],
+            'password' => $this->reglesNouveauMotDePasse(),
         ]);
 
         if ($validator->fails()) {
@@ -46,9 +81,13 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // SCRUM-511 : a la connexion on borne les entrees, mais on n'applique
+        // pas les regles de robustesse. Elles ne concernent que la creation
+        // d'un mot de passe : les appliquer ici revelerait la politique de
+        // l'application et bloquerait les comptes plus anciens.
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => $this->reglesEmail(),
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -118,7 +157,7 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'string', 'email'],
+            'email' => $this->reglesEmail(),
         ]);
 
         if ($validator->fails()) {
@@ -149,9 +188,9 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'token' => ['required', 'string'],
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'token' => ['required', 'string', 'max:255'],
+            'email' => $this->reglesEmail(),
+            'password' => $this->reglesNouveauMotDePasse(),
         ]);
 
         if ($validator->fails()) {
