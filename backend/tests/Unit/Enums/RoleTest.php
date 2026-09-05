@@ -85,13 +85,79 @@ class RoleTest extends TestCase
     }
 
     /**
-     * Un patient n'a acces a aucune permission : il consulte ses propres
-     * donnees via des routes dediees, pas via le systeme de permissions
-     * generique reserve au personnel.
+     * SCRUM-524 - Un patient n'a pas acces au module Patients (reserve au
+     * personnel), mais a un acces en lecture seule a ses propres donnees
+     * medicales (consultations, ordonnances, examens, hospitalisations).
      */
-    public function test_patient_na_aucune_permission(): void
+    public function test_patient_na_pas_acces_au_module_patients(): void
     {
-        $this->assertSame([], Role::PATIENT->permissions());
+        $permissions = Role::PATIENT->permissions();
+
+        $this->assertNotContains(Permission::PATIENTS_READ, $permissions);
+        $this->assertNotContains(Permission::PATIENTS_CREATE, $permissions);
+        $this->assertNotContains(Permission::PATIENTS_UPDATE, $permissions);
+        $this->assertNotContains(Permission::PATIENTS_DELETE, $permissions);
+    }
+
+    public function test_patient_a_un_acces_lecture_seule_a_ses_donnees_medicales(): void
+    {
+        $permissions = Role::PATIENT->permissions();
+
+        $this->assertContains(Permission::CONSULTATIONS_READ, $permissions);
+        $this->assertContains(Permission::ORDONNANCES_READ, $permissions);
+        $this->assertContains(Permission::EXAMENS_READ, $permissions);
+        $this->assertContains(Permission::HOSPITALISATIONS_READ, $permissions);
+
+        // Aucun droit d'ecriture ni de suppression sur ses propres donnees.
+        $this->assertNotContains(Permission::CONSULTATIONS_CREATE, $permissions);
+        $this->assertNotContains(Permission::CONSULTATIONS_DELETE, $permissions);
+    }
+
+    /**
+     * SCRUM-524 - Suppression des dossiers medicaux reservee a l'administrateur.
+     */
+    public function test_seul_administrateur_peut_supprimer_les_donnees_medicales(): void
+    {
+        $this->assertTrue(Role::ADMINISTRATEUR->accorde(Permission::CONSULTATIONS_DELETE));
+        $this->assertTrue(Role::ADMINISTRATEUR->accorde(Permission::ORDONNANCES_DELETE));
+        $this->assertTrue(Role::ADMINISTRATEUR->accorde(Permission::EXAMENS_DELETE));
+        $this->assertTrue(Role::ADMINISTRATEUR->accorde(Permission::HOSPITALISATIONS_DELETE));
+
+        $this->assertFalse(Role::MEDECIN->accorde(Permission::CONSULTATIONS_DELETE));
+        $this->assertFalse(Role::INFIRMIER->accorde(Permission::EXAMENS_DELETE));
+        $this->assertFalse(Role::SECRETAIRE->accorde(Permission::HOSPITALISATIONS_DELETE));
+    }
+
+    /**
+     * SCRUM-524 - Infirmier gere pleinement les examens et hospitalisations
+     * (hors suppression), mais n'a qu'un acces limite aux consultations et
+     * ordonnances.
+     */
+    public function test_infirmier_gere_examens_et_hospitalisations_sans_suppression(): void
+    {
+        $permissions = Role::INFIRMIER->permissions();
+
+        $this->assertContains(Permission::EXAMENS_CREATE, $permissions);
+        $this->assertContains(Permission::EXAMENS_UPDATE, $permissions);
+        $this->assertNotContains(Permission::EXAMENS_DELETE, $permissions);
+
+        $this->assertContains(Permission::CONSULTATIONS_READ, $permissions);
+        $this->assertNotContains(Permission::CONSULTATIONS_CREATE, $permissions);
+    }
+
+    /**
+     * SCRUM-524 - Secretaire n'a aucun acces aux consultations ni
+     * ordonnances (donnees cliniques), seulement une lecture limitee des
+     * examens et hospitalisations.
+     */
+    public function test_secretaire_na_pas_acces_aux_donnees_cliniques(): void
+    {
+        $permissions = Role::SECRETAIRE->permissions();
+
+        $this->assertNotContains(Permission::CONSULTATIONS_READ, $permissions);
+        $this->assertNotContains(Permission::ORDONNANCES_READ, $permissions);
+        $this->assertContains(Permission::EXAMENS_READ, $permissions);
+        $this->assertContains(Permission::HOSPITALISATIONS_READ, $permissions);
     }
 
     /**
