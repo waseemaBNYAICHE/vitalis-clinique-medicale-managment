@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -75,7 +76,19 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken) {
+            // Authentification par token d'API : on revoque uniquement ce token,
+            // les autres appareils de l'utilisateur restent connectes.
+            $token->delete();
+        } elseif ($request->hasSession()) {
+            // Authentification par session (Sanctum renvoie alors un TransientToken,
+            // qui ne peut pas etre supprime) : on ferme la session a la place.
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'message' => 'Déconnexion réussie',
