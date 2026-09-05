@@ -1,9 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '../api'
+import { resolveRedirection } from '../router/guards'
 
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -36,8 +38,9 @@ const login = async () => {
     
     successMessage.value = response.data?.message || 'Connexion réussie'
 
-    // Rediriger vers le dashboard après connexion réussie
-    router.push('/dashboard')
+    // SCRUM-14 : revenir sur la page demandée avant la redirection vers
+    // /login, ou à défaut sur le tableau de bord.
+    router.push(resolveRedirection(route.query.redirect))
   } catch (error) {
     if (error.response?.status === 401) {
       errorMessage.value = 'Email ou mot de passe incorrect.'
