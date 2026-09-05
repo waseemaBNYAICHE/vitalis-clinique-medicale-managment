@@ -1,0 +1,162 @@
+# Validation du deploiement.
+#
+# Aucune infrastructure cible n'est rattachee a ce projet : ni serveur, ni
+# fournisseur cloud, ni registre d'images. Ce workflow ne deploie donc nulle
+# part. Il verifie ce qui peut l'etre sans cible : que la pile de production se
+# construit, demarre et repond correctement.
+#
+# Il n'utilise aucun secret de depot. Les mots de passe generes ci-dessous sont
+# ephemeres, propres au conteneur jetable du runner, et ne protegent rien de
+# reel. Voir docs/DEPLOYMENT.md pour ce qu'il faudrait ajouter afin de deployer
+# reellement.
+name: Deployment validation
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'docker-compose.prod.yml'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker/**'
+      - '.github/workflows/deploy.yml'
+
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'docker-compose.prod.yml'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker/**'
+      - '.github/workflows/deploy.yml'
+
+  workflow_dispatch:
+
+# Lecture du code uniquement : ce workflow ne publie rien et n'ecrit nulle part.
+permissions:
+  contents: read
+
+# Une execution a la fois par branche ; les precedentes sont annulees.
+concurrency:
+  group: deploy-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-stack:
+    name: Build and verify the production stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Preparer un environnement de production jetable
+        run: |
+          # Valeurs ephemeres, valables le temps du job. `>> $GITHUB_ENV` n'est
+          # pas utilise : rien de tout ceci ne doit se retrouver dans un log ni
+          # dans les etapes suivantes autrement que par ce fichier.
+          umask 077
+          {
+            echo "COMPOSE_PROJECT_NAME=vitalis-ci"
+            echo "APP_URL=http://localhost:8080"
+            echo "VITE_API_URL=http://localhost:8080/api"
+            echo "API_PORT=8080"
+            echo "WEB_PORT=8081"
+            echo "RUN_MIGRATIONS=true"
+            echo "APP_KEY=base64:$(openssl rand -base64 32)"
+            echo "DB_DATABASE=vitalis"
+            echo "DB_USERNAME=vitalis"
+            echo "DB_PASSWORD=$(openssl rand -hex 24)"
+            echo "REDIS_PASSWORD=$(openssl rand -hex 24)"
+          } > .env.ci
+
+      - name: Verifier la configuration Compose
+        run: docker compose -f docker-compose.prod.yml --env-file .env.ci config --quiet
+
+      - name: Construire les images de production
+        run: docker compose -f docker-compose.prod.yml --env-file .env.ci build
+
+      - name: Demarrer la pile et attendre les services
+        run: docker compose -f docker-compose.prod.yml --env-file .env.ci up -d --wait
+
+      - name: Etat des conteneurs
+        run: docker compose -f docker-compose.prod.yml --env-file .env.ci ps
+
+      - name: Verifier l'API
+        run: |
+          set -eu
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/up)
+          [ "$code" = "200" ] || { echo "GET /up -> $code, attendu 200"; exit 1; }
+          echo "GET /up -> 200"
+
+          health=$(curl -s http://localhost:8080/api/health)
+          echo "$health"
+          case "$health" in
+            *'"status":"ok"'*) echo '/api/health -> ok' ;;
+            *) echo '/api/health ne rapporte pas ok'; exit 1 ;;
+          esac
+
+      - name: Verifier le frontend statique
+        run: |
+          set -eu
+          for path in / /dashboard; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8081${path}")
+            [ "$code" = "200" ] || { echo "GET $path -> $code, attendu 200"; exit 1; }
+            echo "GET $path -> 200"
+          done
+
+          # Le fallback SPA doit servir index.html, pas une page d'erreur.
+          curl -s http://localhost:8081/dashboard | grep -q '<div id="app">' \
+            || { echo "le fallback SPA ne sert pas index.html"; exit 1; }
+          echo 'fallback SPA -> index.html'
+
+      - name: Verifier les reglages de production
+        run: |
+          set -eu
+          C="docker compose -f docker-compose.prod.yml --env-file .env.ci"
+
+          $C exec -T app php -r 'exit(ini_get("display_errors") ? 1 : 0);' \
+            || { echo "display_errors est actif en production"; exit 1; }
+          echo 'display_errors -> Off'
+
+          # `artisan about --json` plutot que tinker : `tinker --execute` ne
+          # propage pas le code de sortie de exit(), ce qui faisait echouer
+          # l'etape alors que la configuration etait correcte.
+          about=$($C exec -T app php artisan about --json)
+
+          echo "$about" | grep -q '"environment":"production"' \
+            || { echo "APP_ENV n'est pas production"; exit 1; }
+          echo 'APP_ENV -> production'
+
+          echo "$about" | grep -q '"debug_mode":false' \
+            || { echo 'APP_DEBUG est actif en production'; exit 1; }
+          echo 'APP_DEBUG -> false'
+
+          echo "$about" | grep -q '"config":true' \
+            || { echo "la configuration n'est pas mise en cache"; exit 1; }
+          echo 'caches config/routes/vues -> construits'
+
+          if $C exec -T app test -d vendor/phpunit; then
+            echo "les dependances de developpement sont presentes dans l'image"
+            exit 1
+          fi
+          echo 'dependances de developpement -> absentes'
+
+          if $C exec -T app php artisan migrate:status | grep -q Pending; then
+            echo "des migrations sont en attente"
+            exit 1
+          fi
+          echo 'migrations -> toutes appliquees'
+
+      - name: Journaux en cas d'echec
+        if: failure()
+        run: docker compose -f docker-compose.prod.yml --env-file .env.ci logs --tail=100
+
+      - name: Arreter la pile
+        if: always()
+        run: |
+          docker compose -f docker-compose.prod.yml --env-file .env.ci down
+          rm -f .env.ci

@@ -1,9 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '../api'
+import { resolveRedirection } from '../router/guards'
+import { saveSession } from '../auth.js'
 
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -23,21 +26,19 @@ const login = async () => {
       password: password.value
     })
     
-    // Sauvegarder la session selon "Se souvenir de moi"
-    const storage = remember.value ? localStorage : sessionStorage
+    // SCRUM-15 : la session est enregistrée par le module auth, qui choisit le
+    // stockage selon "Se souvenir de moi" et nettoie l'autre.
+    saveSession({
+      token: response.data.token,
+      user: response.data.user,
+      remember: remember.value
+    })
 
-    storage.setItem('token', response.data.token)
-    storage.setItem('user', JSON.stringify(response.data.user))
-
-    // Nettoyer l'autre stockage pour éviter les conflits
-    const otherStorage = remember.value ? sessionStorage : localStorage
-    otherStorage.removeItem('token')
-    otherStorage.removeItem('user')
-    
     successMessage.value = response.data?.message || 'Connexion réussie'
 
-    // Rediriger vers le dashboard après connexion réussie
-    router.push('/dashboard')
+    // SCRUM-14 : revenir sur la page demandée avant la redirection vers
+    // /login, ou à défaut sur le tableau de bord.
+    router.push(resolveRedirection(route.query.redirect))
   } catch (error) {
     if (error.response?.status === 401) {
       errorMessage.value = 'Email ou mot de passe incorrect.'

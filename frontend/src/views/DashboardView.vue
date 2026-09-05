@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api'
+import { getUser, clearSession } from '../auth.js'
 
 const router = useRouter()
 
@@ -27,27 +28,17 @@ const fetchDashboard = async () => {
   loading.value = true
   errorMessage.value = ''
 
-  const token = localStorage.getItem('token')
-  const storedUser = localStorage.getItem('user')
+  // SCRUM-13 : l'acces a cette page est garanti par la garde du routeur,
+  // il n'y a plus de verification d'authentification dupliquee ici.
+  // SCRUM-15 : l'utilisateur est restaure depuis la session, ce qui permet
+  // d'afficher son nom immediatement, y compris apres un rafraichissement.
+  const utilisateur = getUser()
 
-  if (!token) {
-    router.push('/login')
-    return
-  }
-
-  if (storedUser) {
-    try {
-      const parsedUser = JSON.parse(storedUser)
-      userName.value = `${parsedUser.name || ''}`.trim()
-    } catch {
-      userName.value = ''
-    }
-  }
+  userName.value = `${utilisateur?.name || ''}`.trim()
 
   try {
-    const response = await api.get('/dashboard', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    // L'en-tete Authorization est ajoute par l'intercepteur d'api.js.
+    const response = await api.get('/dashboard')
 
     role.value = response.data.role
     const data = response.data.data
@@ -72,11 +63,10 @@ const fetchDashboard = async () => {
       rendezVous.value = []
     }
   } catch (error) {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      router.push('/login')
-    } else {
+    // SCRUM-14 : le cas 401 (session expirée ou invalide) est traité une seule
+    // fois, dans l'intercepteur de réponse d'api.js, qui nettoie la session et
+    // redirige vers la connexion. Ici on ne gère que les autres erreurs.
+    if (error.response?.status !== 401) {
       errorMessage.value = "Impossible de charger les données du tableau de bord."
     }
   } finally {
@@ -85,18 +75,16 @@ const fetchDashboard = async () => {
 }
 
 const logout = async () => {
-  const token = localStorage.getItem('token')
   try {
-    if (token) {
-      await api.post('/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-    }
+    // Révoque le token côté serveur. L'en-tête Authorization est ajouté par
+    // l'intercepteur d'api.js.
+    await api.post('/logout')
   } catch {
     // Même si l'appel échoue, on déconnecte localement
   } finally {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    // SCRUM-15 : efface la session dans les deux stockages, pour ne laisser
+    // aucune donnée utilisateur obsolète derrière soi.
+    clearSession()
     router.push('/login')
   }
 }

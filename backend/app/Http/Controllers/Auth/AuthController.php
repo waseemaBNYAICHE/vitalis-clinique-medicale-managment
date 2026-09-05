@@ -7,16 +7,53 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    /**
+     * SCRUM-511 - Regles de validation d'une adresse email.
+     *
+     * `max:255` correspond a la taille de la colonne en base et evite qu'une
+     * requete transporte une chaine de taille arbitraire.
+     *
+     * @return array<int, string>
+     */
+    private function reglesEmail(): array
+    {
+        return ['required', 'string', 'email', 'max:255'];
+    }
+
+    /**
+     * SCRUM-511 - Regles d'un NOUVEAU mot de passe (inscription, reinitialisation).
+     *
+     * Au moins 8 caracteres, avec des lettres et des chiffres : cela ecarte les
+     * mots de passe les plus faciles a deviner. La borne haute evite un envoi
+     * de taille arbitraire (bcrypt ne prend de toute facon en compte que les
+     * 72 premiers octets).
+     *
+     * @return array<int, mixed>
+     */
+    private function reglesNouveauMotDePasse(): array
+    {
+        return [
+            'required',
+            'string',
+            'max:255',
+            'confirmed',
+            Password::min(8)->letters()->numbers(),
+        ];
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => [...$this->reglesEmail(), 'unique:users,email'],
+            'password' => $this->reglesNouveauMotDePasse(),
         ]);
 
         if ($validator->fails()) {
@@ -44,9 +81,13 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // SCRUM-511 : a la connexion on borne les entrees, mais on n'applique
+        // pas les regles de robustesse. Elles ne concernent que la creation
+        // d'un mot de passe : les appliquer ici revelerait la politique de
+        // l'application et bloquerait les comptes plus anciens.
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => $this->reglesEmail(),
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -57,6 +98,16 @@ class AuthController extends Controller
         }
 
         if (! Auth::attempt($request->only('email', 'password'))) {
+            // SCRUM-510 : trace les echecs pour permettre de detecter une
+            // attaque par force brute. Le mot de passe n'est jamais journalise.
+            Log::warning('Tentative de connexion echouee', [
+                'email' => $request->input('email'),
+                'ip' => $request->ip(),
+            ]);
+
+            // Message volontairement generique : il ne permet pas de distinguer
+            // un compte inexistant d'un mot de passe errone, donc pas
+            // d'enumeration des comptes existants.
             return response()->json([
                 'message' => 'Identifiants invalides',
             ], 401);
@@ -75,7 +126,19 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken) {
+            // Authentification par token d'API : on revoque uniquement ce token,
+            // les autres appareils de l'utilisateur restent connectes.
+            $token->delete();
+        } elseif ($request->hasSession()) {
+            // Authentification par session (Sanctum renvoie alors un TransientToken,
+            // qui ne peut pas etre supprime) : on ferme la session a la place.
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'message' => 'Déconnexion réussie',
@@ -94,7 +157,7 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => ['required', 'string', 'email'],
+            'email' => $this->reglesEmail(),
         ]);
 
         if ($validator->fails()) {
@@ -125,9 +188,9 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'token' => ['required', 'string'],
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'token' => ['required', 'string', 'max:255'],
+            'email' => $this->reglesEmail(),
+            'password' => $this->reglesNouveauMotDePasse(),
         ]);
 
         if ($validator->fails()) {

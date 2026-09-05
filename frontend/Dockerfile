@@ -11,8 +11,10 @@ ENV NODE_ENV=development \
 WORKDIR /app
 
 # Seeds the node_modules volume on first boot and caches the layer afterwards.
-COPY package.json package-lock.json* ./
-RUN npm install --no-audit --no-fund
+# `npm ci` installs exactly what package-lock.json pins - same command as the CI
+# workflow - so the image cannot drift from the versions tested there.
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 
