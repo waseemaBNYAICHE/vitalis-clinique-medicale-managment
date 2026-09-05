@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api'
+import { getUser, clearSession } from '../auth.js'
 
 const router = useRouter()
 
@@ -29,16 +30,11 @@ const fetchDashboard = async () => {
 
   // SCRUM-13 : l'acces a cette page est garanti par la garde du routeur,
   // il n'y a plus de verification d'authentification dupliquee ici.
-  const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
+  // SCRUM-15 : l'utilisateur est restaure depuis la session, ce qui permet
+  // d'afficher son nom immediatement, y compris apres un rafraichissement.
+  const utilisateur = getUser()
 
-  if (storedUser) {
-    try {
-      const parsedUser = JSON.parse(storedUser)
-      userName.value = `${parsedUser.name || ''}`.trim()
-    } catch {
-      userName.value = ''
-    }
-  }
+  userName.value = `${utilisateur?.name || ''}`.trim()
 
   try {
     // L'en-tete Authorization est ajoute par l'intercepteur d'api.js.
@@ -79,18 +75,16 @@ const fetchDashboard = async () => {
 }
 
 const logout = async () => {
-  const token = localStorage.getItem('token')
   try {
-    if (token) {
-      await api.post('/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-    }
+    // Révoque le token côté serveur. L'en-tête Authorization est ajouté par
+    // l'intercepteur d'api.js.
+    await api.post('/logout')
   } catch {
     // Même si l'appel échoue, on déconnecte localement
   } finally {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    // SCRUM-15 : efface la session dans les deux stockages, pour ne laisser
+    // aucune donnée utilisateur obsolète derrière soi.
+    clearSession()
     router.push('/login')
   }
 }
