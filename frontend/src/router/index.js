@@ -4,7 +4,11 @@ import ResetPasswordView from '../views/ResetPasswordView.vue'
 
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+
+
+import MainLayout from '../layouts/MainLayout.vue'
 import PatientCreateView from '../views/patients/PatientCreateView.vue'
+import PatientsView from '../views/patients/PatientsView.vue'
 
 const routes = [
   {
@@ -15,8 +19,7 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView
-  },
-  
+  },  
   {
   path: '/reset-password',
   name: 'reset-password',
@@ -33,13 +36,23 @@ const routes = [
     component: DashboardView
   },
   {
-  path: '/patients/new',
-  name: 'patient-create',
-  component: PatientCreateView
+  path: '/',
+  component: MainLayout,
+  children: [
+    {
+      path: 'patients/new',
+      name: 'patient-create',
+      component: PatientCreateView
+    },
+    {
+      path: 'patients',
+      name: 'patients',
+      component: PatientsView
+    }
+  ]
 }
+
 ]
-
-
 const router = createRouter({
   history: createWebHistory(),
   routes
