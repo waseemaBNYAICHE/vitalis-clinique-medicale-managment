@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -58,6 +59,16 @@ class AuthController extends Controller
         }
 
         if (! Auth::attempt($request->only('email', 'password'))) {
+            // SCRUM-510 : trace les echecs pour permettre de detecter une
+            // attaque par force brute. Le mot de passe n'est jamais journalise.
+            Log::warning('Tentative de connexion echouee', [
+                'email' => $request->input('email'),
+                'ip' => $request->ip(),
+            ]);
+
+            // Message volontairement generique : il ne permet pas de distinguer
+            // un compte inexistant d'un mot de passe errone, donc pas
+            // d'enumeration des comptes existants.
             return response()->json([
                 'message' => 'Identifiants invalides',
             ], 401);

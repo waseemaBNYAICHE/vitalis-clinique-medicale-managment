@@ -15,10 +15,17 @@ use App\Http\Controllers\DashboardController;
 */
 
 // Routes publiques d'authentification
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+// SCRUM-510 : ces routes sont accessibles sans jeton, elles sont donc limitees
+// en debit pour empecher la force brute et les envois en masse. Les limiteurs
+// 'login' et 'auth-public' sont definis dans AppServiceProvider.
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:login');
+
+Route::middleware('throttle:auth-public')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+});
 
 
 // Routes accessibles uniquement aux utilisateurs authentifiés
