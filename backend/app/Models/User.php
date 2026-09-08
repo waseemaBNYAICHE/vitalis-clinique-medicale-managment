@@ -30,4 +30,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function medecin()
+   {
+    return $this->belongsTo(Medecin::class, 'id_medecin', 'id_medecin');
+   }
 }

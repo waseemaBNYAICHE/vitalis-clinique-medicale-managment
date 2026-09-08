@@ -18,4 +18,9 @@ class Medecin extends Model
         'tarif_consultation',
         'id_specialite',
     ];
+
+    public function user()
+   {
+    return $this->hasOne(User::class, 'id_medecin', 'id_medecin');
+   }
 }
