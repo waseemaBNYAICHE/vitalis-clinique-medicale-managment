@@ -70,16 +70,26 @@ class PatientController extends Controller
     ], 200);
 }
 
-   public function destroy($id)
-   {
+   public function destroy($id) { 
     $patient = Patient::findOrFail($id);
+$hasRendezVous = \DB::table('rendez_vous')
+    ->where('id_patient', $patient->id_patient)
+    ->exists();
 
-    $patient->delete();
-
+if ($hasRendezVous) {
     return response()->json([
-        'message' => 'Patient supprimé avec succès'
-    ], 200);
-   }
+        'message' => 'Impossible de supprimer ce patient car il possède des rendez-vous associés.'
+    ], 409);
+}
+
+$patient->delete();
+
+return response()->json([
+    'message' => 'Patient supprimé avec succès.'
+], 200);
+}
+
+   
 
    public function search(Request $request)
    {
