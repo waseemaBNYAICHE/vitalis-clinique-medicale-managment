@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MedecinController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Attribuer ou modifier le role d'un utilisateur
         Route::put('/users/{user}/role', [RoleController::class, 'update']);
+
+        // Gestion des médecins
+       Route::get('/medecins', [MedecinController::class, 'index']);
+       Route::get('/medecins/{id}', [MedecinController::class, 'show']);
+       Route::post('/medecins', [MedecinController::class, 'store']);
+       Route::put('/medecins/{id}', [MedecinController::class, 'update']);
+       Route::delete('/medecins/{id}', [MedecinController::class, 'destroy']);
 
     });
 });
