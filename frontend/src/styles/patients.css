@@ -15,7 +15,7 @@
 .patients-header h1 {
   margin: 0;
   color: #172033;
-  font-size: 29px;
+  font-size: 30px;
   font-weight: 700;
 }
 
@@ -27,7 +27,7 @@
 
 .primary-btn {
   border: none;
-  border-radius: 7px;
+  border-radius: 8px;
   padding: 11px 18px;
   background: #1677ff;
   color: #fff;
@@ -37,12 +37,12 @@
 }
 
 .primary-btn:hover {
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .patients-toolbar {
   display: grid;
-  grid-template-columns: minmax(300px, 2fr) 1fr 1fr auto;
+  grid-template-columns: minmax(320px, 2fr) 1fr 1fr auto;
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -69,7 +69,7 @@
 .patients-toolbar select {
   height: 42px;
   border: 1px solid #e4e9f0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #fff;
   color: #344054;
   outline: none;
@@ -88,7 +88,7 @@
   height: 42px;
   padding: 0 17px;
   border: 1px solid #e4e9f0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #fff;
   color: #667085;
   cursor: pointer;
@@ -99,7 +99,7 @@
   border: 1px solid #edf1f6;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
 }
 
 .table-responsive {
@@ -109,7 +109,7 @@
 
 .patients-table {
   width: 100%;
-  min-width: 950px;
+  min-width: 1050px;
   border-collapse: collapse;
 }
 
@@ -178,6 +178,101 @@
   color: #dc2626;
 }
 
+.delete-btn {
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  text-decoration: underline;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal {
+  width: 420px;
+  max-width: 100%;
+  padding: 28px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+  text-align: center;
+}
+
+.confirm-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.confirm-modal h3 {
+  margin: 0 0 12px;
+  color: #1d2939;
+  font-size: 20px;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.confirm-modal strong {
+  color: #344054;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.cancel-btn,
+.confirm-delete-btn {
+  min-width: 100px;
+  padding: 10px 16px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #344054;
+}
+
+.confirm-delete-btn {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+
 @media (max-width: 1000px) {
   .patients-toolbar {
     grid-template-columns: 1fr 1fr;
@@ -190,8 +285,8 @@
   }
 
   .patients-header {
-    align-items: stretch;
     flex-direction: column;
+    align-items: stretch;
   }
 
   .primary-btn {
@@ -200,5 +295,14 @@
 
   .patients-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-btn,
+  .confirm-delete-btn {
+    width: 100%;
   }
 }
