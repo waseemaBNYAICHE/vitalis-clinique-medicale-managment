@@ -249,7 +249,7 @@ class DatabaseSeeder extends Seeder
         'prenom' => 'Vitalis',
         'email' => 'admin@vitalis.ma',
         'password' => Hash::make('Vitalis@2026'),
-        'role' => 'admin',
+        'role' => 'administrateur',
         'telephone' => '+212539000001',
         'adresse' => 'Avenue Mohammed VI, Tanger',
         'date_naissance' => '1990-01-01',
