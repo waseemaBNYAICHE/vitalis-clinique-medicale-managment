@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedecinController;
+use App\Http\Controllers\SpecialiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +89,12 @@ Route::middleware('auth:sanctum')->group(function () {
        Route::post('/medecins', [MedecinController::class, 'store']);
        Route::put('/medecins/{id}', [MedecinController::class, 'update']);
        Route::delete('/medecins/{id}', [MedecinController::class, 'destroy']);
+        // Gestion des specialites
+       Route::get('/specialites', [SpecialiteController::class, 'index']);
+       Route::get('/specialites/{id}', [SpecialiteController::class, 'show']);
+       Route::post('/specialites', [SpecialiteController::class, 'store']);
+       Route::put('/specialites/{id}', [SpecialiteController::class, 'update']);
+       Route::delete('/specialites/{id}', [SpecialiteController::class, 'destroy']);
 
     });
 });
