@@ -6,8 +6,8 @@ import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
-import PatientCreateView from '../views/patients/PatientCreateView.vue'
-import PatientsView from '../views/patients/PatientsView.vue'
+import PatientCreateView from '../views/Patients/PatientCreateView.vue'
+import PatientsView from '../views/Patients/PatientsView.vue'
 
 import { resolveNavigation } from './guards'
 
