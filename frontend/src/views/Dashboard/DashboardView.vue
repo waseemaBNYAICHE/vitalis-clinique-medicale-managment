@@ -3,6 +3,15 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api.js'
 import { getUser, closeSession } from '../../auth.js'
+import { peutAction, peutAuMoinsUneAction } from '../../actions.js'
+
+// SCRUM-534 : les quatre actions du panneau "Activite rapide".
+const ACTIONS_RAPIDES = [
+  'tableauBord.nouveauRendezVous',
+  'tableauBord.nouveauPatient',
+  'tableauBord.consultationRapide',
+  'tableauBord.demandeExamen'
+]
 
 const router = useRouter()
 
@@ -157,13 +166,16 @@ onMounted(fetchDashboard)
           </div>
 
           <!-- ACTIONS -->
-          <div class="panel">
+          <!-- SCRUM-534 : chaque action n'apparait que si le role detient la
+               permission backend correspondante. Le panneau entier disparait
+               si aucune ne reste, plutot que d'afficher un cadre vide. -->
+          <div class="panel" v-if="peutAuMoinsUneAction(ACTIONS_RAPIDES)">
             <h3>Activité rapide</h3>
 
-            <button>＋ Nouveau rendez-vous</button>
-            <button>＋ Nouveau patient</button>
-            <button>＋ Consultation rapide</button>
-            <button>＋ Demande d'examen</button>
+            <button v-if="peutAction('tableauBord.nouveauRendezVous')">＋ Nouveau rendez-vous</button>
+            <button v-if="peutAction('tableauBord.nouveauPatient')">＋ Nouveau patient</button>
+            <button v-if="peutAction('tableauBord.consultationRapide')">＋ Consultation rapide</button>
+            <button v-if="peutAction('tableauBord.demandeExamen')">＋ Demande d'examen</button>
 
             <div class="alert" v-if="examensEnAttente > 0">
               ⚠ {{ examensEnAttente }} résultats d'examens en attente

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api, { messageErreur } from '../../api'
+import { peutAction } from '../../actions.js'
 
 const router = useRouter()
 
@@ -207,13 +208,21 @@ const cancel = () => {
             Annuler
           </button>
 
+          <!-- SCRUM-534 : sans 'patients.create', l'enregistrement serait
+               refuse par un 403. On ne propose pas le bouton, et on dit
+               pourquoi plutot que de laisser un formulaire sans issue. -->
           <button
+            v-if="peutAction('patients.creer')"
             type="submit"
             class="btn-primary"
             :disabled="loading"
           >
             {{ loading ? 'Enregistrement...' : 'Enregistrer le patient' }}
           </button>
+
+          <p v-else class="alert">
+            Votre profil ne permet pas de créer un dossier patient.
+          </p>
         </div>
       </form>
     </div>

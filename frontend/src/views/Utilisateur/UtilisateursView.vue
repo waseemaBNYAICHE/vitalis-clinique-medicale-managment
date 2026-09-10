@@ -8,7 +8,10 @@
         <p>Gérez les comptes et les droits d'accès des utilisateurs.</p>
       </div>
 
-      <button class="btn-add-user">
+      <!-- SCRUM-534 : la gestion des comptes est gouvernee par une seule
+           permission backend, 'roles.manage', accordee au seul
+           administrateur. -->
+      <button class="btn-add-user" v-if="peutAction('utilisateurs.ajouter')">
         <i class="fi fi-rr-user-add"></i>
         <span>Ajouter un utilisateur</span>
       </button>
@@ -137,6 +140,7 @@
                 <div class="actions">
 
                   <button
+                    v-if="peutAction('utilisateurs.consulter')"
                     class="action-btn view-btn"
                     title="Voir"
                   >
@@ -144,6 +148,7 @@
                   </button>
 
                   <button
+                    v-if="peutAction('utilisateurs.modifier')"
                     class="action-btn edit-btn"
                     title="Modifier"
                   >
@@ -151,6 +156,7 @@
                   </button>
 
                   <button
+                    v-if="peutAction('utilisateurs.supprimer')"
                     class="action-btn delete-btn"
                     title="Supprimer"
                   >
@@ -225,6 +231,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { peutAction } from '../../actions.js'
 
 const search = ref('')
 const roleFilter = ref('')

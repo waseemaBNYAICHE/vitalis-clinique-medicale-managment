@@ -1,0 +1,77 @@
+// SCRUM-534 - Quelle permission gouverne quelle action d'ecran.
+//
+// Les ecrans affichaient leurs boutons a tout le monde : "Nouveau patient"
+// et "Consultation rapide" sur le tableau de bord, "Ajouter un utilisateur",
+// "Modifier" et "Supprimer" sur la gestion des comptes. Un patient voyait
+// donc des actions qui lui repondent 403.
+//
+// Chaque action est rattachee ici a la permission backend qui la gouverne
+// vraiment. Rien n'est invente : ces valeurs viennent de src/rbac.js, lui-meme
+// miroir verifie de backend/app/Enums/Role.php.
+//
+// Rappel, comme pour la navigation de SCRUM-533 : masquer n'est pas
+// proteger. Le backend refuse l'operation par un 403 que le bouton ait ete
+// affiche ou non. On evite seulement de proposer ce qui sera refuse.
+
+import { peut, peutAuMoinsUne } from './rbac.js'
+
+/**
+ * Action d'ecran -> permission requise.
+ *
+ * Cle de la forme "ecran.action", lisible dans les templates.
+ */
+export const PERMISSION_PAR_ACTION = {
+  // Tableau de bord - panneau "Activite rapide"
+  //
+  // 'tableauBord.nouveauRendezVous' se rattache a 'indicateurs.read' faute de
+  // mieux : le backend n'expose aucune permission rendez_vous.*, le module
+  // n'ayant pas encore de controller. C'est le meme choix que SCRUM-533 pour
+  // l'entree de menu "Rendez-vous", donc coherent avec l'existant. A revoir
+  // le jour ou la permission dediee sera creee.
+  'tableauBord.nouveauRendezVous': 'indicateurs.read',
+  'tableauBord.nouveauPatient': 'patients.create',
+  'tableauBord.consultationRapide': 'consultations.create',
+  'tableauBord.demandeExamen': 'examens.create',
+
+  // Dossiers patients
+  'patients.creer': 'patients.create',
+  'patients.modifier': 'patients.update',
+  'patients.supprimer': 'patients.delete',
+
+  // Comptes utilisateurs : le backend ne connait qu'une permission pour tout
+  // ce module, 'roles.manage', accordee au seul administrateur.
+  'utilisateurs.ajouter': 'roles.manage',
+  'utilisateurs.consulter': 'roles.manage',
+  'utilisateurs.modifier': 'roles.manage',
+  'utilisateurs.supprimer': 'roles.manage'
+}
+
+/**
+ * L'utilisateur connecte peut-il voir cette action ?
+ *
+ * Une cle inconnue renvoie false : mieux vaut masquer une action mal
+ * declaree que la montrer a tout le monde.
+ *
+ * @param {string} action
+ */
+export function peutAction(action) {
+  const permission = PERMISSION_PAR_ACTION[action]
+
+  return permission === undefined ? false : peut(permission)
+}
+
+/**
+ * Au moins une de ces actions est-elle visible ?
+ *
+ * Sert a masquer le conteneur entier - un panneau "Activite rapide" vide n'a
+ * pas de raison de s'afficher.
+ *
+ * @param {string[]} actions
+ */
+export function peutAuMoinsUneAction(actions) {
+  const permissions = actions
+    .map((action) => PERMISSION_PAR_ACTION[action])
+    .filter((permission) => permission !== undefined)
+
+  return peutAuMoinsUne(permissions)
+}
