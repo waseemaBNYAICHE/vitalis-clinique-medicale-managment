@@ -84,7 +84,10 @@ class DashboardControllerTest extends TestCase
 
     public function test_chiffre_affaires_endpoint(): void
     {
-        $user = User::factory()->create(['role' => 'medecin']);
+        // SCRUM-527 : donnee de gestion, desormais reservee a
+        // l'administrateur. Le refus oppose aux autres roles est
+        // verifie dans EndpointsSensiblesTest.
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/dashboard/chiffre-affaires');
@@ -106,7 +109,10 @@ class DashboardControllerTest extends TestCase
 
     public function test_statistiques_mensuelles_endpoint(): void
     {
-        $user = User::factory()->create(['role' => 'medecin']);
+        // SCRUM-527 : donnee de gestion, desormais reservee a
+        // l'administrateur. Le refus oppose aux autres roles est
+        // verifie dans EndpointsSensiblesTest.
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/dashboard/statistiques-mensuelles');
@@ -117,7 +123,10 @@ class DashboardControllerTest extends TestCase
 
     public function test_export_statistiques_returns_csv(): void
     {
-        $user = User::factory()->create(['role' => 'medecin']);
+        // SCRUM-527 : donnee de gestion, desormais reservee a
+        // l'administrateur. Le refus oppose aux autres roles est
+        // verifie dans EndpointsSensiblesTest.
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         $response = $this->actingAs($user, 'sanctum')
             ->get('/api/dashboard/export-statistiques');

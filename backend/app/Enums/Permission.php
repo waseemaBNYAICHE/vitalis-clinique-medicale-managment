@@ -68,4 +68,23 @@ enum Permission: string
     case SPECIALITES_CREATE = 'specialites.create';
     case SPECIALITES_UPDATE = 'specialites.update';
     case SPECIALITES_DELETE = 'specialites.delete';
+
+    // SCRUM-527 - Donnees agregees du tableau de bord.
+    //
+    // Les routes /api/dashboard/* n'exigeaient qu'un compte valide, sans
+    // aucune permission. Elles sont ici separees en deux niveaux, parce
+    // qu'elles n'ont pas la meme sensibilite.
+    //
+    // INDICATEURS_READ : compteurs d'activite de la clinique et agenda du
+    // jour. C'est la matiere du tableau de bord du personnel.
+    //
+    // STATISTIQUES_READ : chiffre d'affaires, tendances sur six mois et
+    // export CSV. Ce sont des donnees de gestion, pas des donnees de soin :
+    // un soignant n'a pas a connaitre le revenu global de la clinique.
+    //
+    // Attention : ces permissions portent sur des donnees AGREGEES couvrant
+    // toute la clinique. Elles ne se confondent pas avec CONSULTATIONS_READ
+    // ou EXAMENS_READ, qu'un patient detient pour SES propres dossiers.
+    case INDICATEURS_READ = 'indicateurs.read';
+    case STATISTIQUES_READ = 'statistiques.read';
 }

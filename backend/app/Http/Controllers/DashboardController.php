@@ -176,11 +176,38 @@ public function chiffreAffaires(Request $request): JsonResponse
     ]);
 }
 
+/**
+ * Agenda du jour.
+ *
+ * SCRUM-527 - Cette route renvoyait l'agenda de TOUTE la clinique a qui la
+ * demandait. C'est la reponse la plus sensible du tableau de bord : elle
+ * associe le nom d'un patient au motif de sa venue, donc a une information
+ * de sante.
+ *
+ * Un medecin n'y voit desormais que ses propres rendez-vous. La regle
+ * n'est pas nouvelle : medecinDashboard() l'appliquait deja pour
+ * /api/dashboard, mais cette route-ci la contournait. Le personnel
+ * d'accueil et de soin (secretaire, infirmier) et l'administrateur gardent
+ * l'agenda complet : accueillir les patients et coordonner les soins de la
+ * journee suppose de le voir en entier.
+ */
 public function rendezVousDuJour(Request $request): JsonResponse
 {
-    $rendezVous = DB::table('rendez_vous')
+    $user = $request->user();
+
+    $requete = DB::table('rendez_vous')
         ->join('patients', 'rendez_vous.id_patient', '=', 'patients.id_patient')
-        ->whereDate('rendez_vous.date_rendez_vous', now()->toDateString())
+        ->whereDate('rendez_vous.date_rendez_vous', now()->toDateString());
+
+    if ($user->role === Role::MEDECIN->value) {
+        // Un compte medecin sans profil associe ne se voit attribuer aucun
+        // rendez-vous : on renvoie une liste vide plutot que l'agenda
+        // complet. Se tromper dans ce sens est sans consequence, l'inverse
+        // exposerait les patients des confreres.
+        $requete->where('rendez_vous.id_medecin', $user->id_medecin);
+    }
+
+    $rendezVous = $requete
         ->orderBy('rendez_vous.heure_debut')
         ->select(
             'rendez_vous.heure_debut',

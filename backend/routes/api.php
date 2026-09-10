@@ -36,18 +36,44 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+
+    // Tableau de bord principal.
+    //
+    // Seule route /dashboard/* sans permission, et c'est volontaire : le
+    // controller choisit lui-meme le contenu selon le role de l'appelant, et
+    // chaque role n'y recoit que son propre perimetre (le medecin ses
+    // rendez-vous, le patient son dossier). Un compte valide suffit donc.
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/dashboard/patients-count', [DashboardController::class, 'nombrePatients']);
-    Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
-    Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
-    Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
-   Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
-   Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
-   ///confli mergr
-   Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
-   Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
-  
-  
+
+    // SCRUM-527 : les routes ci-dessous renvoient des donnees AGREGEES sur
+    // toute la clinique, sans tenir compte du role de l'appelant. Elles
+    // n'exigeaient jusqu'ici qu'un compte valide : n'importe quel utilisateur
+    // authentifie - y compris un compte cree librement via /api/register, qui
+    // recoit le role 'patient' - pouvait lire le chiffre d'affaires de la
+    // clinique et la liste nominative des rendez-vous du jour.
+    //
+    // Indicateurs d'activite : matiere du tableau de bord du personnel.
+    Route::middleware('can:indicateurs.read')->group(function () {
+        Route::get('/dashboard/patients-count', [DashboardController::class, 'nombrePatients']);
+        Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
+        Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
+        Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
+
+        // Agenda du jour : contient le nom des patients et le MOTIF de leur
+        // venue. Le controller restreint en plus le medecin a ses propres
+        // rendez-vous.
+        Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
+    });
+
+    // Donnees de gestion (chiffre d'affaires, tendances, export) : reservees
+    // a l'administrateur. Un soignant n'a pas a connaitre le revenu global de
+    // la clinique pour exercer.
+    Route::middleware('can:statistiques.read')->group(function () {
+        Route::get('/dashboard/chiffre-affaires', [DashboardController::class, 'chiffreAffaires']);
+        Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
+        Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
+    });
+
    // Gestion des patients - reservee au personnel medical/administratif
    
    

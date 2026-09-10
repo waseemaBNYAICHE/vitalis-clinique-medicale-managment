@@ -31,6 +31,12 @@ enum Role: string
      * patient), mais seul l'administrateur le modifie. Le role patient n'y a
      * pas acces : aucune route ne le lui expose aujourd'hui.
      *
+     * SCRUM-527 - Tableau de bord : tout le personnel lit les indicateurs
+     * d'activite, mais le chiffre d'affaires et les tendances restent a
+     * l'administrateur. Le role patient n'a ni l'un ni l'autre : ces donnees
+     * couvrent toute la clinique, alors qu'un patient ne doit voir que son
+     * propre dossier.
+     *
      * @return array<int, Permission>
      */
     public function permissions(): array
@@ -66,6 +72,8 @@ enum Role: string
                 Permission::SPECIALITES_CREATE,
                 Permission::SPECIALITES_UPDATE,
                 Permission::SPECIALITES_DELETE,
+                Permission::INDICATEURS_READ,
+                Permission::STATISTIQUES_READ,
             ],
 
             // Consultations/ordonnances/hospitalisations "les siennes" :
@@ -88,6 +96,7 @@ enum Role: string
                 Permission::HOSPITALISATIONS_UPDATE,
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
+                Permission::INDICATEURS_READ,
             ],
 
             // Pas d'acces aux consultations ni ordonnances (donnees
@@ -101,6 +110,7 @@ enum Role: string
                 Permission::HOSPITALISATIONS_READ,
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
+                Permission::INDICATEURS_READ,
             ],
 
             // Acces limite en lecture aux consultations, lecture seule des
@@ -120,6 +130,7 @@ enum Role: string
                 Permission::HOSPITALISATIONS_UPDATE,
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
+                Permission::INDICATEURS_READ,
             ],
 
             // Un patient n'accede pas aux dossiers des autres patients.

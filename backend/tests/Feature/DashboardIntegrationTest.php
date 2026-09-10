@@ -95,7 +95,12 @@ class DashboardIntegrationTest extends TestCase
 
     public function test_dashboard_all_endpoints_are_accessible_together(): void
     {
-        $user = User::factory()->create(['role' => 'medecin']);
+        // SCRUM-527 : la liste ci-dessous melange indicateurs d'activite et
+        // donnees de gestion. Seul l'administrateur detient les deux
+        // permissions, c'est donc le seul role qui puisse tout appeler.
+        // Le perimetre exact de chaque autre role est verifie dans
+        // EndpointsSensiblesTest.
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         $endpoints = [
             '/api/dashboard',
