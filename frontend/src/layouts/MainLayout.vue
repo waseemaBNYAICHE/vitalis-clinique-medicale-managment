@@ -19,51 +19,19 @@
       </div>
 
       <!-- NAVIGATION -->
+      <!-- SCRUM-533 : les entrees sont filtrees selon le role (permissions
+           du backend) et selon les routes qui existent reellement. Voir
+           src/navigation.js. -->
       <nav class="sidebar-menu">
 
-        <RouterLink to="/dashboard" class="menu-item">
-          <i class="fi fi-rr-home menu-icon"></i>
-          <span>Tableau de bord</span>
-        </RouterLink>
-
-        <RouterLink to="/patients" class="menu-item">
-          <i class="fi fi-rr-users-medical menu-icon"></i>
-          <span>Patients</span>
-        </RouterLink>
-
-        <RouterLink to="/rendez-vous" class="menu-item">
-          <i class="fi fi-rr-calendar menu-icon"></i>
-          <span>Rendez-vous</span>
-        </RouterLink>
-
-        <RouterLink to="/consultations" class="menu-item">
-          <i class="fi fi-rr-stethoscope menu-icon"></i>
-          <span>Consultations</span>
-        </RouterLink>
-
-        <RouterLink to="/examens" class="menu-item">
-          <i class="fi fi-rr-document menu-icon"></i>
-          <span>Examens</span>
-        </RouterLink>
-
-        <RouterLink to="/hospitalisations" class="menu-item">
-          <i class="fi fi-rr-bed menu-icon"></i>
-          <span>Hospitalisations</span>
-        </RouterLink>
-
-        <RouterLink to="/facturation" class="menu-item">
-          <i class="fi fi-rr-receipt menu-icon"></i>
-          <span>Facturation</span>
-        </RouterLink>
-
-        <RouterLink to="/utilisateurs" class="menu-item">
-          <i class="fi fi-rr-user-gear menu-icon"></i>
-          <span>Utilisateurs</span>
-        </RouterLink>
-
-        <RouterLink to="/parametres" class="menu-item">
-          <i class="fi fi-rr-settings menu-icon"></i>
-          <span>Paramètres</span>
+        <RouterLink
+          v-for="entree in entreesMenu"
+          :key="entree.to"
+          :to="entree.to"
+          class="menu-item"
+        >
+          <i :class="['fi', entree.icone, 'menu-icon']"></i>
+          <span>{{ entree.libelle }}</span>
         </RouterLink>
 
       </nav>
@@ -183,8 +151,25 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api'
 import { closeSession, getUser } from '../auth.js'
+import { entreesVisibles } from '../navigation.js'
 
 const router = useRouter()
+
+/* =========================
+   NAVIGATION SELON LE ROLE
+========================= */
+
+// SCRUM-533 : la barre laterale affichait ses neuf liens a tout le monde. Un
+// patient se voyait donc proposer "Patients" et "Utilisateurs", qui lui
+// repondent 403, et six liens menaient a des chemins sans route.
+//
+// entreesVisibles() croise deux filtres : les permissions du role (miroir de
+// la matrice backend, src/rbac.js) et les chemins reellement desservis par le
+// routeur. Une entree reapparaitra d'elle-meme quand sa route sera ecrite.
+//
+// Rappel : cela ne protege rien, c'est de l'affichage. Le backend refuse un
+// acces interdit par un 403, que le lien ait ete montre ou non.
+const entreesMenu = computed(() => entreesVisibles())
 
 /* =========================
    SEARCH
