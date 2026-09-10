@@ -28,6 +28,16 @@ x-backend-env: &backend-env
   QUEUE_CONNECTION: redis
   # SCRUM-526 - Duree de validite d'un jeton d'API, en minutes.
   SANCTUM_TOKEN_EXPIRATION: ${SANCTUM_TOKEN_EXPIRATION:-720}
+  # SCRUM-540 - Adresse publique du frontend.
+  #
+  # Elle etait absente de la production alors que docker-compose.yml la
+  # definit pour le developpement. Le backend retombait donc sur son defaut,
+  # http://localhost:5173, avec deux consequences : CORS n'autorisait que
+  # localhost, et les emails de reinitialisation de mot de passe envoyaient
+  # les utilisateurs vers un lien localhost - jeton compris.
+  FRONTEND_URL: ${FRONTEND_URL:-${APP_URL}}
+  # SCRUM-540 - Le cookie de session ne doit pas circuler en clair.
+  SESSION_SECURE_COOKIE: "true"
 
 services:
   postgres:

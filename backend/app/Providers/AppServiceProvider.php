@@ -35,7 +35,11 @@ class AppServiceProvider extends ServiceProvider
         $this->declarerPermissions();
 
         ResetPassword::createUrlUsing(function ($notifiable, string $token) {
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            // SCRUM-540 : lecture via config() et non env(). En production
+            // l'entrypoint execute `config:cache` ; env() hors d'un fichier
+            // de configuration est alors une source de surprises. La valeur
+            // est resolue une seule fois dans config/app.php.
+            $frontendUrl = config('app.frontend_url');
 
             return $frontendUrl.'/reset-password?token='.$token.'&email='.urlencode($notifiable->getEmailForPasswordReset());
         });

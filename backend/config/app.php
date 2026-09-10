@@ -56,6 +56,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | SCRUM-540 - Adresse publique de l'application Vue. Elle sert a deux
+    | choses qui sortent du backend : la liste des origines autorisees par
+    | CORS, et le lien de reinitialisation de mot de passe envoye par email.
+    |
+    | Elle etait lue par env() depuis AppServiceProvider, hors d'un fichier de
+    | configuration. En production l'entrypoint execute `config:cache`, et la
+    | bonne pratique Laravel est de n'appeler env() que dans config/ : la
+    | valeur est desormais resolue ici, une seule fois.
+    |
+    | A defaut, on retombe sur APP_URL plutot que sur localhost : mieux vaut
+    | l'adresse du serveur que celle du poste du developpeur.
+    |
+    | On utilise `?:` et non le second argument d'env() : une variable definie
+    | mais VIDE (ce que produit un `${FRONTEND_URL:-}` de Docker Compose)
+    | n'est pas une valeur absente pour env(), qui renverrait alors une chaine
+    | vide. `?:` traite les deux cas de la meme facon.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL') ?: env('APP_URL') ?: 'http://localhost:5173',
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
