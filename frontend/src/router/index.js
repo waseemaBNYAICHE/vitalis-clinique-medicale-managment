@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import LoginView from '../views/LoginView.vue'
-import DashboardView from '../views/DashboardView.vue'
+import DashboardView from '../views/Dashboard/DashboardView.vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import PatientCreateView from '../views/Patients/PatientCreateView.vue'
 import PatientsView from '../views/Patients/PatientsView.vue'
+
+import UtilisateursView from '../views/Utilisateur/UtilisateursView.vue'
 
 import { resolveNavigation } from './guards'
 
@@ -48,6 +50,12 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: DashboardView,
+    meta: { requiresAuth: true }
+     },
+      {
         path: 'patients',
         name: 'patients',
         component: PatientsView
@@ -56,6 +64,11 @@ const routes = [
         path: 'patients/new',
         name: 'patient-create',
         component: PatientCreateView
+      },
+      {
+        path: 'utilisateurs',
+        name: 'utilisateurs',
+        component: UtilisateursView
       }
     ]
   }
