@@ -156,6 +156,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'store']);
     Route::put('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'update']);
     Route::delete('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'destroy']);
+    
+    // Gestion d'historique d'ordonnances
+    Route::get(
+        '/patients/{idPatient}/ordonnances/historique',
+        [OrdonnanceController::class, 'historiquePatient']
+    );
 });
 
 // Health check
