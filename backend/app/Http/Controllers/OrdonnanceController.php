@@ -63,6 +63,22 @@ class OrdonnanceController extends Controller
         ], 200);
     }
 
+    public function historiquePatient($idPatient)
+    {
+        $ordonnances = Ordonnance::whereHas(
+            'consultation.rendezVous', 
+            function ($query) use ($idPatient) {
+                $query->where('id_patient', $idPatient);
+            }
+        )
+        ->orderBy('date_ordonnance', 'desc')
+        ->get();
+
+        return response()->json([
+            'historique' => $ordonnances
+        ], 200);
+    }
+
     public function destroy($id)
     {
         $ordonnance = Ordonnance::findOrFail($id);
