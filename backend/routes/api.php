@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedecinController;
 use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
+use App\Http\Controllers\LigneOrdonnanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,6 +150,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ordonnances', [OrdonnanceController::class, 'store']);
     Route::put('/ordonnances/{id}', [OrdonnanceController::class, 'update']);
     Route::delete('/ordonnances/{id}', [OrdonnanceController::class, 'destroy']);
+
+    // Gestion du contenu des ordonnances
+    Route::get('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'index']);
+    Route::post('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'store']);
+    Route::put('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'update']);
+    Route::delete('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'destroy']);
 });
 
 // Health check
