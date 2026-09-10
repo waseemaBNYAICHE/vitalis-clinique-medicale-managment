@@ -18,50 +18,33 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        DB::table('specialites')->insert([
-            [
-                'id_specialite' => 1,
-                'nom_specialite' => 'Médecine générale',
-                'description' => 'Consultations générales et suivi médical.',
+        $specialites = [
+            [1, 'Médecine générale', 'Consultations générales et suivi médical.'],
+            [2, 'Cardiologie', 'Diagnostic et traitement des maladies cardiovasculaires.'],
+            [3, 'Pédiatrie', 'Soins médicaux des nourrissons et des enfants.'],
+            [4, 'Dermatologie', 'Diagnostic et traitement des maladies de la peau.'],
+            [5, 'Gynécologie-obstétrique', 'Suivi gynécologique et suivi de grossesse.'],
+            [6, 'Traumatologie-orthopédie', 'Traitement des traumatismes, os et articulations.'],
+            [7, 'Neurologie', 'Traitement des maladies du système nerveux.'],
+            [8, 'Gastro-entérologie', 'Traitement des maladies digestives.'],
+            [9, 'Endocrinologie', 'Prise en charge du diabète et des troubles hormonaux.'],
+            [10, 'Psychiatrie', 'Diagnostic et traitement des troubles psychiques.'],
+            [11, 'Urologie', 'Traitement des maladies urinaires et urologiques.'],
+        ];
+
+        $specialitesData = [];
+
+        foreach ($specialites as $specialite) {
+            $specialitesData[] = [
+                'id_specialite' => $specialite[0],
+                'nom_specialite' => $specialite[1],
+                'description' => $specialite[2],
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'id_specialite' => 2,
-                'nom_specialite' => 'Cardiologie',
-                'description' => 'Diagnostic et traitement des maladies cardiovasculaires.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_specialite' => 3,
-                'nom_specialite' => 'Pédiatrie',
-                'description' => 'Soins médicaux des nourrissons et des enfants.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_specialite' => 4,
-                'nom_specialite' => 'Dermatologie',
-                'description' => 'Diagnostic et traitement des maladies de la peau.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_specialite' => 5,
-                'nom_specialite' => 'Gynécologie-obstétrique',
-                'description' => 'Suivi gynécologique et suivi de grossesse.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_specialite' => 6,
-                'nom_specialite' => 'Traumatologie-orthopédie',
-                'description' => 'Traitement des traumatismes, os et articulations.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('specialites')->insert($specialitesData);
 
         /*
         |--------------------------------------------------------------------------
@@ -69,233 +52,217 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        DB::table('medecins')->insert([
-            [
-                'id_medecin' => 1,
-                'matricule' => 'MED-001',
-                'nom' => 'El Amrani',
-                'prenom' => 'Youssef',
-                'telephone' => '+212661234501',
-                'email' => 'youssef.elamrani@vitalis.ma',
-                'date_embauche' => '2019-03-11',
-                'tarif_consultation' => 250,
-                'id_specialite' => 1,
+        $medecins = [
+            [1, 'MED-001', 'El Amrani', 'Youssef', '+212661234501', 'youssef.elamrani@vitalis.ma', '2019-03-11', 250, 1, 'M', 'Tanger'],
+            [2, 'MED-002', 'Berrada', 'Salma', '+212661234502', 'salma.berrada@vitalis.ma', '2018-09-17', 400, 2, 'F', 'Rabat'],
+            [3, 'MED-003', 'Alaoui', 'Mehdi', '+212661234503', 'mehdi.alaoui@vitalis.ma', '2020-01-06', 300, 3, 'M', 'Casablanca'],
+            [4, 'MED-004', 'Benjelloun', 'Imane', '+212661234504', 'imane.benjelloun@vitalis.ma', '2021-05-24', 350, 4, 'F', 'Fès'],
+            [5, 'MED-005', 'Tazi', 'Nadia', '+212661234505', 'nadia.tazi@vitalis.ma', '2017-11-13', 400, 5, 'F', 'Tanger'],
+            [6, 'MED-006', 'Chraibi', 'Omar', '+212661234506', 'omar.chraibi@vitalis.ma', '2020-08-03', 350, 6, 'M', 'Marrakech'],
+            [7, 'MED-007', 'Idrissi', 'Sara', '+212661234507', 'sara.idrissi@vitalis.ma', '2021-02-15', 450, 7, 'F', 'Tanger'],
+            [8, 'MED-008', 'Lahlou', 'Hamza', '+212661234508', 'hamza.lahlou@vitalis.ma', '2020-10-05', 400, 8, 'M', 'Tétouan'],
+            [9, 'MED-009', 'El Mansouri', 'Kawtar', '+212661234509', 'kawtar.elmansouri@vitalis.ma', '2022-01-10', 400, 9, 'F', 'Agadir'],
+            [10, 'MED-010', 'Ait Lahcen', 'Adil', '+212661234510', 'adil.aitlahcen@vitalis.ma', '2019-06-17', 450, 10, 'M', 'Béni Mellal'],
+            [11, 'MED-011', 'El Khatib', 'Othmane', '+212661234511', 'othmane.elkhatib@vitalis.ma', '2018-04-23', 400, 11, 'M', 'Meknès'],
+        ];
+
+        $medecinsData = [];
+
+        foreach ($medecins as $medecin) {
+            $medecinsData[] = [
+                'id_medecin' => $medecin[0],
+                'matricule' => $medecin[1],
+                'nom' => $medecin[2],
+                'prenom' => $medecin[3],
+                'telephone' => $medecin[4],
+                'email' => $medecin[5],
+                'date_embauche' => $medecin[6],
+                'tarif_consultation' => $medecin[7],
+                'id_specialite' => $medecin[8],
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'id_medecin' => 2,
-                'matricule' => 'MED-002',
-                'nom' => 'Berrada',
-                'prenom' => 'Salma',
-                'telephone' => '+212661234502',
-                'email' => 'salma.berrada@vitalis.ma',
-                'date_embauche' => '2018-09-17',
-                'tarif_consultation' => 400,
-                'id_specialite' => 2,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_medecin' => 3,
-                'matricule' => 'MED-003',
-                'nom' => 'Alaoui',
-                'prenom' => 'Mehdi',
-                'telephone' => '+212661234503',
-                'email' => 'mehdi.alaoui@vitalis.ma',
-                'date_embauche' => '2020-01-06',
-                'tarif_consultation' => 300,
-                'id_specialite' => 3,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_medecin' => 4,
-                'matricule' => 'MED-004',
-                'nom' => 'Benjelloun',
-                'prenom' => 'Imane',
-                'telephone' => '+212661234504',
-                'email' => 'imane.benjelloun@vitalis.ma',
-                'date_embauche' => '2021-05-24',
-                'tarif_consultation' => 350,
-                'id_specialite' => 4,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_medecin' => 5,
-                'matricule' => 'MED-005',
-                'nom' => 'Tazi',
-                'prenom' => 'Nadia',
-                'telephone' => '+212661234505',
-                'email' => 'nadia.tazi@vitalis.ma',
-                'date_embauche' => '2017-11-13',
-                'tarif_consultation' => 400,
-                'id_specialite' => 5,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_medecin' => 6,
-                'matricule' => 'MED-006',
-                'nom' => 'Chraibi',
-                'prenom' => 'Omar',
-                'telephone' => '+212661234506',
-                'email' => 'omar.chraibi@vitalis.ma',
-                'date_embauche' => '2020-08-03',
-                'tarif_consultation' => 350,
-                'id_specialite' => 6,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('medecins')->insert($medecinsData);
 
         /*
         |--------------------------------------------------------------------------
-        | Patients
+        | 100 patients marocains
         |--------------------------------------------------------------------------
         */
 
-        DB::table('patients')->insert([
-            [
-                'id_patient' => 1,
-                'nom' => 'Stitou',
-                'prenom' => 'Mounia',
-                'date_naissance' => '2000-04-18',
-                'sexe' => 'F',
-                'cin' => 'LA145821',
-                'telephone' => '+212612340101',
-                'email' => 'mounia.stitou@example.ma',
-                'groupe_sanguin' => 'A+',
+        $prenomsHommes = [
+            'Mohamed', 'Ahmed', 'Yassine', 'Amine', 'Oussama',
+            'Reda', 'Karim', 'Ilyas', 'Soufiane', 'Adil',
+            'Anas', 'Zakaria', 'Hamza', 'Mehdi', 'Ayoub',
+        ];
+
+        $prenomsFemmes = [
+            'Fatima Zahra', 'Salma', 'Sara', 'Imane', 'Kawtar',
+            'Nadia', 'Houda', 'Ikram', 'Meryem', 'Asmae',
+            'Ghita', 'Chaimae', 'Oumaima', 'Hajar', 'Khadija',
+        ];
+
+        $nomsFamille = [
+            'El Amrani', 'Alaoui', 'Berrada', 'Benjelloun',
+            'Tazi', 'Idrissi', 'Lahlou', 'Chraibi',
+            'Naciri', 'Mernissi', 'Ouazzani', 'Bennis',
+            'El Fassi', 'Skalli', 'Belkadi', 'Lamrani',
+            'El Mansouri', 'Ait Lahcen', 'El Khatib', 'Amrani',
+        ];
+
+        $groupesSanguins = [
+            'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-',
+        ];
+
+        $prefixesCin = [
+            'AB', 'AE', 'BE', 'BK', 'CD', 'EE',
+            'GA', 'J', 'K', 'LA', 'TA',
+        ];
+
+        $villes = [
+            'Tanger', 'Tétouan', 'Larache', 'Ksar El Kebir',
+            'Rabat', 'Casablanca', 'Fès', 'Meknès',
+            'Kénitra', 'Agadir', 'Marrakech',
+        ];
+
+        $patientsData = [];
+
+        for ($id = 1; $id <= 100; $id++) {
+            $sexe = $id % 2 === 0 ? 'M' : 'F';
+
+            if ($sexe === 'M') {
+                $prenom = $prenomsHommes[$id % count($prenomsHommes)];
+            } else {
+                $prenom = $prenomsFemmes[$id % count($prenomsFemmes)];
+            }
+
+            $nom = $nomsFamille[$id % count($nomsFamille)];
+            $annee = 1955 + ($id % 50);
+            $mois = 1 + ($id % 12);
+            $jour = 1 + ($id % 28);
+
+            $patientsData[] = [
+                'id_patient' => $id,
+                'nom' => $nom,
+                'prenom' => $prenom,
+                'date_naissance' => sprintf(
+                    '%04d-%02d-%02d',
+                    $annee,
+                    $mois,
+                    $jour
+                ),
+                'sexe' => $sexe,
+                'cin' => $prefixesCin[
+                    $id % count($prefixesCin)
+                ] . sprintf('%06d', 500000 + $id),
+                'telephone' => '+2126' . sprintf('%08d', 10000000 + $id),
+                'email' => 'patient' . sprintf('%03d', $id) . '@example.ma',
+                'groupe_sanguin' => $groupesSanguins[
+                    $id % count($groupesSanguins)
+                ],
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'id_patient' => 2,
-                'nom' => 'El Fassi',
-                'prenom' => 'Ayoub',
-                'date_naissance' => '1988-07-12',
-                'sexe' => 'M',
-                'cin' => 'AB274593',
-                'telephone' => '+212612340102',
-                'email' => 'ayoub.elfassi@example.ma',
-                'groupe_sanguin' => 'O+',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_patient' => 3,
-                'nom' => 'Bennis',
-                'prenom' => 'Khadija',
-                'date_naissance' => '1976-02-23',
-                'sexe' => 'F',
-                'cin' => 'BE193847',
-                'telephone' => '+212612340103',
-                'email' => 'khadija.bennis@example.ma',
-                'groupe_sanguin' => 'B+',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_patient' => 4,
-                'nom' => 'Ouazzani',
-                'prenom' => 'Anas',
-                'date_naissance' => '1994-11-05',
-                'sexe' => 'M',
-                'cin' => 'K421785',
-                'telephone' => '+212612340104',
-                'email' => 'anas.ouazzani@example.ma',
-                'groupe_sanguin' => 'A-',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_patient' => 5,
-                'nom' => 'Amrani',
-                'prenom' => 'Ghita',
-                'date_naissance' => '2018-06-29',
-                'sexe' => 'F',
-                'cin' => 'BK302145',
-                'telephone' => '+212612340105',
-                'email' => 'famille.amrani@example.ma',
-                'groupe_sanguin' => 'O+',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_patient' => 6,
-                'nom' => 'Naciri',
-                'prenom' => 'Zakaria',
-                'date_naissance' => '1982-09-14',
-                'sexe' => 'M',
-                'cin' => 'EE548721',
-                'telephone' => '+212612340106',
-                'email' => 'zakaria.naciri@example.ma',
-                'groupe_sanguin' => 'AB+',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('patients')->insert($patientsData);
 
         /*
         |--------------------------------------------------------------------------
-        | Utilisateurs
+        | Compte administrateur
         |--------------------------------------------------------------------------
         */
 
         DB::table('users')->insert([
-    [
-        'name' => 'Administrateur',
-        'prenom' => 'Vitalis',
-        'email' => 'admin@vitalis.ma',
-        'password' => Hash::make('Vitalis@2026'),
-        'role' => 'admin',
-        'telephone' => '+212539000001',
-        'adresse' => 'Avenue Mohammed VI, Tanger',
-        'date_naissance' => '1990-01-01',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'El Amrani',
-        'prenom' => 'Youssef',
-        'email' => 'youssef.elamrani@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234501',
-        'adresse' => 'Tanger',
-        'date_naissance' => '1982-05-09',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 1,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Stitou',
-        'prenom' => 'Mounia',
-        'email' => 'mounia.stitou@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340101',
-        'adresse' => 'Ksar El Kebir',
-        'date_naissance' => '2000-04-18',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 1,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
+            [
+                'name' => 'Administrateur',
+                'prenom' => 'Vitalis',
+                'email' => 'admin@vitalis.ma',
+                'password' => Hash::make('Vitalis@2026'),
+                'role' => 'admin',
+                'telephone' => '+212539000001',
+                'adresse' => 'Avenue Mohammed VI, Tanger',
+                'date_naissance' => '1990-01-01',
+                'sexe' => 'F',
+                'statut' => 'actif',
+                'id_medecin' => null,
+                'id_patient' => null,
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comptes des 11 médecins
+        |--------------------------------------------------------------------------
+        */
+
+        $comptesMedecins = [];
+        $motDePasseMedecin = Hash::make('Medecin@2026');
+
+        foreach ($medecins as $medecin) {
+            $comptesMedecins[] = [
+                'name' => $medecin[2],
+                'prenom' => $medecin[3],
+                'email' => $medecin[5],
+                'password' => $motDePasseMedecin,
+                'role' => 'medecin',
+                'telephone' => $medecin[4],
+                'adresse' => $medecin[10],
+                'date_naissance' => sprintf(
+                    '%04d-%02d-%02d',
+                    1975 + ($medecin[0] % 15),
+                    1 + ($medecin[0] % 12),
+                    1 + ($medecin[0] % 28)
+                ),
+                'sexe' => $medecin[9],
+                'statut' => 'actif',
+                'id_medecin' => $medecin[0],
+                'id_patient' => null,
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        DB::table('users')->insert($comptesMedecins);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comptes des 100 patients
+        |--------------------------------------------------------------------------
+        */
+
+        $comptesPatients = [];
+        $motDePassePatient = Hash::make('Patient@2026');
+
+        foreach ($patientsData as $patient) {
+            $comptesPatients[] = [
+                'name' => $patient['nom'],
+                'prenom' => $patient['prenom'],
+                'email' => $patient['email'],
+                'password' => $motDePassePatient,
+                'role' => 'patient',
+                'telephone' => $patient['telephone'],
+                'adresse' => $villes[
+                    $patient['id_patient'] % count($villes)
+                ],
+                'date_naissance' => $patient['date_naissance'],
+                'sexe' => $patient['sexe'],
+                'statut' => 'actif',
+                'id_medecin' => null,
+                'id_patient' => $patient['id_patient'],
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        DB::table('users')->insert($comptesPatients);
 
         /*
         |--------------------------------------------------------------------------
@@ -306,7 +273,7 @@ class DatabaseSeeder extends Seeder
         DB::table('rendez_vous')->insert([
             [
                 'id_rendez_vous' => 1,
-                'date_rendez_vous' => '2026-09-08',
+                'date_rendez_vous' => '2026-09-11',
                 'heure_debut' => '09:00',
                 'heure_fin' => '09:30',
                 'motif' => 'Migraine récurrente',
@@ -318,7 +285,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id_rendez_vous' => 2,
-                'date_rendez_vous' => '2026-09-08',
+                'date_rendez_vous' => '2026-09-11',
                 'heure_debut' => '10:00',
                 'heure_fin' => '10:30',
                 'motif' => 'Douleurs thoraciques',
@@ -330,37 +297,73 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id_rendez_vous' => 3,
-                'date_rendez_vous' => '2026-09-09',
+                'date_rendez_vous' => '2026-09-12',
                 'heure_debut' => '11:00',
                 'heure_fin' => '11:30',
                 'motif' => 'Fièvre et toux',
                 'statut' => 'confirme',
-                'id_patient' => 5,
+                'id_patient' => 3,
                 'id_medecin' => 3,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
                 'id_rendez_vous' => 4,
-                'date_rendez_vous' => '2026-09-09',
+                'date_rendez_vous' => '2026-09-12',
                 'heure_debut' => '14:00',
                 'heure_fin' => '14:30',
                 'motif' => 'Éruption cutanée',
                 'statut' => 'en_attente',
-                'id_patient' => 3,
+                'id_patient' => 4,
                 'id_medecin' => 4,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
                 'id_rendez_vous' => 5,
-                'date_rendez_vous' => '2026-09-10',
-                'heure_debut' => '15:00',
-                'heure_fin' => '15:30',
-                'motif' => 'Douleur au genou',
-                'statut' => 'termine',
+                'date_rendez_vous' => '2026-09-13',
+                'heure_debut' => '09:30',
+                'heure_fin' => '10:00',
+                'motif' => 'Contrôle de grossesse',
+                'statut' => 'confirme',
+                'id_patient' => 5,
+                'id_medecin' => 5,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id_rendez_vous' => 6,
+                'date_rendez_vous' => '2026-09-14',
+                'heure_debut' => '09:00',
+                'heure_fin' => '09:30',
+                'motif' => 'Maux de tête et vertiges',
+                'statut' => 'confirme',
                 'id_patient' => 6,
-                'id_medecin' => 6,
+                'id_medecin' => 7,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id_rendez_vous' => 7,
+                'date_rendez_vous' => '2026-09-14',
+                'heure_debut' => '10:00',
+                'heure_fin' => '10:30',
+                'motif' => 'Douleurs abdominales',
+                'statut' => 'confirme',
+                'id_patient' => 7,
+                'id_medecin' => 8,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id_rendez_vous' => 8,
+                'date_rendez_vous' => '2026-09-15',
+                'heure_debut' => '11:00',
+                'heure_fin' => '11:30',
+                'motif' => 'Fatigue et contrôle hormonal',
+                'statut' => 'en_attente',
+                'id_patient' => 8,
+                'id_medecin' => 9,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
@@ -377,7 +380,7 @@ class DatabaseSeeder extends Seeder
                 'id_consultation' => 1,
                 'motif' => 'Douleurs thoraciques',
                 'diagnostic' => 'Hypertension artérielle légère',
-                'observations' => 'Réduire le sel et contrôler régulièrement la tension.',
+                'observations' => 'Réduire le sel et contrôler la tension.',
                 'poids' => 82.5,
                 'taille' => 178,
                 'tension_arterielle' => '145/90',
@@ -388,14 +391,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id_consultation' => 2,
-                'motif' => 'Douleur au genou',
-                'diagnostic' => 'Entorse légère du genou droit',
-                'observations' => 'Repos pendant sept jours.',
-                'poids' => 76.2,
-                'taille' => 174,
-                'tension_arterielle' => '125/80',
+                'motif' => 'Éruption cutanée',
+                'diagnostic' => 'Réaction allergique légère',
+                'observations' => 'Éviter les produits allergènes.',
+                'poids' => 65.2,
+                'taille' => 165,
+                'tension_arterielle' => '120/80',
                 'temperature' => 36.7,
-                'id_rendez_vous' => 5,
+                'id_rendez_vous' => 4,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
@@ -449,7 +452,7 @@ class DatabaseSeeder extends Seeder
         DB::table('ordonnances')->insert([
             [
                 'id_ordonnance' => 1,
-                'date_ordonnance' => '2026-09-08',
+                'date_ordonnance' => '2026-09-11',
                 'instructions_generales' => 'Contrôler régulièrement la tension.',
                 'duree_traitement' => '30 jours',
                 'type' => 'Traitement chronique',
@@ -459,7 +462,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id_ordonnance' => 2,
-                'date_ordonnance' => '2026-09-10',
+                'date_ordonnance' => '2026-09-12',
                 'instructions_generales' => 'Prendre le traitement après les repas.',
                 'duree_traitement' => '7 jours',
                 'type' => 'Traitement ponctuel',
@@ -468,6 +471,12 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => $now,
             ],
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lignes d’ordonnances
+        |--------------------------------------------------------------------------
+        */
 
         DB::table('ligne_ordonnances')->insert([
             [
@@ -496,19 +505,19 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | Demandes d’examen et résultats
+        | Demandes d’examen
         |--------------------------------------------------------------------------
         */
 
         DB::table('demandes_examen')->insert([
             [
                 'id_demande_examen' => 1,
-                'date_demande' => '2026-09-08',
+                'date_demande' => '2026-09-11',
                 'niveau_urgence' => 'normal',
                 'indications_cliniques' => 'Bilan lipidique et fonction rénale.',
                 'statut' => 'realise',
-                'date_prevue' => '2026-09-09',
-                'date_realisation' => '2026-09-09',
+                'date_prevue' => '2026-09-12',
+                'date_realisation' => '2026-09-12',
                 'observation' => 'Patient à jeun.',
                 'id_consultation' => 1,
                 'created_at' => $now,
@@ -516,40 +525,46 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id_demande_examen' => 2,
-                'date_demande' => '2026-09-10',
+                'date_demande' => '2026-09-12',
                 'niveau_urgence' => 'normal',
-                'indications_cliniques' => 'Radiographie du genou droit.',
+                'indications_cliniques' => 'Analyse allergologique.',
                 'statut' => 'realise',
-                'date_prevue' => '2026-09-10',
-                'date_realisation' => '2026-09-10',
-                'observation' => 'Radiographie face et profil.',
+                'date_prevue' => '2026-09-13',
+                'date_realisation' => '2026-09-13',
+                'observation' => 'Recherche d’allergènes.',
                 'id_consultation' => 2,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Résultats
+        |--------------------------------------------------------------------------
+        */
+
         DB::table('resultats')->insert([
             [
-                'date_resultat' => '2026-09-09',
-                'resultat_detaille' => 'Cholestérol total légèrement élevé.',
+                'date_resultat' => '2026-09-12',
+                'resultat_detaille' => 'Cholestérol légèrement élevé.',
                 'conclusion' => 'Dyslipidémie modérée.',
-                'valeurs_mesurees' => 'Cholestérol total : 2.25 g/L ; LDL : 1.42 g/L',
-                'fichier_resultat' => 'bilan_lipidique_001.pdf',
-                'image_resultat' => 'bilan_lipidique_001.png',
+                'valeurs_mesurees' => 'Cholestérol : 2.25 g/L',
+                'fichier_resultat' => 'bilan_001.pdf',
+                'image_resultat' => 'bilan_001.png',
                 'observations' => 'Contrôle conseillé dans trois mois.',
                 'id_demande_examen' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
-                'date_resultat' => '2026-09-10',
-                'resultat_detaille' => 'Absence de fracture ou de lésion osseuse.',
-                'conclusion' => 'Entorse sans complication osseuse.',
-                'valeurs_mesurees' => 'Alignement articulaire conservé.',
-                'fichier_resultat' => 'radiographie_genou_002.pdf',
-                'image_resultat' => 'radiographie_genou_002.png',
-                'observations' => 'Contrôle si la douleur persiste.',
+                'date_resultat' => '2026-09-13',
+                'resultat_detaille' => 'Réaction allergique modérée.',
+                'conclusion' => 'Allergie saisonnière probable.',
+                'valeurs_mesurees' => 'IgE légèrement élevées.',
+                'fichier_resultat' => 'allergie_002.pdf',
+                'image_resultat' => 'allergie_002.png',
+                'observations' => 'Suivi dermatologique conseillé.',
                 'id_demande_examen' => 2,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -558,7 +573,7 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | Chambres et hospitalisations
+        | Chambres
         |--------------------------------------------------------------------------
         */
 
@@ -595,11 +610,17 @@ class DatabaseSeeder extends Seeder
                 'capacite' => 1,
                 'tarif_journalier' => 1800,
                 'statut' => 'occupee',
-                'description' => 'Chambre équipée pour la surveillance intensive.',
+                'description' => 'Chambre de surveillance intensive.',
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hospitalisations
+        |--------------------------------------------------------------------------
+        */
 
         DB::table('hospitalisations')->insert([
             [
@@ -610,8 +631,8 @@ class DatabaseSeeder extends Seeder
                 'motif_hospitalisation' => 'Surveillance cardiaque',
                 'diagnostic_entree' => 'Crise hypertensive',
                 'statut' => 'en_cours',
-                'observations' => 'Surveillance de la tension toutes les quatre heures.',
-                'id_patient' => 3,
+                'observations' => 'Surveillance toutes les quatre heures.',
+                'id_patient' => 2,
                 'id_chambre' => 3,
                 'id_medecin' => 2,
                 'created_at' => $now,
@@ -623,10 +644,10 @@ class DatabaseSeeder extends Seeder
                 'heure_entree' => '11:15',
                 'date_sortie' => '2026-09-05',
                 'motif_hospitalisation' => 'Observation après intervention',
-                'diagnostic_entree' => 'Fracture du poignet traitée',
+                'diagnostic_entree' => 'Fracture traitée',
                 'statut' => 'terminee',
                 'observations' => 'Évolution favorable.',
-                'id_patient' => 4,
+                'id_patient' => 6,
                 'id_chambre' => 2,
                 'id_medecin' => 6,
                 'created_at' => $now,
@@ -636,7 +657,7 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | Factures et paiements
+        | Factures
         |--------------------------------------------------------------------------
         */
 
@@ -644,7 +665,7 @@ class DatabaseSeeder extends Seeder
             [
                 'id_facture' => 1,
                 'numero_facture' => 'FAC-2026-0001',
-                'date_facture' => '2026-09-08',
+                'date_facture' => '2026-09-11',
                 'montant_total' => 650,
                 'remise' => 50,
                 'montant_net' => 600,
@@ -658,12 +679,12 @@ class DatabaseSeeder extends Seeder
             [
                 'id_facture' => 2,
                 'numero_facture' => 'FAC-2026-0002',
-                'date_facture' => '2026-09-10',
+                'date_facture' => '2026-09-12',
                 'montant_total' => 600,
                 'remise' => 0,
                 'montant_net' => 600,
                 'statut_paiement' => 'partielle',
-                'observations' => 'Consultation et radiographie.',
+                'observations' => 'Consultation et analyses.',
                 'id_consultation' => 2,
                 'id_hospitalisation' => null,
                 'created_at' => $now,
@@ -685,9 +706,15 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Paiements
+        |--------------------------------------------------------------------------
+        */
+
         DB::table('paiements')->insert([
             [
-                'date_paiement' => '2026-09-08',
+                'date_paiement' => '2026-09-11',
                 'heure_paiement' => '11:20',
                 'montant_paye' => 600,
                 'mode_paiement' => 'carte_bancaire',
@@ -698,7 +725,7 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => $now,
             ],
             [
-                'date_paiement' => '2026-09-10',
+                'date_paiement' => '2026-09-12',
                 'heure_paiement' => '16:10',
                 'montant_paye' => 300,
                 'mode_paiement' => 'especes',
@@ -720,546 +747,10 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => $now,
             ],
         ]);
-        /*
-|--------------------------------------------------------------------------
-| Spécialités supplémentaires
-|--------------------------------------------------------------------------
-*/
-
-DB::table('specialites')->insert([
-    [
-        'id_specialite' => 7,
-        'nom_specialite' => 'Neurologie',
-        'description' => 'Diagnostic et traitement des maladies du système nerveux.',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_specialite' => 8,
-        'nom_specialite' => 'Gastro-entérologie',
-        'description' => 'Diagnostic et traitement des maladies digestives.',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_specialite' => 9,
-        'nom_specialite' => 'Endocrinologie',
-        'description' => 'Prise en charge du diabète et des troubles hormonaux.',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_specialite' => 10,
-        'nom_specialite' => 'Psychiatrie',
-        'description' => 'Diagnostic et traitement des troubles psychiques.',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_specialite' => 11,
-        'nom_specialite' => 'Urologie',
-        'description' => 'Prise en charge des maladies urinaires et urologiques.',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
-
-/*
-|--------------------------------------------------------------------------
-| Médecins supplémentaires
-|--------------------------------------------------------------------------
-*/
-
-DB::table('medecins')->insert([
-    [
-        'id_medecin' => 7,
-        'matricule' => 'MED-007',
-        'nom' => 'Idrissi',
-        'prenom' => 'Sara',
-        'telephone' => '+212661234507',
-        'email' => 'sara.idrissi@vitalis.ma',
-        'date_embauche' => '2021-02-15',
-        'tarif_consultation' => 450,
-        'id_specialite' => 7,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_medecin' => 8,
-        'matricule' => 'MED-008',
-        'nom' => 'Lahlou',
-        'prenom' => 'Hamza',
-        'telephone' => '+212661234508',
-        'email' => 'hamza.lahlou@vitalis.ma',
-        'date_embauche' => '2020-10-05',
-        'tarif_consultation' => 400,
-        'id_specialite' => 8,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_medecin' => 9,
-        'matricule' => 'MED-009',
-        'nom' => 'El Mansouri',
-        'prenom' => 'Kawtar',
-        'telephone' => '+212661234509',
-        'email' => 'kawtar.elmansouri@vitalis.ma',
-        'date_embauche' => '2022-01-10',
-        'tarif_consultation' => 400,
-        'id_specialite' => 9,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_medecin' => 10,
-        'matricule' => 'MED-010',
-        'nom' => 'Ait Lahcen',
-        'prenom' => 'Adil',
-        'telephone' => '+212661234510',
-        'email' => 'adil.aitlahcen@vitalis.ma',
-        'date_embauche' => '2019-06-17',
-        'tarif_consultation' => 450,
-        'id_specialite' => 10,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_medecin' => 11,
-        'matricule' => 'MED-011',
-        'nom' => 'El Khatib',
-        'prenom' => 'Othmane',
-        'telephone' => '+212661234511',
-        'email' => 'othmane.elkhatib@vitalis.ma',
-        'date_embauche' => '2018-04-23',
-        'tarif_consultation' => 400,
-        'id_specialite' => 11,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
-
-/*
-|--------------------------------------------------------------------------
-| Nouveaux patients
-|--------------------------------------------------------------------------
-*/
-
-DB::table('patients')->insert([
-    [
-        'id_patient' => 7,
-        'nom' => 'Mernissi',
-        'prenom' => 'Houda',
-        'date_naissance' => '1991-01-30',
-        'sexe' => 'F',
-        'cin' => 'CD762914',
-        'telephone' => '+212612340107',
-        'email' => 'houda.mernissi@example.ma',
-        'groupe_sanguin' => 'B-',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_patient' => 8,
-        'nom' => 'Skalli',
-        'prenom' => 'Rachid',
-        'date_naissance' => '1965-12-08',
-        'sexe' => 'M',
-        'cin' => 'J359281',
-        'telephone' => '+212612340108',
-        'email' => 'rachid.skalli@example.ma',
-        'groupe_sanguin' => 'O-',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_patient' => 9,
-        'nom' => 'Belkadi',
-        'prenom' => 'Ikram',
-        'date_naissance' => '2004-03-19',
-        'sexe' => 'F',
-        'cin' => 'TA619374',
-        'telephone' => '+212612340109',
-        'email' => 'ikram.belkadi@example.ma',
-        'groupe_sanguin' => 'A+',
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
-
-/*
-|--------------------------------------------------------------------------
-| Cinq nouveaux comptes utilisateurs
-|--------------------------------------------------------------------------
-*/
-
-DB::table('users')->insert([
-    [
-        'name' => 'Idrissi',
-        'prenom' => 'Sara',
-        'email' => 'sara.idrissi@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234507',
-        'adresse' => 'Tanger',
-        'date_naissance' => '1986-07-14',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => 7,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Lahlou',
-        'prenom' => 'Hamza',
-        'email' => 'hamza.lahlou@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234508',
-        'adresse' => 'Tétouan',
-        'date_naissance' => '1984-11-21',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 8,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Mernissi',
-        'prenom' => 'Houda',
-        'email' => 'houda.mernissi@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340107',
-        'adresse' => 'Larache',
-        'date_naissance' => '1991-01-30',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 7,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Skalli',
-        'prenom' => 'Rachid',
-        'email' => 'rachid.skalli@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340108',
-        'adresse' => 'Chefchaouen',
-        'date_naissance' => '1965-12-08',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 8,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Belkadi',
-        'prenom' => 'Ikram',
-        'email' => 'ikram.belkadi@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340109',
-        'adresse' => 'Kénitra',
-        'date_naissance' => '2004-03-19',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 9,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
-
-/*
-|--------------------------------------------------------------------------
-| Trois nouveaux rendez-vous
-|--------------------------------------------------------------------------
-*/
-
-DB::table('rendez_vous')->insert([
-    [
-        'id_rendez_vous' => 6,
-        'date_rendez_vous' => '2026-09-14',
-        'heure_debut' => '09:00',
-        'heure_fin' => '09:30',
-        'motif' => 'Maux de tête et vertiges',
-        'statut' => 'confirme',
-        'id_patient' => 7,
-        'id_medecin' => 7,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_rendez_vous' => 7,
-        'date_rendez_vous' => '2026-09-14',
-        'heure_debut' => '10:00',
-        'heure_fin' => '10:30',
-        'motif' => 'Douleurs abdominales',
-        'statut' => 'confirme',
-        'id_patient' => 8,
-        'id_medecin' => 8,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'id_rendez_vous' => 8,
-        'date_rendez_vous' => '2026-09-15',
-        'heure_debut' => '11:00',
-        'heure_fin' => '11:30',
-        'motif' => 'Fatigue et contrôle hormonal',
-        'statut' => 'en_attente',
-        'id_patient' => 9,
-        'id_medecin' => 9,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
-/*
-|--------------------------------------------------------------------------
-| Comptes des médecins et patients restants
-|--------------------------------------------------------------------------
-*/
-
-DB::table('users')->insert([
-    // Médecins
-    [
-        'name' => 'Berrada',
-        'prenom' => 'Salma',
-        'email' => 'salma.berrada@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234502',
-        'adresse' => 'Rabat',
-        'date_naissance' => '1985-03-12',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => 2,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Alaoui',
-        'prenom' => 'Mehdi',
-        'email' => 'mehdi.alaoui@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234503',
-        'adresse' => 'Casablanca',
-        'date_naissance' => '1987-08-22',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 3,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Benjelloun',
-        'prenom' => 'Imane',
-        'email' => 'imane.benjelloun@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234504',
-        'adresse' => 'Fès',
-        'date_naissance' => '1988-01-17',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => 4,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Tazi',
-        'prenom' => 'Nadia',
-        'email' => 'nadia.tazi@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234505',
-        'adresse' => 'Tanger',
-        'date_naissance' => '1981-06-25',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => 5,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Chraibi',
-        'prenom' => 'Omar',
-        'email' => 'omar.chraibi@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234506',
-        'adresse' => 'Marrakech',
-        'date_naissance' => '1984-10-09',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 6,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'El Mansouri',
-        'prenom' => 'Kawtar',
-        'email' => 'kawtar.elmansouri@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234509',
-        'adresse' => 'Agadir',
-        'date_naissance' => '1989-04-11',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => 9,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Ait Lahcen',
-        'prenom' => 'Adil',
-        'email' => 'adil.aitlahcen@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234510',
-        'adresse' => 'Béni Mellal',
-        'date_naissance' => '1983-12-03',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 10,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'El Khatib',
-        'prenom' => 'Othmane',
-        'email' => 'othmane.elkhatib@vitalis.ma',
-        'password' => Hash::make('Medecin@2026'),
-        'role' => 'medecin',
-        'telephone' => '+212661234511',
-        'adresse' => 'Meknès',
-        'date_naissance' => '1980-09-16',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => 11,
-        'id_patient' => null,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-
-    // Patients
-    [
-        'name' => 'El Fassi',
-        'prenom' => 'Ayoub',
-        'email' => 'ayoub.elfassi@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340102',
-        'adresse' => 'Casablanca',
-        'date_naissance' => '1988-07-12',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 2,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Bennis',
-        'prenom' => 'Khadija',
-        'email' => 'khadija.bennis@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340103',
-        'adresse' => 'Fès',
-        'date_naissance' => '1976-02-23',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 3,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Ouazzani',
-        'prenom' => 'Anas',
-        'email' => 'anas.ouazzani@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340104',
-        'adresse' => 'Rabat',
-        'date_naissance' => '1994-11-05',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 4,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Amrani',
-        'prenom' => 'Ghita',
-        'email' => 'famille.amrani@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340105',
-        'adresse' => 'Tanger',
-        'date_naissance' => '2018-06-29',
-        'sexe' => 'F',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 5,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-    [
-        'name' => 'Naciri',
-        'prenom' => 'Zakaria',
-        'email' => 'zakaria.naciri@example.ma',
-        'password' => Hash::make('Patient@2026'),
-        'role' => 'patient',
-        'telephone' => '+212612340106',
-        'adresse' => 'Kénitra',
-        'date_naissance' => '1982-09-14',
-        'sexe' => 'M',
-        'statut' => 'actif',
-        'id_medecin' => null,
-        'id_patient' => 6,
-        'email_verified_at' => $now,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ],
-]);
 
         /*
         |--------------------------------------------------------------------------
-        | Correction des compteurs PostgreSQL
+        | Synchronisation des séquences PostgreSQL
         |--------------------------------------------------------------------------
         */
 
