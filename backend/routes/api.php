@@ -10,6 +10,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedecinController;
 use App\Http\Controllers\SpecialiteController;
+use App\Http\Controllers\OrdonnanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -141,6 +142,13 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('can:specialites.update');
     Route::delete('/specialites/{id}', [SpecialiteController::class, 'destroy'])
         ->middleware('can:specialites.delete');
+
+        // Gestion des ordonnances
+    Route::get('/ordonnances', [OrdonnanceController::class, 'index']);
+    Route::get('/ordonnances/{id}', [OrdonnanceController::class, 'show']);
+    Route::post('/ordonnances', [OrdonnanceController::class, 'store']);
+    Route::put('/ordonnances/{id}', [OrdonnanceController::class, 'update']);
+    Route::delete('/ordonnances/{id}', [OrdonnanceController::class, 'destroy']);
 });
 
 // Health check
