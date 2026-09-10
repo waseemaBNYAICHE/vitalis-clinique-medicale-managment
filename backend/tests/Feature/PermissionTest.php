@@ -62,9 +62,39 @@ class PermissionTest extends TestCase
         }
     }
 
-    public function test_a_patient_holds_no_permission(): void
+    /**
+     * SCRUM-526 - Ce test datait de SCRUM-518, ou le role patient n'avait
+     * effectivement aucune permission. SCRUM-524 lui a donne la lecture de
+     * ses propres donnees medicales sans mettre l'assertion a jour : elle
+     * echouait depuis. On verifie desormais ce qui compte reellement, a
+     * savoir que le patient reste enferme dans une lecture seule et n'a
+     * aucun acces aux modules du personnel.
+     */
+    public function test_a_patient_only_holds_read_permissions(): void
     {
-        $this->assertSame([], Role::PATIENT->permissions());
+        $permissions = Role::PATIENT->permissions();
+
+        $this->assertNotEmpty($permissions);
+
+        foreach ($permissions as $permission) {
+            $this->assertStringEndsWith(
+                '.read',
+                $permission->value,
+                "Le role patient ne doit detenir que des permissions de lecture, or il detient {$permission->value}"
+            );
+        }
+
+        foreach ([
+            Permission::PATIENTS_READ,
+            Permission::ROLES_MANAGE,
+            Permission::MEDECINS_READ,
+            Permission::SPECIALITES_READ,
+        ] as $interdite) {
+            $this->assertFalse(
+                Role::PATIENT->accorde($interdite),
+                "Le role patient ne doit pas detenir {$interdite->value}"
+            );
+        }
     }
 
     public function test_every_permission_is_registered_as_a_gate(): void

@@ -14,7 +14,12 @@ class PatientDeleteTest extends TestCase
 
     public function test_un_patient_peut_etre_supprime(): void
     {
-        $user = User::factory()->create();
+        // SCRUM-526 : le role est desormais explicite. Sans lui, la factory
+        // retombe sur la valeur par defaut de la colonne ('patient'),
+        // un role qui n'a aucune permission sur le module Patients depuis
+        // SCRUM-524 : le test recevait 403 au lieu de tester son sujet.
+        // Role retenu ici : suppression d'un dossier medical : reservee a l'administrateur (SCRUM-518).
+        $user = User::factory()->create(['role' => 'administrateur']);
 
         Sanctum::actingAs($user);
 
@@ -35,8 +40,12 @@ class PatientDeleteTest extends TestCase
 
         $response->assertStatus(200);
 
+        // SCRUM-526 : le point final manquait dans l'assertion. Le message est
+        // recopie du controller (SCRUM-115) plutot que corrige dans celui-ci :
+        // le frontend affiche cette chaine telle quelle. Cet ecart etait
+        // masque par le 403 que le test recevait avant la correction du role.
         $response->assertJson([
-            'message' => 'Patient supprimé avec succès',
+            'message' => 'Patient supprimé avec succès.',
         ]);
 
         $this->assertDatabaseMissing('patients', [

@@ -26,6 +26,8 @@ x-backend-env: &backend-env
   CACHE_STORE: redis
   SESSION_DRIVER: redis
   QUEUE_CONNECTION: redis
+  # SCRUM-526 - Duree de validite d'un jeton d'API, en minutes.
+  SANCTUM_TOKEN_EXPIRATION: ${SANCTUM_TOKEN_EXPIRATION:-720}
 
 services:
   postgres:

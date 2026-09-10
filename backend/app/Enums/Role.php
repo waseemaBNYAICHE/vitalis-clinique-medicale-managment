@@ -26,6 +26,11 @@ enum Role: string
      * Lecture / Non) ; la distinction "toutes les donnees" vs "les siennes"
      * sera affinee au niveau des Policies quand les Controllers existeront.
      *
+     * SCRUM-526 - Referentiel medecins/specialites : l'ensemble du personnel
+     * le consulte en lecture (l'annuaire est necessaire pour orienter un
+     * patient), mais seul l'administrateur le modifie. Le role patient n'y a
+     * pas acces : aucune route ne le lui expose aujourd'hui.
+     *
      * @return array<int, Permission>
      */
     public function permissions(): array
@@ -53,6 +58,14 @@ enum Role: string
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
                 Permission::HOSPITALISATIONS_DELETE,
+                Permission::MEDECINS_READ,
+                Permission::MEDECINS_CREATE,
+                Permission::MEDECINS_UPDATE,
+                Permission::MEDECINS_DELETE,
+                Permission::SPECIALITES_READ,
+                Permission::SPECIALITES_CREATE,
+                Permission::SPECIALITES_UPDATE,
+                Permission::SPECIALITES_DELETE,
             ],
 
             // Consultations/ordonnances/hospitalisations "les siennes" :
@@ -73,6 +86,8 @@ enum Role: string
                 Permission::HOSPITALISATIONS_READ,
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
+                Permission::MEDECINS_READ,
+                Permission::SPECIALITES_READ,
             ],
 
             // Pas d'acces aux consultations ni ordonnances (donnees
@@ -84,6 +99,8 @@ enum Role: string
                 Permission::PATIENTS_UPDATE,
                 Permission::EXAMENS_READ,
                 Permission::HOSPITALISATIONS_READ,
+                Permission::MEDECINS_READ,
+                Permission::SPECIALITES_READ,
             ],
 
             // Acces limite en lecture aux consultations, lecture seule des
@@ -101,6 +118,8 @@ enum Role: string
                 Permission::HOSPITALISATIONS_READ,
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
+                Permission::MEDECINS_READ,
+                Permission::SPECIALITES_READ,
             ],
 
             // Un patient n'accede pas aux dossiers des autres patients.

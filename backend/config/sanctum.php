@@ -48,9 +48,19 @@ return [
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
     |
+    | SCRUM-526 : la valeur etait `null`, c'est-a-dire "jamais". Un jeton
+    | recupere dans le localStorage d'un poste partage de la clinique restait
+    | donc valable indefiniment, meme apres le depart de l'agent. 720 minutes
+    | (12 heures) couvrent une journee de travail complete sans obliger a se
+    | reconnecter en pleine consultation. La valeur reste reglable par
+    | environnement.
+    |
+    | A noter : Sanctum marque le jeton comme expire mais ne le supprime pas.
+    | La commande `sanctum:prune-expired` fait le menage si besoin.
+    |
     */
 
-    'expiration' => null,
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 720),
 
     /*
     |--------------------------------------------------------------------------

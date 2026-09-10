@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -63,10 +64,19 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // SCRUM-526 : le role est impose par le serveur, jamais lu dans la
+        // requete. L'inscription est publique : sans cette ligne, la seule
+        // chose qui empeche un visiteur de se declarer administrateur est la
+        // valeur par defaut de la colonne en base - une protection invisible
+        // ici, qu'une future refonte du controller ferait disparaitre sans
+        // que personne ne le remarque. Un compte cree librement demarre donc
+        // toujours avec le role le moins privilegie ; c'est ensuite a un
+        // administrateur de l'elever via PUT /api/users/{user}/role.
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => Role::PATIENT->value,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -171,15 +181,28 @@ class AuthController extends Controller
             $request->only('email')
         );
 
-        if ($status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
-            return response()->json([
-                'message' => 'Lien de réinitialisation envoyé',
-            ], 200);
+        if ($status !== \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+            // SCRUM-526 : l'echec est journalise pour l'equipe, jamais renvoye
+            // au client.
+            Log::warning('Lien de reinitialisation non envoye', [
+                'email' => $request->input('email'),
+                'ip' => $request->ip(),
+                'statut' => $status,
+            ]);
         }
 
+        // SCRUM-526 : la reponse est volontairement la MEME, que l'adresse
+        // corresponde a un compte existant ou non.
+        //
+        // Auparavant une adresse inconnue recevait un 400 et une adresse
+        // connue un 200 : il suffisait d'appeler cette route pour savoir qui
+        // possede un compte dans la clinique. Sur une application de sante,
+        // cette seule information est deja une donnee personnelle. Le meme
+        // raisonnement avait ete applique a /api/login (SCRUM-510), mais pas
+        // a cette route.
         return response()->json([
-            'message' => 'Impossible d\'envoyer le lien de réinitialisation',
-        ], 400);
+            'message' => 'Si un compte existe pour cette adresse, un lien de réinitialisation vient d\'être envoyé',
+        ], 200);
     }
 
     /**

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
@@ -82,39 +83,67 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Attribuer ou modifier le role d'un utilisateur
         Route::put('/users/{user}/role', [RoleController::class, 'update']);
-
-        // Gestion des médecins
-       Route::get('/medecins', [MedecinController::class, 'index']);
-       Route::get('/medecins/{id}', [MedecinController::class, 'show']);
-       Route::post('/medecins', [MedecinController::class, 'store']);
-       Route::put('/medecins/{id}', [MedecinController::class, 'update']);
-       Route::delete('/medecins/{id}', [MedecinController::class, 'destroy']);
-        // Gestion des specialites
-       Route::get('/specialites', [SpecialiteController::class, 'index']);
-       Route::get('/specialites/{id}', [SpecialiteController::class, 'show']);
-       Route::post('/specialites', [SpecialiteController::class, 'store']);
-       Route::put('/specialites/{id}', [SpecialiteController::class, 'update']);
-       Route::delete('/specialites/{id}', [SpecialiteController::class, 'destroy']);
-
     });
+
+    // Gestion des medecins
+    //
+    // SCRUM-526 : ces routes etaient dans le groupe 'can:roles.manage'. Cette
+    // permission decrit la gestion des comptes utilisateurs, pas le
+    // referentiel medical : le controle etait donc correct par accident
+    // (seul l'administrateur passait) mais impossible a faire evoluer sans
+    // ouvrir la gestion des roles. Chaque route porte desormais la
+    // permission de sa propre ressource.
+    Route::get('/medecins', [MedecinController::class, 'index'])
+        ->middleware('can:medecins.read');
+    Route::get('/medecins/{id}', [MedecinController::class, 'show'])
+        ->middleware('can:medecins.read');
+    Route::post('/medecins', [MedecinController::class, 'store'])
+        ->middleware('can:medecins.create');
+    Route::put('/medecins/{id}', [MedecinController::class, 'update'])
+        ->middleware('can:medecins.update');
+    Route::delete('/medecins/{id}', [MedecinController::class, 'destroy'])
+        ->middleware('can:medecins.delete');
+
+    // Gestion des specialites
+    Route::get('/specialites', [SpecialiteController::class, 'index'])
+        ->middleware('can:specialites.read');
+    Route::get('/specialites/{id}', [SpecialiteController::class, 'show'])
+        ->middleware('can:specialites.read');
+    Route::post('/specialites', [SpecialiteController::class, 'store'])
+        ->middleware('can:specialites.create');
+    Route::put('/specialites/{id}', [SpecialiteController::class, 'update'])
+        ->middleware('can:specialites.update');
+    Route::delete('/specialites/{id}', [SpecialiteController::class, 'destroy'])
+        ->middleware('can:specialites.delete');
 });
 
 // Health check
+//
+// SCRUM-526 : route volontairement publique (sondes Docker, workflow de
+// deploiement, script de smoke test). Elle ne renvoie donc QUE 'ok' ou
+// 'failed' par service. Auparavant elle recopiait le message de l'exception,
+// qui contient l'hote, le port, le nom de la base et l'utilisateur : ces
+// informations d'infrastructure etaient lisibles par n'importe quel visiteur
+// non authentifie des que la base tombait. Le detail part maintenant dans les
+// logs applicatifs, ou seule l'equipe y a acces.
 Route::get('/health', function () {
     $checks = [];
 
-    try {
-        DB::connection()->getPdo();
-        $checks['database'] = 'ok';
-    } catch (\Throwable $e) {
-        $checks['database'] = 'failed: '.$e->getMessage();
-    }
+    foreach ([
+        'database' => fn () => DB::connection()->getPdo(),
+        'redis' => fn () => Redis::connection()->ping(),
+    ] as $service => $sonde) {
+        try {
+            $sonde();
+            $checks[$service] = 'ok';
+        } catch (\Throwable $e) {
+            Log::error("Health check: service {$service} indisponible", [
+                'service' => $service,
+                'exception' => $e->getMessage(),
+            ]);
 
-    try {
-        Redis::connection()->ping();
-        $checks['redis'] = 'ok';
-    } catch (\Throwable $e) {
-        $checks['redis'] = 'failed: '.$e->getMessage();
+            $checks[$service] = 'failed';
+        }
     }
 
     $healthy = ! in_array(false, array_map(

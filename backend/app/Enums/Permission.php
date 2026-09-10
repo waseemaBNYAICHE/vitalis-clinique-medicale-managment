@@ -51,4 +51,21 @@ enum Permission: string
     case HOSPITALISATIONS_CREATE = 'hospitalisations.create';
     case HOSPITALISATIONS_UPDATE = 'hospitalisations.update';
     case HOSPITALISATIONS_DELETE = 'hospitalisations.delete';
+
+    // SCRUM-526 - Referentiel medecins et specialites.
+    //
+    // Ces routes etaient protegees par 'roles.manage', une permission qui ne
+    // decrit pas la ressource : gerer le referentiel des medecins n'est pas
+    // gerer les roles des utilisateurs. Elles ont desormais leurs propres
+    // permissions, ce qui permet au personnel de consulter l'annuaire (utile
+    // pour la prise de rendez-vous) sans lui ouvrir la gestion des comptes.
+    case MEDECINS_READ = 'medecins.read';
+    case MEDECINS_CREATE = 'medecins.create';
+    case MEDECINS_UPDATE = 'medecins.update';
+    case MEDECINS_DELETE = 'medecins.delete';
+
+    case SPECIALITES_READ = 'specialites.read';
+    case SPECIALITES_CREATE = 'specialites.create';
+    case SPECIALITES_UPDATE = 'specialites.update';
+    case SPECIALITES_DELETE = 'specialites.delete';
 }

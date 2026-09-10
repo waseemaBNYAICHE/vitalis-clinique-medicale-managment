@@ -13,7 +13,12 @@ class PatientStoreTest extends TestCase
 
     public function test_un_patient_peut_etre_enregistre(): void
     {
-        $user = User::factory()->create();
+        // SCRUM-526 : le role est desormais explicite. Sans lui, la factory
+        // retombe sur la valeur par defaut de la colonne ('patient'),
+        // un role qui n'a aucune permission sur le module Patients depuis
+        // SCRUM-524 : le test recevait 403 au lieu de tester son sujet.
+        // Role retenu ici : creation d'un dossier patient : operation du personnel d'accueil.
+        $user = User::factory()->create(['role' => 'secretaire']);
 
         Sanctum::actingAs($user);
 

@@ -14,7 +14,12 @@ class PatientSearchTest extends TestCase
 
     public function test_recherche_patient_par_cin(): void
     {
-        $user = User::factory()->create();
+        // SCRUM-526 : le role est desormais explicite. Sans lui, la factory
+        // retombe sur la valeur par defaut de la colonne ('patient'),
+        // un role qui n'a aucune permission sur le module Patients depuis
+        // SCRUM-524 : le test recevait 403 au lieu de tester son sujet.
+        // Role retenu ici : consultation des dossiers : operation du personnel d'accueil.
+        $user = User::factory()->create(['role' => 'secretaire']);
 
         Sanctum::actingAs($user);
 
@@ -44,7 +49,12 @@ class PatientSearchTest extends TestCase
 
     public function test_recherche_patient_par_date_de_naissance(): void
     {
-        $user = User::factory()->create();
+        // SCRUM-526 : le role est desormais explicite. Sans lui, la factory
+        // retombe sur la valeur par defaut de la colonne ('patient'),
+        // un role qui n'a aucune permission sur le module Patients depuis
+        // SCRUM-524 : le test recevait 403 au lieu de tester son sujet.
+        // Role retenu ici : consultation des dossiers : operation du personnel d'accueil.
+        $user = User::factory()->create(['role' => 'secretaire']);
 
         Sanctum::actingAs($user);
 

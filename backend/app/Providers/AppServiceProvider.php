@@ -9,6 +9,7 @@ use Illuminate\Auth\Access\Response as ReponseAutorisation;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
      * Sans ces limites, /api/login accepte un nombre illimite de tentatives :
      * un mot de passe peut donc etre devine par force brute. Une fois la limite
      * atteinte, Laravel repond 429 avec un en-tete Retry-After.
+     *
+     * SCRUM-526 - S'y ajoute le limiteur 'api', applique a toutes les routes.
      */
     private function configurerLimitesAuthentification(): void
     {
@@ -64,6 +67,35 @@ class AppServiceProvider extends ServiceProvider
             // la creation de comptes en masse, l'envoi massif d'emails et les
             // essais de jetons de reinitialisation.
             return Limit::perMinute(5)->by($request->ip());
+        });
+
+        // SCRUM-526 - Limiteur applique a l'ensemble de l'API (voir
+        // bootstrap/app.php).
+        //
+        // Les limiteurs de SCRUM-510 ne couvrent que la connexion et les
+        // routes publiques d'authentification. Celui-ci protege tout le reste :
+        // un jeton vole ou un compte legitime detourne ne peut plus enumerer
+        // /api/patients ni marteler le serveur sans etre ralenti.
+        //
+        // La cle est l'identifiant de l'utilisateur quand il est authentifie :
+        // deux membres du personnel derriere la meme connexion internet ne se
+        // penalisent donc pas mutuellement. On retombe sur l'adresse IP pour
+        // les requetes anonymes (health check, login deja limite par ailleurs).
+        //
+        // On interroge explicitement le garde 'sanctum' : le limiteur s'execute
+        // AVANT le middleware auth:sanctum, donc $request->user() renverrait
+        // null pour une requete portant un jeton Bearer et tout le personnel
+        // partagerait le compteur de l'adresse IP de la clinique. Le garde
+        // memorise l'utilisateur resolu, l'authentification n'a donc pas lieu
+        // deux fois.
+        //
+        // 60 requetes/minute laisse largement passer l'usage normal du
+        // frontend Vue (chargement d'un tableau de bord, pagination, recherche)
+        // tout en coupant court a un script automatise.
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by(
+                Auth::guard('sanctum')->id() ?: $request->ip()
+            );
         });
     }
 
