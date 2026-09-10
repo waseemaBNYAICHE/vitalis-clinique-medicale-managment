@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('ligne_ordonnances', function (Blueprint $table) {
             $table->id('id_ligne_ordonnance');
 
-            $table->string('posologie');
+            $table->string('dosologie');
             $table->string('frequence');
             $table->string('duree');
             $table->integer('quantite');

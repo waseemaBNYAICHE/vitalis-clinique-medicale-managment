@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ordonnance extends Model
 {
@@ -30,5 +31,14 @@ class Ordonnance extends Model
     public function medecin(): ?Medecin
     {
         return $this->consultation?->medecin();
+    }
+
+    public function lignes(): HasMany
+    {
+    return $this->hasMany(
+        LigneOrdonnance::class,
+        'id_ordonnance',
+        'id_ordonnance'
+    );
     }
 }
