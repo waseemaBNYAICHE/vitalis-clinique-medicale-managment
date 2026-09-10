@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:guards": "node tests/guards.test.mjs"
+    "test:guards": "node tests/guards.test.mjs",
+    "test:routes": "node tests/routes.test.mjs",
+    "test": "npm run test:guards && npm run test:routes"
   },
   "dependencies": {
     "@flaticon/flaticon-uicons": "^3.3.1",
