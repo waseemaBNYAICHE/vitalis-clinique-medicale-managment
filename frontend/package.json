@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "test:guards": "node tests/guards.test.mjs",
     "test:routes": "node tests/routes.test.mjs",
-    "test": "npm run test:guards && npm run test:routes && npm run test:rbac && npm run test:actions",
+    "test": "npm run test:guards && npm run test:routes && npm run test:rbac && npm run test:actions && npm run test:acces",
     "test:rbac": "node tests/rbac.test.mjs",
-    "test:actions": "node tests/actions.test.mjs"
+    "test:actions": "node tests/actions.test.mjs",
+    "test:acces": "node tests/acces.test.mjs"
   },
   "dependencies": {
     "@flaticon/flaticon-uicons": "^3.3.1",

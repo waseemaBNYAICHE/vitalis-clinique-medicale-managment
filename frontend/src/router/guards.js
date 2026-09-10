@@ -1,6 +1,7 @@
 // Extension explicite : ce module reste ainsi importable tel quel par Node,
 // ce qui permet de verifier la garde sans navigateur.
 import { isAuthenticated } from '../auth.js'
+import { peut } from '../rbac.js'
 
 // SCRUM-13 - Decision de la garde de navigation, isolee dans une fonction pure
 // pour rester lisible et verifiable sans navigateur.
@@ -24,6 +25,22 @@ export function resolveNavigation(to) {
   // SCRUM-14 : un utilisateur deja connecte n'a rien a faire sur /login.
   // Cela evite aussi qu'un aller-retour login <-> dashboard ne boucle.
   if (to.name === 'login' && connecte) {
+    return { name: 'dashboard' }
+  }
+
+  // SCRUM-535 : la route exige-t-elle une permission que ce role n'a pas ?
+  //
+  // requiresAuth ne verifiait que la presence d'un compte. Un patient
+  // authentifie atteignait donc /utilisateurs ou /patients en saisissant
+  // l'URL, meme si le menu ne lui proposait pas le lien (SCRUM-533) et que
+  // les boutons y etaient masques (SCRUM-534) : il voyait l'ecran.
+  //
+  // On renvoie vers le tableau de bord, seul ecran ouvert a tous les roles
+  // authentifies : pas de cul-de-sac, et pas de nouvelle page a creer.
+  //
+  // Ce controle n'est pas une securite : il evite d'ouvrir un ecran dont
+  // toutes les donnees viendront de requetes que le backend refusera.
+  if (connecte && to.meta?.permission && !peut(to.meta.permission)) {
     return { name: 'dashboard' }
   }
 

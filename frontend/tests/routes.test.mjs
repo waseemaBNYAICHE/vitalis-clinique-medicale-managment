@@ -24,6 +24,7 @@ globalThis.localStorage = creerStockage()
 globalThis.sessionStorage = creerStockage()
 
 const { routes } = await import('../src/router/routes.js')
+const { saveSession, clearSession } = await import('../src/auth.js')
 const { resolveNavigation } = await import('../src/router/guards.js')
 
 const cas = []
@@ -65,9 +66,18 @@ const naviguer = async (chemin) => {
   return router.currentRoute.value
 }
 
+// SCRUM-535 : "connecte" ne suffit plus. Les routes privees declarent
+// desormais une permission (meta.permission), il faut donc un role pour les
+// atteindre. On se connecte en administrateur : ce fichier verifie la
+// protection par AUTHENTIFICATION, le filtrage par ROLE est verifie dans
+// acces.test.mjs.
 const connecter = () => {
-  localStorage.clear(); sessionStorage.clear()
-  localStorage.setItem('token', 'jeton-de-test')
+  clearSession()
+  saveSession({
+    token: 'jeton-de-test',
+    user: { id: 1, name: 'Test', role: 'administrateur' },
+    remember: true
+  })
 }
 const deconnecter = () => { localStorage.clear(); sessionStorage.clear() }
 

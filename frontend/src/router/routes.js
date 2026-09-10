@@ -38,6 +38,19 @@ export const routes = [
   // fusionne le meta de tous les enregistrements traverses, chaque enfant en
   // herite donc sans avoir a le repeter.
   //
+  // SCRUM-535 - meta.permission complete requiresAuth. Jusqu'ici toute route
+  // privee se contentait d'exiger un compte : n'importe quel role atteignait
+  // donc /utilisateurs ou /patients en tapant l'URL. Masquer le lien
+  // (SCRUM-533) et les boutons (SCRUM-534) ne change rien a une URL saisie a
+  // la main.
+  //
+  // Le tableau de bord n'en porte pas volontairement : DashboardController
+  // choisit son contenu selon le role, tout compte authentifie peut l'ouvrir.
+  //
+  // Rappel : ceci reste de l'affichage. Le backend refuse l'operation par un
+  // 403 quoi qu'il arrive ; on evite seulement d'ouvrir un ecran vide ou
+  // trompeur.
+  //
   // SCRUM-532 : /dashboard etait declare deux fois, ici et une seconde fois
   // hors de ce layout, sous le meme nom. C'est l'enfant qui gagnait, la
   // declaration isolee ne servait donc a rien - mais elle laissait croire
@@ -55,17 +68,20 @@ export const routes = [
       {
         path: 'patients',
         name: 'patients',
-        component: () => import('../views/Patients/PatientsView.vue')
+        component: () => import('../views/Patients/PatientsView.vue'),
+        meta: { permission: 'patients.read' }
       },
       {
         path: 'patients/new',
         name: 'patient-create',
-        component: () => import('../views/Patients/PatientCreateView.vue')
+        component: () => import('../views/Patients/PatientCreateView.vue'),
+        meta: { permission: 'patients.create' }
       },
       {
         path: 'utilisateurs',
         name: 'utilisateurs',
-        component: () => import('../views/Utilisateur/UtilisateursView.vue')
+        component: () => import('../views/Utilisateur/UtilisateursView.vue'),
+        meta: { permission: 'roles.manage' }
       }
     ]
   },
