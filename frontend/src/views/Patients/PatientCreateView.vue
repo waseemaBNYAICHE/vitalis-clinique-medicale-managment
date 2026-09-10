@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../../api'
+import api, { messageErreur } from '../../api'
 
 const router = useRouter()
 
@@ -41,9 +41,11 @@ const submitPatient = async () => {
       validationErrors.value = error.response.data?.errors || {}
       errorMessage.value = 'Veuillez vérifier les informations saisies.'
     } else {
-      errorMessage.value =
-        error.response?.data?.message ||
+      // SCRUM-531 : voir messageErreur() dans api.js.
+      errorMessage.value = messageErreur(
+        error,
         "Une erreur est survenue lors de l'ajout du patient."
+      )
     }
   } finally {
     loading.value = false

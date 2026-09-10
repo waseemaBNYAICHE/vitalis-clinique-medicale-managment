@@ -46,4 +46,33 @@ api.interceptors.response.use(
   }
 )
 
+/**
+ * SCRUM-531 - Message affichable a l'utilisateur pour une erreur d'API.
+ *
+ * Les vues affichaient error.response.data.message quel que soit le code.
+ * Ce champ est redige pour l'utilisateur sur les erreurs 4xx (validation,
+ * identifiants invalides, acces refuse), mais sur une erreur serveur il
+ * decrit une panne technique - et en developpement, APP_DEBUG expose en plus
+ * la classe d'exception et le chemin du fichier. Rien de tout cela n'a sa
+ * place dans l'interface.
+ *
+ * On ne fait donc confiance au message du backend que pour les codes 4xx, et
+ * on retombe sur un texte neutre pour le reste (5xx, coupure reseau).
+ *
+ * @param {unknown} error Erreur remontee par axios.
+ * @param {string} secours Message affiche si celui du backend n'est pas sur.
+ */
+export function messageErreur(error, secours) {
+  const statut = error?.response?.status
+  const message = error?.response?.data?.message
+
+  const estErreurClient = typeof statut === 'number' && statut >= 400 && statut < 500
+
+  if (estErreurClient && typeof message === 'string' && message !== '') {
+    return message
+  }
+
+  return secours
+}
+
 export default api

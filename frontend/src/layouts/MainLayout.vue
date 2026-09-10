@@ -181,6 +181,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '../api'
+import { closeSession, getUser } from '../auth.js'
 
 const router = useRouter()
 
@@ -193,32 +195,33 @@ const searchText = ref('')
    USER
 ========================= */
 
-const storedUser =
-  localStorage.getItem('user') ||
-  sessionStorage.getItem('user')
-
-let parsedUser = {}
-
-try {
-  parsedUser = storedUser
-    ? JSON.parse(storedUser)
-    : {}
-} catch (error) {
-  parsedUser = {}
-}
+// SCRUM-531 : la session se lit via auth.js, seul module a connaitre les
+// cles de stockage. Ce composant les recopiait ('user', 'token') et refaisait
+// le JSON.parse de son cote : deux implementations a maintenir, dont une qui
+// serait restee en arriere le jour ou les cles changent. auth.js gere deja le
+// cas d'une donnee illisible.
+const parsedUser = getUser() ?? {}
 
 const imageError = ref(false)
 
+// SCRUM-531 : sans session lisible, l'en-tete affichait "Administrateur" et
+// un role 'administrateur'. Un defaut qui accorde le role le plus eleve est
+// un defaut qui echoue du mauvais cote : c'est precisement la valeur sur
+// laquelle SCRUM-533 et SCRUM-534 s'appuieront pour decider ce qui est
+// visible. On repart donc d'une identite neutre et sans privilege.
+//
+// L'autorisation reelle reste cote backend : cette valeur ne sert qu'a
+// l'affichage.
 const userName = computed(() => {
   return (
     parsedUser?.name ||
     parsedUser?.nom ||
-    'Administrateur'
+    'Utilisateur'
   )
 })
 
 const userRole = computed(() => {
-  return parsedUser?.role || 'administrateur'
+  return parsedUser?.role || null
 })
 
 const formattedRole = computed(() => {
@@ -267,12 +270,16 @@ const currentYear = new Date().getFullYear()
    LOGOUT
 ========================= */
 
+// SCRUM-531 : la deconnexion se contentait de vider le stockage du
+// navigateur. Le jeton Sanctum restait donc valide cote serveur jusqu'a son
+// expiration (12 h) : sur un poste partage de la clinique, un jeton recupere
+// apres coup continuait d'ouvrir l'API alors que l'utilisateur se croyait
+// deconnecte. La route POST /api/logout existait deja et revoque le jeton
+// courant - elle n'etait simplement jamais appelee.
+//
+// closeSession() revoque puis efface, et efface meme si la revocation echoue.
 const logout = async () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-
-  sessionStorage.removeItem('token')
-  sessionStorage.removeItem('user')
+  await closeSession(() => api.post('/logout'))
 
   await router.push('/login')
 }

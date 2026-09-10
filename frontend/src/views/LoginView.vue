@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import api from '../api'
+import api, { messageErreur } from '../api'
 import { resolveRedirection } from '../router/guards'
 import { saveSession } from '../auth.js'
 
@@ -43,8 +43,12 @@ const login = async () => {
     if (error.response?.status === 401) {
       errorMessage.value = 'Email ou mot de passe incorrect.'
     } else {
-      errorMessage.value = error.response?.data?.message ||
+      // SCRUM-531 : le message du backend n'est repris que pour les
+      // erreurs 4xx. Sur une erreur serveur il decrit une panne technique.
+      errorMessage.value = messageErreur(
+        error,
         'Une erreur est survenue lors de la connexion.'
+      )
     }
   } finally {
     loading.value = false

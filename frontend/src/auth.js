@@ -85,3 +85,38 @@ export function clearSession() {
     stockage.removeItem(CLE_USER)
   }
 }
+
+/**
+ * SCRUM-531 - Ferme la session : revocation cote serveur PUIS effacement local.
+ *
+ * Se deconnecter en vidant seulement le stockage ne suffit pas. Le jeton
+ * Sanctum reste valide cote serveur jusqu'a son expiration (12 h, SCRUM-526) :
+ * un jeton recupere apres coup sur un poste partage de la clinique - console
+ * du navigateur, sauvegarde de profil, extension - continuerait d'ouvrir
+ * l'API. C'est justement ce que fait POST /api/logout, qui supprime le jeton
+ * courant.
+ *
+ * L'effacement local a lieu dans tous les cas, y compris si l'appel echoue
+ * (reseau coupe, jeton deja expire). Un serveur injoignable ne doit pas
+ * laisser l'utilisateur connecte sur la machine : rester connecte localement
+ * serait le pire des deux mondes.
+ *
+ * La revocation est passee en parametre plutot qu'importee : auth.js est
+ * importe par api.js, l'inverse creerait un cycle. Cela rend aussi la
+ * sequence verifiable sans navigateur.
+ *
+ * @param {() => Promise<unknown>} revoquer Appel HTTP de revocation.
+ */
+export async function closeSession(revoquer) {
+  try {
+    if (typeof revoquer === 'function') {
+      await revoquer()
+    }
+  } catch {
+    // Le jeton est peut-etre deja invalide, ou le serveur injoignable : il
+    // n'y a rien a faire de plus, et surtout rien qui justifie de conserver
+    // la session locale.
+  } finally {
+    clearSession()
+  }
+}

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api from '../api'
+import api, { messageErreur } from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,9 +35,11 @@ const resetPassword = async () => {
       router.push('/login')
     }, 1500)
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message ||
+    // SCRUM-531 : voir messageErreur() dans api.js.
+    errorMessage.value = messageErreur(
+      error,
       'Impossible de réinitialiser le mot de passe.'
+    )
   } finally {
     loading.value = false
   }

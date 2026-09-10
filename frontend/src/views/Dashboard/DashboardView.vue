@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api.js'
-import { getUser, clearSession } from '../../auth.js'
+import { getUser, closeSession } from '../../auth.js'
 
 const router = useRouter()
 
@@ -74,19 +74,14 @@ const fetchDashboard = async () => {
   }
 }
 
+// SCRUM-531 : la sequence "revoquer puis effacer" vit desormais dans
+// auth.js (closeSession). Elle etait ecrite ici et, dans une version
+// differente et incomplete, dans MainLayout - qui n'appelait pas /logout du
+// tout. Une seule implementation evite que les deux divergent a nouveau.
 const logout = async () => {
-  try {
-    // Révoque le token côté serveur. L'en-tête Authorization est ajouté par
-    // l'intercepteur d'api.js.
-    await api.post('/logout')
-  } catch {
-    // Même si l'appel échoue, on déconnecte localement
-  } finally {
-    // SCRUM-15 : efface la session dans les deux stockages, pour ne laisser
-    // aucune donnée utilisateur obsolète derrière soi.
-    clearSession()
-    router.push('/login')
-  }
+  await closeSession(() => api.post('/logout'))
+
+  router.push('/login')
 }
 
 onMounted(fetchDashboard)

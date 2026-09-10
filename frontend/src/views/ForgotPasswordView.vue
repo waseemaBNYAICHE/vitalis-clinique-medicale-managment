@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import api from '../api'
+import api, { messageErreur } from '../api'
 
 const email = ref('')
 const loading = ref(false)
@@ -20,9 +20,11 @@ const sendResetLink = async () => {
     successMessage.value =
       response.data?.message || 'Lien de réinitialisation envoyé'
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message ||
+    // SCRUM-531 : voir messageErreur() dans api.js.
+    errorMessage.value = messageErreur(
+      error,
       "Impossible d'envoyer le lien de réinitialisation."
+    )
   } finally {
     loading.value = false
   }

@@ -37,17 +37,29 @@ export function resolveNavigation(to) {
  * "/login" : cela evite une boucle de redirection et empeche qu'un lien
  * malveillant (`?redirect=https://site-externe`) ne renvoie l'utilisateur
  * vers un autre site apres sa connexion.
+ *
+ * SCRUM-531 - Les antislashs sont normalises en slashs avant le controle,
+ * comme le fait le navigateur, sans quoi "/\\site-externe" serait accepte.
  */
 export function resolveRedirection(redirect) {
   if (typeof redirect !== 'string') {
     return '/dashboard'
   }
 
-  const interne = redirect.startsWith('/') && !redirect.startsWith('//')
+  // SCRUM-531 - Les navigateurs traitent l'antislash comme un slash dans une
+  // URL. "/\\site-externe" passait donc le controle ci-dessous (il commence
+  // par "/" et pas par "//") tout en etant resolu par le navigateur en
+  // "//site-externe", c'est-a-dire une adresse externe. On normalise avant de
+  // decider, plutot que d'ajouter un cas particulier de plus.
+  const normalise = redirect.replaceAll('\\', '/')
 
-  if (!interne || redirect === '/login' || redirect.startsWith('/login?')) {
+  const interne = normalise.startsWith('/') && !normalise.startsWith('//')
+
+  if (!interne || normalise === '/login' || normalise.startsWith('/login?')) {
     return '/dashboard'
   }
 
-  return redirect
+  // SCRUM-531 - On renvoie la valeur normalisee, pas l'originale : sinon
+  // l'appelant naviguerait vers la chaine non verifiee.
+  return normalise
 }
