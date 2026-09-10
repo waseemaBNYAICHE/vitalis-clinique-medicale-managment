@@ -152,4 +152,33 @@ enum Role: string
     {
         return in_array($permission, $this->permissions(), true);
     }
+
+    /**
+     * SCRUM-528 - Ce role voit-il TOUS les dossiers, ou seulement les siens ?
+     *
+     * Une permission dit ce que l'utilisateur a le droit de faire
+     * (CONSULTATIONS_READ). Elle ne dit pas SUR QUELS dossiers. Les enums
+     * decrivaient depuis SCRUM-524 un perimetre "les siennes" pour le medecin
+     * et le patient, mais rien ne l'appliquait : les Gates repondaient
+     * "autorise" sans jamais regarder le dossier vise. Un patient muni de
+     * CONSULTATIONS_READ aurait donc lu les consultations de tout le monde
+     * des qu'une route aurait consomme cette permission.
+     *
+     * Cette methode est le pendant manquant de accorde() : la premiere
+     * repond "a-t-il le droit ?", celle-ci "sur quels dossiers ?".
+     *
+     * - Administrateur : responsable de l'etablissement.
+     * - Secretaire : accueille et oriente indifferemment tous les patients.
+     * - Infirmier : les soins d'un service ne suivent pas le decoupage par
+     *   medecin traitant.
+     * - Medecin : ses propres patients (secret medical entre confreres).
+     * - Patient : son seul dossier.
+     */
+    public function accedeATousLesDossiers(): bool
+    {
+        return match ($this) {
+            self::ADMINISTRATEUR, self::SECRETAIRE, self::INFIRMIER => true,
+            self::MEDECIN, self::PATIENT => false,
+        };
+    }
 }

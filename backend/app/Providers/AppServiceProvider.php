@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Auth\PerimetreDossier;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
@@ -106,19 +107,43 @@ class AppServiceProvider extends ServiceProvider
      * d'utiliser le middleware natif `can:` sur les routes. Il n'y a donc pas
      * de middleware supplementaire a ecrire ni de table a creer : la reponse
      * vient de la correspondance role -> permissions definie dans l'enum Role.
+     *
+     * SCRUM-528 - Ces Gates acceptent desormais un dossier optionnel et
+     * verifient, le cas echeant, que l'utilisateur en fait bien partie. Voir
+     * App\Auth\PerimetreDossier.
      */
     private function declarerPermissions(): void
     {
         foreach (Permission::cases() as $permission) {
-            Gate::define($permission->value, function (User $user) use ($permission) {
+            Gate::define($permission->value, function (User $user, ?object $dossier = null) use ($permission) {
                 $role = Role::tryFrom((string) $user->role);
 
+                // 1. Le role accorde-t-il la permission ? (SCRUM-518)
+                //
                 // Le message est conserve a l'identique pour que les clients
                 // existants voient la meme reponse 403 qu'avec le middleware
                 // 'role' utilise jusqu'ici.
-                return $role !== null && $role->accorde($permission)
-                    ? ReponseAutorisation::allow()
-                    : ReponseAutorisation::deny('Accès interdit');
+                if ($role === null || ! $role->accorde($permission)) {
+                    return ReponseAutorisation::deny('Accès interdit');
+                }
+
+                // 2. SCRUM-528 - Et sur CE dossier ?
+                //
+                // Deuxieme question, distincte de la premiere : un medecin a
+                // le droit de lire une consultation, mais pas n'importe
+                // laquelle. Tant que l'appelant ne designe aucun dossier
+                // ($dossier vaut null), il n'y a rien a cloisonner et le
+                // comportement reste celui d'avant : c'est le cas de toutes
+                // les routes actuelles, qui utilisent 'can:permission' sans
+                // argument. Des qu'une route passera un modele - via
+                // 'can:consultations.read,consultation' et le model binding -
+                // l'appartenance sera verifiee ici, sans rien changer aux
+                // routes existantes.
+                if ($dossier !== null && ! PerimetreDossier::accessible($user, $dossier)) {
+                    return ReponseAutorisation::deny('Accès interdit');
+                }
+
+                return ReponseAutorisation::allow();
             });
         }
     }

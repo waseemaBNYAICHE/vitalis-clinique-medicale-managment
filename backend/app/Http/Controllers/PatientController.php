@@ -91,22 +91,56 @@ return response()->json([
 
    
 
+   /**
+    * Recherche d'un dossier patient.
+    *
+    * SCRUM-528 - Les deux filtres sont facultatifs. Appelee sans aucun
+    * parametre, cette route executait Patient::query()->get() et renvoyait
+    * donc l'INTEGRALITE du fichier patients, sans pagination et avec toutes
+    * les donnees personnelles (CIN, telephone, email, date de naissance,
+    * groupe sanguin).
+    *
+    * C'etait un contournement complet de la pagination de index(), qui se
+    * limite volontairement a 10 dossiers par page : un seul GET suffisait a
+    * exporter tout le fichier. La permission 'patients.read' autorise a
+    * CONSULTER un dossier, pas a exporter le registre entier.
+    *
+    * Trois corrections : au moins un critere est exige, les criteres sont
+    * valides, et le resultat est pagine comme celui de index().
+    */
    public function search(Request $request)
    {
+    $validated = $request->validate([
+        'cin' => ['nullable', 'string', 'max:50'],
+        'date_naissance' => ['nullable', 'date'],
+    ]);
+
+    $criteres = array_filter(
+        $validated,
+        fn ($valeur) => $valeur !== null && $valeur !== ''
+    );
+
+    if ($criteres === []) {
+        return response()->json([
+            'message' => 'Erreur de validation',
+            'errors' => [
+                'cin' => ['Indiquez au moins un critere de recherche (cin ou date_naissance).'],
+            ],
+        ], 422);
+    }
+
     $query = Patient::query();
 
-    if ($request->filled('cin')) {
-        $query->where('cin', $request->cin);
+    if (isset($criteres['cin'])) {
+        $query->where('cin', $criteres['cin']);
     }
 
-    if ($request->filled('date_naissance')) {
-        $query->where('date_naissance', $request->date_naissance);
+    if (isset($criteres['date_naissance'])) {
+        $query->where('date_naissance', $criteres['date_naissance']);
     }
-
-    $patients = $query->get();
 
     return response()->json([
-        'patients' => $patients
+        'patients' => $query->paginate(10)
     ], 200);
    }
 
