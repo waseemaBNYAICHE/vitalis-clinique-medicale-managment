@@ -62,6 +62,23 @@ class CouvertureEndpointsSecurisesTest extends TestCase
      * elle-meme son contenu selon son role : il n'y a donc rien a cloisonner
      * par permission.
      */
+    /**
+     * Permissions detenues par TOUS les roles, protegees par l'appartenance.
+     *
+     * SCRUM-605 - Le balayage ci-dessous exige normalement qu'au moins un
+     * role se voie refuser chaque permission : une permission que tout le
+     * monde detient ne filtre rien. La lecture des rendez-vous est une
+     * exception assumee - chacun consulte son agenda, y compris le patient -
+     * mais elle n'est alors PLUS protegee par le role : seul le cloisonnement
+     * par proprietaire la protege.
+     *
+     * Y inscrire une permission est donc un engagement : son cloisonnement
+     * doit etre teste. Celui des rendez-vous l'est dans RendezVousAccesTest.
+     */
+    private const PERMISSIONS_CLOISONNEES_PAR_PROPRIETAIRE = [
+        'rendez-vous.read',
+    ];
+
     private const SANS_PERMISSION_ASSUMEE = [
         'api/logout',     // revoque le jeton de l'appelant
         'api/me',         // renvoie le compte de l'appelant
@@ -83,7 +100,10 @@ class CouvertureEndpointsSecurisesTest extends TestCase
             }
 
             $middleware = implode(',', array_filter($route->gatherMiddleware(), 'is_string'));
-            preg_match('/can:([a-zA-Z.]+)/', $middleware, $correspondance);
+            // SCRUM-605 : le tiret manquait dans la classe de caracteres. Une
+            // permission comme 'rendez-vous.read' etait lue 'rendez', et ce
+            // balayage ne verifiait donc rien sur ces routes.
+            preg_match('/can:([a-zA-Z.\-]+)/', $middleware, $correspondance);
 
             $routes[] = [
                 'methode' => $route->methods()[0],
@@ -107,6 +127,7 @@ class CouvertureEndpointsSecurisesTest extends TestCase
             str_contains($uri, 'api/medecins/{id}') => str_replace('{id}', (string) $identifiants['medecin'], $uri),
             str_contains($uri, 'api/specialites/{id}') => str_replace('{id}', (string) $identifiants['specialite'], $uri),
             str_contains($uri, 'api/users/{user}') => str_replace('{user}', (string) $identifiants['cible'], $uri),
+            str_contains($uri, 'api/rendez-vous/{id}') => str_replace('{id}', (string) $identifiants['rendez_vous'], $uri),
             default => $uri,
         };
     }
@@ -124,24 +145,24 @@ class CouvertureEndpointsSecurisesTest extends TestCase
             'prenom' => 'Fatima',
             'date_naissance' => '1990-01-01',
             'sexe' => 'F',
-            'cin' => 'CIN'.random_int(100000, 999999),
+            'cin' => 'CIN'.uniqid(),
             'telephone' => '0600000000',
-            'email' => 'patient'.random_int(1000, 9999).'@example.com',
+            'email' => 'patient'.uniqid().'@example.com',
             'groupe_sanguin' => 'O+',
         ]);
 
         $idSpecialite = DB::table('specialites')->insertGetId([
-            'nom_specialite' => 'Cardiologie'.random_int(100, 999),
+            'nom_specialite' => 'Cardiologie'.uniqid(),
             'created_at' => now(),
             'updated_at' => now(),
         ], 'id_specialite');
 
         $idMedecin = DB::table('medecins')->insertGetId([
-            'matricule' => 'MAT'.random_int(100000, 999999),
+            'matricule' => 'MAT'.uniqid(),
             'nom' => 'Bennani',
             'prenom' => 'Docteur',
             'telephone' => '0600000000',
-            'email' => 'medecin'.random_int(1000, 9999).'@example.com',
+            'email' => 'medecin'.uniqid().'@example.com',
             'date_embauche' => '2020-01-01',
             'tarif_consultation' => 300,
             'id_specialite' => $idSpecialite,
@@ -149,10 +170,21 @@ class CouvertureEndpointsSecurisesTest extends TestCase
             'updated_at' => now(),
         ], 'id_medecin');
 
+        $rendezVous = \App\Models\RendezVous::create([
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '09:00:00',
+            'heure_fin' => '09:30:00',
+            'motif' => 'Controle',
+            'statut' => 'confirme',
+            'id_patient' => $patient->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
         return [
             'patient' => $patient->id_patient,
             'medecin' => $idMedecin,
             'specialite' => $idSpecialite,
+            'rendez_vous' => $rendezVous->id_rendez_vous,
             'cible' => User::factory()->create(['role' => 'patient'])->id,
         ];
     }
@@ -290,11 +322,19 @@ class CouvertureEndpointsSecurisesTest extends TestCase
                 continue;
             }
 
+            if (in_array($route['permission'], self::PERMISSIONS_CLOISONNEES_PAR_PROPRIETAIRE, true)) {
+                // Protegee par l'appartenance, pas par le role : voir la
+                // constante et RendezVousAccesTest.
+                continue;
+            }
+
             $role = $this->roleSansLaPermission($route['permission']);
 
             $this->assertNotNull(
                 $role,
-                "Aucun role ne se voit refuser {$route['permission']} : la permission ne protege rien."
+                "Aucun role ne se voit refuser {$route['permission']} : la permission ne protege rien. "
+                ."Si c'est volontaire, inscrivez-la dans PERMISSIONS_CLOISONNEES_PAR_PROPRIETAIRE "
+                ."et testez son cloisonnement."
             );
 
             $this->app['auth']->forgetGuards();
@@ -395,7 +435,7 @@ class CouvertureEndpointsSecurisesTest extends TestCase
                 'prenom' => 'Cree par '.$role,
                 'date_naissance' => '1990-01-01',
                 'sexe' => 'F',
-                'cin' => 'CIN'.random_int(100000, 999999),
+                'cin' => 'CIN'.uniqid(),
                 'telephone' => '0600000000',
                 'email' => $role.random_int(1000, 9999).'@example.com',
                 'groupe_sanguin' => 'O+',

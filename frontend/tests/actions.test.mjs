@@ -81,15 +81,28 @@ verifier('SCRUM-534 administrateur : toutes les actions sont proposees', () => {
  * patient", "Consultation rapide", "Ajouter un utilisateur", "Modifier",
  * "Supprimer" - autant d'operations qui lui repondent 403.
  */
-verifier('SCRUM-534 patient : aucune action n est proposee', () => {
+verifier('SCRUM-605 patient : seule la prise de rendez-vous lui est proposee', () => {
   connecterAvecRole(ROLES.PATIENT)
 
+  // SCRUM-49 accorde RENDEZ_VOUS_CREATE au patient : la prise de rendez-vous
+  // en ligne est la seule action qu'il puisse declencher. Le backend la
+  // restreint a son propre dossier (RendezVousAccesTest).
+  const seuleActionAutorisee = 'tableauBord.nouveauRendezVous'
+
+  assert.equal(peutAction(seuleActionAutorisee), true)
+
   for (const action of Object.keys(PERMISSION_PAR_ACTION)) {
+    if (action === seuleActionAutorisee) continue
+
     assert.equal(peutAction(action), false, `le patient ne devrait pas voir ${action}`)
   }
 
-  // Le panneau entier disparait plutot que d'afficher un cadre vide.
-  assert.equal(peutAuMoinsUneAction(ACTIONS_RAPIDES), false)
+  // Le patient ne cree, ne modifie ni ne supprime aucun dossier medical.
+  for (const action of ['patients.creer', 'patients.modifier', 'patients.supprimer',
+    'tableauBord.consultationRapide', 'tableauBord.demandeExamen',
+    'utilisateurs.ajouter', 'utilisateurs.modifier', 'utilisateurs.supprimer']) {
+    assert.equal(peutAction(action), false, action)
+  }
 })
 
 verifier('SCRUM-534 seul l administrateur gere les comptes utilisateurs', () => {
@@ -130,6 +143,12 @@ verifier('SCRUM-534 le personnel cree et modifie un dossier patient', () => {
     assert.equal(peutAction('patients.creer'), true, `role ${role}`)
     assert.equal(peutAction('patients.modifier'), true, `role ${role}`)
   }
+})
+
+verifier('SCRUM-605 le panneau disparait pour un role sans aucune action', () => {
+  // Sans session, aucune action : le panneau ne doit pas s'afficher vide.
+  clearSession()
+  assert.equal(peutAuMoinsUneAction(ACTIONS_RAPIDES), false)
 })
 
 verifier('SCRUM-534 activite rapide : chaque role ne voit que ce qui le concerne', () => {

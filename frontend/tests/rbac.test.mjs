@@ -34,20 +34,45 @@ const cas = []
 const verifier = (nom, fn) => { fn(); cas.push(nom) }
 
 const ici = dirname(fileURLToPath(import.meta.url))
-const CHEMIN_ENUM_PHP = resolve(ici, '../../backend/app/Enums/Role.php')
+const CHEMIN_ROLE_PHP = resolve(ici, '../../backend/app/Enums/Role.php')
+const CHEMIN_PERMISSION_PHP = resolve(ici, '../../backend/app/Enums/Permission.php')
+
+/**
+ * Valeur reelle de chaque constante de l'enum Permission.
+ *
+ * SCRUM-605 - Cette table etait auparavant deduite du NOM de la constante
+ * (PATIENTS_READ -> patients.read). La deduction s'est cassee des qu'une
+ * valeur a cesse de suivre le nom : RENDEZ_VOUS_READ vaut 'rendez-vous.read',
+ * avec un tiret. On lit donc la valeur declaree, seule source fiable.
+ *
+ * @returns {Record<string, string>}
+ */
+const lireValeursPermissions = () => {
+  const source = readFileSync(CHEMIN_PERMISSION_PHP, 'utf8')
+  const valeurs = {}
+
+  for (const ligne of source.split('\n')) {
+    const declaration = ligne.match(/case\s+([A-Z_]+)\s*=\s*'([^']+)'\s*;/)
+    if (declaration) {
+      valeurs[declaration[1]] = declaration[2]
+    }
+  }
+
+  return valeurs
+}
 
 /**
  * Lit la matrice role -> permissions directement dans l'enum PHP.
  *
  * Le but n'est pas d'analyser du PHP en general, mais de detecter une
  * divergence : si le backend gagne ou perd une permission, la copie du
- * frontend doit suivre. Le format vise est celui, stable, de
- * Role::permissions() : "self::ROLE => [" puis des "Permission::NOM,".
+ * frontend doit suivre.
  *
  * @returns {Record<string, string[]>}
  */
 const lireMatricePhp = () => {
-  const source = readFileSync(CHEMIN_ENUM_PHP, 'utf8')
+  const valeurs = lireValeursPermissions()
+  const source = readFileSync(CHEMIN_ROLE_PHP, 'utf8')
   const corps = source.slice(source.indexOf('public function permissions'))
 
   const matrice = {}
@@ -61,15 +86,15 @@ const lireMatricePhp = () => {
       continue
     }
 
-    const permission = ligne.match(/Permission::([A-Z_]+)\s*,/)
-    if (permission && roleCourantPhp) {
-      // PATIENTS_READ -> patients.read ; RENDEZ_VOUS_READ -> le dernier
-      // segment est l'action, le reste la ressource.
-      const brut = permission[1].toLowerCase()
-      const coupure = brut.lastIndexOf('_')
-      matrice[roleCourantPhp].push(
-        `${brut.slice(0, coupure)}.${brut.slice(coupure + 1)}`
-      )
+    const reference = ligne.match(/Permission::([A-Z_]+)\s*,/)
+    if (reference && roleCourantPhp) {
+      const valeur = valeurs[reference[1]]
+
+      if (valeur === undefined) {
+        throw new Error(`Permission::${reference[1]} n'existe pas dans Permission.php`)
+      }
+
+      matrice[roleCourantPhp].push(valeur)
     }
 
     if (ligne.includes('};')) break
