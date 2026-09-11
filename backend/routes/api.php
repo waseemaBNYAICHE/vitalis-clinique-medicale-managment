@@ -172,6 +172,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('can:ordonnances.read');
     Route::get('/ordonnances/{id}', [OrdonnanceController::class, 'show'])
         ->middleware('can:ordonnances.read');
+    Route::get('/ordonnances/{id}/imprimer', [OrdonnanceController::class, 'imprimer'])
+        ->middleware('can:ordonnances.read');
     Route::post('/ordonnances', [OrdonnanceController::class, 'store'])
         ->middleware('can:ordonnances.create');
     Route::put('/ordonnances/{id}', [OrdonnanceController::class, 'update'])
