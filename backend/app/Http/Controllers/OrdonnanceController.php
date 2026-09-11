@@ -105,6 +105,27 @@ class OrdonnanceController extends Controller
         ], 200);
     }
 
+    public function imprimer(Request $request, $id)
+    {
+        $ordonnance = $this->trouverOuRefuser(
+        Ordonnance::with([
+            'consultation.rendezVous.patient',
+            'consultation.rendezVous.medecin',
+            'lignes.medicament',
+        ])->find($id),
+        $request
+        );
+
+        Gate::authorize('ordonnances.read', $ordonnance);
+
+        return response()->json([
+        'ordonnance' => $ordonnance,
+        'patient' => $ordonnance->consultation?->patient(),
+        'medecin' => $ordonnance->consultation?->medecin(),
+         ], 200);
+    }
+
+
    public function store(Request $request)
     {
     $request->validate([
