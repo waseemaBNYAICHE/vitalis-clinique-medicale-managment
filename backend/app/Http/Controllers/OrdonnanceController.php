@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\PerimetreDossier;
 use App\Enums\Role;
 use App\Models\Ordonnance;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,30 +81,6 @@ class OrdonnanceController extends Controller
                     $q->where('id_patient', $utilisateur->id_patient);
                 }
             }
-        );
-    }
-
-
-    /**
-     * Recupere un dossier sans reveler son existence a qui n'y a pas droit.
-     *
-     * SCRUM-568 - findOrFail() renvoyait 404 pour un identifiant inexistant
-     * et le controle d'acces 403 pour un dossier appartenant a autrui. La
-     * difference entre les deux reponses suffisait a enumerer les
-     * identifiants reellement utilises dans la clinique. Un role au perimetre
-     * restreint recoit donc le meme refus dans les deux cas. Un role au
-     * perimetre global garde un 404 : "introuvable" est pour lui une
-     * information legitime.
-     */
-    private function trouverOuRefuser(?object $dossier, Request $request): object
-    {
-        if ($dossier !== null) {
-            return $dossier;
-        }
-
-        abort(
-            PerimetreDossier::perimetreRestreint($request->user()) ? 403 : 404,
-            PerimetreDossier::perimetreRestreint($request->user()) ? 'Accès interdit' : 'Ressource introuvable'
         );
     }
 
