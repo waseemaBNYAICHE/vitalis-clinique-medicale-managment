@@ -2,44 +2,123 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Models\Ordonnance;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
+/**
+ * SCRUM-564 / SCRUM-566 - Ordonnances.
+ *
+ * Deux protections completent le middleware `can:` pose sur les routes.
+ *
+ * 1. Le cloisonnement. Une permission dit "a le droit de lire une
+ *    ordonnance", pas "celle-ci". Le role patient detient ORDONNANCES_READ
+ *    pour SON dossier (SCRUM-524) : sans verification du dossier vise, cette
+ *    permission ouvrirait l'ordonnance de tout le monde. On s'appuie sur les
+ *    Gates a ressource de SCRUM-528, qui delegent a PerimetreDossier.
+ *
+ * 2. La validation. Les entrees etaient reprises telles quelles via
+ *    $request->only(), sans aucune regle : un id_consultation inexistant
+ *    provoquait une erreur SQL, et rien ne bornait la taille des champs.
+ */
 class OrdonnanceController extends Controller
 {
-    public function index()
+    /**
+     * Regles communes a la creation et a la modification.
+     *
+     * `exists` sur id_consultation evite qu'une ordonnance soit rattachee a
+     * une consultation inexistante : c'est cette cle qui determine a quel
+     * patient et a quel medecin l'ordonnance appartient, donc qui pourra la
+     * lire ensuite.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function regles(bool $creation): array
     {
-        $ordonnances = Ordonnance::all();
+        $requis = $creation ? 'required' : 'sometimes';
+
+        return [
+            'date_ordonnance' => [$requis, 'date'],
+            'instructions_generales' => [$requis, 'string', 'max:2000'],
+            'duree_traitement' => [$requis, 'string', 'max:255'],
+            'type' => [$requis, 'string', 'max:255'],
+            'id_consultation' => [$requis, 'integer', 'exists:consultations,id_consultation'],
+        ];
+    }
+
+    /**
+     * Restreint une requete au perimetre du role qui la formule.
+     *
+     * PerimetreDossier repond dossier par dossier ; pour une liste il faut
+     * filtrer en base, sans quoi il faudrait charger toute la clinique pour
+     * n'en garder que quelques lignes. La regle appliquee est la meme : un
+     * medecin ses patients, un patient son dossier, le reste du personnel
+     * tout l'etablissement.
+     */
+    private function limiterAuPerimetre(Builder $requete, Request $request): Builder
+    {
+        $utilisateur = $request->user();
+        $role = Role::tryFrom((string) $utilisateur->role);
+
+        if ($role === null) {
+            // Role inattendu en base : on n'expose rien plutot que tout.
+            return $requete->whereRaw('1 = 0');
+        }
+
+        if ($role->accedeATousLesDossiers()) {
+            return $requete;
+        }
+
+        return $requete->whereHas(
+            'consultation.rendezVous',
+            function ($q) use ($role, $utilisateur) {
+                if ($role === Role::MEDECIN) {
+                    $q->where('id_medecin', $utilisateur->id_medecin);
+                } else {
+                    $q->where('id_patient', $utilisateur->id_patient);
+                }
+            }
+        );
+    }
+
+    public function index(Request $request)
+    {
+        $ordonnances = $this->limiterAuPerimetre(Ordonnance::query(), $request)->get();
 
         return response()->json([
-            'ordonnances' => $ordonnances
+            'ordonnances' => $ordonnances,
         ], 200);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $ordonnance = Ordonnance::findOrFail($id);
 
+        // Repond 403 si l'ordonnance ne releve pas du perimetre de l'appelant.
+        Gate::authorize('ordonnances.read', $ordonnance);
+
         return response()->json([
-            'ordonnance' => $ordonnance
+            'ordonnance' => $ordonnance,
         ], 200);
     }
 
     public function store(Request $request)
     {
-        $ordonnance = Ordonnance::create(
-            $request->only([
-                'date_ordonnance',
-                'instructions_generales',
-                'duree_traitement',
-                'type',
-                'id_consultation',
-            ])
-        );
+        $valide = $request->validate($this->regles(creation: true));
+
+        // La consultation determine le dossier : on verifie que l'appelant a
+        // le droit d'y prescrire avant de creer quoi que ce soit.
+        $ordonnance = new Ordonnance($valide);
+        Gate::authorize('ordonnances.create', $ordonnance);
+
+        $ordonnance->save();
 
         return response()->json([
             'message' => 'Ordonnance ajoutée avec succès',
-            'ordonnance' => $ordonnance
+            'ordonnance' => $ordonnance,
         ], 201);
     }
 
@@ -47,46 +126,67 @@ class OrdonnanceController extends Controller
     {
         $ordonnance = Ordonnance::findOrFail($id);
 
-        $ordonnance->update(
-            $request->only([
-                'date_ordonnance',
-                'instructions_generales',
-                'duree_traitement',
-                'type',
-                'id_consultation',
-            ])
-        );
+        Gate::authorize('ordonnances.update', $ordonnance);
+
+        $valide = $request->validate($this->regles(creation: false));
+
+        $ordonnance->update($valide);
 
         return response()->json([
             'message' => 'Ordonnance modifiée avec succès',
-            'ordonnance' => $ordonnance
+            'ordonnance' => $ordonnance,
         ], 200);
     }
 
-    public function historiquePatient($idPatient)
+    /**
+     * Historique des ordonnances d'un patient.
+     *
+     * SCRUM-564 : l'identifiant vient de l'URL. Il suffisait de le changer
+     * pour obtenir l'historique medicamenteux de n'importe quel patient de la
+     * clinique - un antecedent de traitement est une donnee de sante.
+     *
+     * Le filtre de perimetre s'applique en plus du patient demande : un
+     * patient qui reclame l'historique d'un autre obtient une liste vide, et
+     * non un refus. On ne revele donc pas non plus quels identifiants
+     * existent.
+     */
+    public function historiquePatient(Request $request, $idPatient)
     {
-        $ordonnances = Ordonnance::whereHas(
-            'consultation.rendezVous', 
-            function ($query) use ($idPatient) {
-                $query->where('id_patient', $idPatient);
-            }
-        )
-        ->orderBy('date_ordonnance', 'desc')
-        ->get();
+        $requete = Ordonnance::whereHas(
+            'consultation.rendezVous',
+            fn ($q) => $q->where('id_patient', $idPatient)
+        );
+
+        $ordonnances = $this->limiterAuPerimetre($requete, $request)
+            ->orderBy('date_ordonnance', 'desc')
+            ->get();
 
         return response()->json([
-            'historique' => $ordonnances
+            'historique' => $ordonnances,
         ], 200);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $ordonnance = Ordonnance::findOrFail($id);
+
+        Gate::authorize('ordonnances.delete', $ordonnance);
+
+        // SCRUM-566 : sans ce controle, la contrainte de cle etrangere des
+        // lignes remontait en PDOException, donc en 500 - avec la trace SQL
+        // quand APP_DEBUG est actif. Une dependance qui empeche la
+        // suppression est un conflit metier (409), pas une panne serveur.
+        // Meme traitement que PatientController pour ses rendez-vous.
+        if (DB::table('ligne_ordonnances')->where('id_ordonnance', $ordonnance->id_ordonnance)->exists()) {
+            return response()->json([
+                'message' => 'Impossible de supprimer cette ordonnance car elle contient des médicaments.',
+            ], 409);
+        }
 
         $ordonnance->delete();
 
         return response()->json([
-            'message' => 'Ordonnance supprimée avec succès'
+            'message' => 'Ordonnance supprimée avec succès',
         ], 200);
     }
 }
