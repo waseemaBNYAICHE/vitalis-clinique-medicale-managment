@@ -28,9 +28,12 @@ class SpecialiteController extends Controller
 
     public function store(Request $request)
     {
+    // SCRUM-567 : bornes alignees sur le schema (VARCHAR(255),
+    // DECIMAL(10,2)). Sans elles, une valeur surdimensionnee passait la
+    // validation et n'echouait qu'en base, en 500.
     $validated = $request->validate([
-        'nom_specialite' => 'required|string',
-        'description' => 'nullable|string',
+        'nom_specialite' => 'required|string|max:255',
+        'description' => 'nullable|string|max:2000',
     ]);
 
     $specialite = Specialite::create($validated);
@@ -46,8 +49,8 @@ class SpecialiteController extends Controller
     $specialite = Specialite::findOrFail($id);
 
     $validated = $request->validate([
-        'nom_specialite' => 'required|string',
-        'description' => 'nullable|string',
+        'nom_specialite' => 'required|string|max:255',
+        'description' => 'nullable|string|max:2000',
     ]);
 
     $specialite->update($validated);
