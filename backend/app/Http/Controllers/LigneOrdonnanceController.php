@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Auth\PerimetreDossier;
 use App\Models\LigneOrdonnance;
 use App\Models\Ordonnance;
 use Illuminate\Http\Request;
@@ -26,18 +27,43 @@ class LigneOrdonnanceController extends Controller
      * Le middleware `can:` de la route verifie la permission ; ici on verifie
      * le DOSSIER, via les Gates a ressource de SCRUM-528.
      */
-    private function ordonnanceAutorisee(int|string $idOrdonnance, string $permission): Ordonnance
+    private function ordonnanceAutorisee(int|string $idOrdonnance, string $permission, Request $request): Ordonnance
     {
-        $ordonnance = Ordonnance::findOrFail($idOrdonnance);
+        // SCRUM-568 : voir trouverOuRefuser() - un role au perimetre
+        // restreint ne doit pas distinguer "n'existe pas" de "pas la votre".
+        $ordonnance = $this->trouverOuRefuser(Ordonnance::find($idOrdonnance), $request);
 
         Gate::authorize($permission, $ordonnance);
 
         return $ordonnance;
     }
 
-    public function index($idOrdonnance)
+    /**
+     * Recupere un dossier sans reveler son existence a qui n'y a pas droit.
+     *
+     * SCRUM-568 - findOrFail() renvoyait 404 pour un identifiant inexistant
+     * et le controle d'acces 403 pour un dossier appartenant a autrui. La
+     * difference entre les deux reponses suffisait a enumerer les
+     * identifiants reellement utilises dans la clinique. Un role au perimetre
+     * restreint recoit donc le meme refus dans les deux cas. Un role au
+     * perimetre global garde un 404 : "introuvable" est pour lui une
+     * information legitime.
+     */
+    private function trouverOuRefuser(?object $dossier, Request $request): object
     {
-        $this->ordonnanceAutorisee($idOrdonnance, 'ordonnances.read');
+        if ($dossier !== null) {
+            return $dossier;
+        }
+
+        abort(
+            PerimetreDossier::perimetreRestreint($request->user()) ? 403 : 404,
+            PerimetreDossier::perimetreRestreint($request->user()) ? 'Accès interdit' : 'Ressource introuvable'
+        );
+    }
+
+    public function index(Request $request, $idOrdonnance)
+    {
+        $this->ordonnanceAutorisee($idOrdonnance, 'ordonnances.read', $request);
 
         $lignes = LigneOrdonnance::where('id_ordonnance', $idOrdonnance)->get();
 
@@ -48,7 +74,7 @@ class LigneOrdonnanceController extends Controller
 
     public function store(Request $request, $idOrdonnance)
     {
-        $this->ordonnanceAutorisee($idOrdonnance, 'ordonnances.update');
+        $this->ordonnanceAutorisee($idOrdonnance, 'ordonnances.update', $request);
 
         // SCRUM-564 : les champs etaient repris tels quels. id_medicament en
         // particulier n'etait pas verifie, ce qui laissait creer une ligne
@@ -72,7 +98,7 @@ class LigneOrdonnanceController extends Controller
 
     public function update(Request $request, $id)
     {
-        $ligne = LigneOrdonnance::findOrFail($id);
+        $ligne = $this->trouverOuRefuser(LigneOrdonnance::find($id), $request);
 
         // La ligne est rattachee a son ordonnance par PerimetreDossier.
         Gate::authorize('ordonnances.update', $ligne);
@@ -94,9 +120,9 @@ class LigneOrdonnanceController extends Controller
         ], 200);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $ligne = LigneOrdonnance::findOrFail($id);
+        $ligne = $this->trouverOuRefuser(LigneOrdonnance::find($id), $request);
 
         Gate::authorize('ordonnances.update', $ligne);
 

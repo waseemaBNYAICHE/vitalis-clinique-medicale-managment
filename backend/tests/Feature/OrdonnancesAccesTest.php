@@ -466,6 +466,175 @@ class OrdonnancesAccesTest extends TestCase
         $this->assertDatabaseHas('medecins', ['id_medecin' => $idMedecin]);
     }
 
+    // ------------------------- SCRUM-567 : bornes sur les entrees
+
+    /**
+     * Les champs du referentiel n'avaient aucune borne alors que les colonnes
+     * sont des VARCHAR(255) : une valeur surdimensionnee passait la validation
+     * et n'echouait qu'en base, en 500 sur PostgreSQL. Meme borne que celle
+     * posee sur l'authentification par SCRUM-511.
+     */
+    public function test_les_entrees_du_referentiel_sont_bornees(): void
+    {
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $idSpecialite = DB::table('medecins')->value('id_specialite')
+            ?? DB::table('specialites')->insertGetId([
+                'nom_specialite' => 'Specialite',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], 'id_specialite');
+
+        $this->postJson('/api/medecins', [
+            'matricule' => str_repeat('M', 300),
+            'nom' => str_repeat('N', 300),
+            'prenom' => str_repeat('P', 300),
+            'telephone' => str_repeat('0', 300),
+            'email' => str_repeat('e', 300).'@example.com',
+            'date_embauche' => '2020-01-01',
+            'tarif_consultation' => 300,
+            'id_specialite' => $idSpecialite,
+        ])->assertStatus(422)->assertJsonValidationErrors([
+            'matricule', 'nom', 'prenom', 'telephone', 'email',
+        ]);
+
+        $this->postJson('/api/specialites', [
+            'nom_specialite' => str_repeat('S', 300),
+            'description' => str_repeat('D', 5000),
+        ])->assertStatus(422)->assertJsonValidationErrors(['nom_specialite', 'description']);
+    }
+
+    /**
+     * Le tarif est un DECIMAL(10,2) : une valeur negative ou hors capacite
+     * n'a pas de sens et depasse la colonne.
+     */
+    public function test_le_tarif_de_consultation_est_borne(): void
+    {
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $idSpecialite = DB::table('specialites')->insertGetId([
+            'nom_specialite' => 'Cardiologie',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], 'id_specialite');
+
+        $base = [
+            'matricule' => 'MAT123456',
+            'nom' => 'Alami',
+            'prenom' => 'Docteur',
+            'telephone' => '0600000000',
+            'email' => 'tarif@example.com',
+            'date_embauche' => '2020-01-01',
+            'id_specialite' => $idSpecialite,
+        ];
+
+        $this->postJson('/api/medecins', $base + ['tarif_consultation' => -100])
+            ->assertStatus(422)->assertJsonValidationErrors('tarif_consultation');
+
+        $this->postJson('/api/medecins', $base + ['tarif_consultation' => 999999999999])
+            ->assertStatus(422)->assertJsonValidationErrors('tarif_consultation');
+
+        $this->postJson('/api/medecins', $base + ['tarif_consultation' => 300])
+            ->assertStatus(201);
+    }
+
+    // ------------------------- SCRUM-568 : acces direct par identifiant
+
+    /**
+     * L'oracle d'existence. findOrFail() repondait 404 pour un identifiant
+     * inexistant et 403 pour une ordonnance appartenant a autrui : la
+     * difference suffisait a enumerer les ordonnances reellement presentes
+     * dans la clinique en faisant varier l'identifiant.
+     */
+    public function test_un_role_restreint_ne_distingue_pas_absente_de_pas_la_sienne(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $sien = $this->creerPatient('Sien');
+        $autre = $this->creerPatient('Autre');
+
+        $dossierAutre = $this->creerOrdonnance($autre->id_patient, $idMedecin);
+        $idExistante = $dossierAutre['ordonnance']->id_ordonnance;
+
+        Sanctum::actingAs($this->utilisateur('patient', ['id_patient' => $sien->id_patient]));
+
+        $surExistante = $this->getJson("/api/ordonnances/{$idExistante}");
+        $surInexistante = $this->getJson('/api/ordonnances/999999');
+
+        $this->assertSame(403, $surExistante->status());
+        $this->assertSame(
+            403,
+            $surInexistante->status(),
+            'Un identifiant inexistant ne doit pas se distinguer d un dossier interdit.'
+        );
+        $this->assertSame($surExistante->json('message'), $surInexistante->json('message'));
+    }
+
+    public function test_un_medecin_ne_distingue_pas_non_plus_les_deux_cas(): void
+    {
+        $idMedecinA = $this->creerMedecin('Alami');
+        $idMedecinB = $this->creerMedecin('Bennani');
+        $patient = $this->creerPatient('Patient');
+
+        $dossierDeB = $this->creerOrdonnance($patient->id_patient, $idMedecinB);
+        $idExistante = $dossierDeB['ordonnance']->id_ordonnance;
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecinA]));
+
+        $this->assertSame(403, $this->getJson("/api/ordonnances/{$idExistante}")->status());
+        $this->assertSame(403, $this->getJson('/api/ordonnances/999999')->status());
+    }
+
+    /**
+     * Un role au perimetre global garde un 404 : "introuvable" est pour lui
+     * une information legitime, et la masquer nuirait au diagnostic.
+     */
+    public function test_un_role_global_recoit_bien_404_sur_un_identifiant_inexistant(): void
+    {
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $this->getJson('/api/ordonnances/999999')->assertStatus(404);
+        $this->getJson('/api/ordonnances/999999/lignes')->assertStatus(404);
+    }
+
+    /**
+     * Acces direct a une LIGNE par son identifiant, sans passer par son
+     * ordonnance : c'est la route la plus exposee a une manipulation
+     * d'identifiant, et le cloisonnement doit y jouer aussi.
+     */
+    public function test_un_medecin_natteint_pas_la_ligne_dun_confrere(): void
+    {
+        $idMedecinA = $this->creerMedecin('Alami');
+        $idMedecinB = $this->creerMedecin('Bennani');
+        $patient = $this->creerPatient('Patient');
+
+        $dossierDeB = $this->creerOrdonnance($patient->id_patient, $idMedecinB);
+        $idLigne = $dossierDeB['ligne']->id_ligne_ordonnance;
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecinA]));
+
+        $this->putJson("/api/lignes-ordonnance/{$idLigne}", ['duree' => '30 jours'])
+            ->assertStatus(403);
+        $this->deleteJson("/api/lignes-ordonnance/{$idLigne}")->assertStatus(403);
+
+        $this->assertDatabaseHas('ligne_ordonnances', [
+            'id_ligne_ordonnance' => $idLigne,
+            'duree' => '7 jours',
+        ]);
+    }
+
+    public function test_un_medecin_gere_les_lignes_de_ses_propres_ordonnances(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+        $dossier = $this->creerOrdonnance($patient->id_patient, $idMedecin);
+        $idLigne = $dossier['ligne']->id_ligne_ordonnance;
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecin]));
+
+        $this->putJson("/api/lignes-ordonnance/{$idLigne}", ['duree' => '30 jours'])
+            ->assertStatus(200);
+    }
+
     // ------------------------------------------- scenario d attaque complet
 
     /**
