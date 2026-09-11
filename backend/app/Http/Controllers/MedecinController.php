@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Medecin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MedecinController extends Controller
 {
@@ -72,6 +73,26 @@ class MedecinController extends Controller
 public function destroy($id)
    {
     $medecin = Medecin::findOrFail($id);
+
+    // SCRUM-563 : un medecin est reference par les rendez-vous, les
+    // hospitalisations et eventuellement un compte utilisateur. Sans ce
+    // controle, la contrainte de cle etrangere remontait en PDOException,
+    // donc en 500 avec la trace SQL quand APP_DEBUG est actif. Meme
+    // traitement que PatientController : un conflit metier vaut 409.
+    $dependances = [
+        'rendez-vous' => DB::table('rendez_vous')->where('id_medecin', $medecin->id_medecin)->exists(),
+        'hospitalisations' => DB::table('hospitalisations')->where('id_medecin', $medecin->id_medecin)->exists(),
+        'compte utilisateur' => DB::table('users')->where('id_medecin', $medecin->id_medecin)->exists(),
+    ];
+
+    $bloquantes = array_keys(array_filter($dependances));
+
+    if ($bloquantes !== []) {
+        return response()->json([
+            'message' => 'Impossible de supprimer ce medecin car des '
+                . implode(', ', $bloquantes) . ' lui sont associes.'
+        ], 409);
+    }
 
     $medecin->delete();
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Specialite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SpecialiteController extends Controller
 {
@@ -60,6 +61,15 @@ class SpecialiteController extends Controller
 public function destroy($id)
    {
     $specialite = Specialite::findOrFail($id);
+
+    // SCRUM-563 : meme raison que pour les medecins - une specialite encore
+    // rattachee a un medecin faisait remonter la contrainte de cle etrangere
+    // en 500 au lieu d'un conflit metier.
+    if (DB::table('medecins')->where('id_specialite', $specialite->id_specialite)->exists()) {
+        return response()->json([
+            'message' => 'Impossible de supprimer cette specialite car des medecins y sont rattaches.'
+        ], 409);
+    }
 
     $specialite->delete();
 
