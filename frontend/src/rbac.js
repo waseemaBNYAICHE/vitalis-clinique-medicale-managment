@@ -45,7 +45,8 @@ export const PERMISSIONS_PAR_ROLE = {
     'hospitalisations.read', 'hospitalisations.create', 'hospitalisations.update', 'hospitalisations.delete',
     'medecins.read', 'medecins.create', 'medecins.update', 'medecins.delete',
     'specialites.read', 'specialites.create', 'specialites.update', 'specialites.delete',
-    'indicateurs.read', 'statistiques.read'
+    'indicateurs.read', 'statistiques.read',
+    'rendez-vous.read', 'rendez-vous.create', 'rendez-vous.update', 'rendez-vous.delete'
   ],
 
   [ROLES.MEDECIN]: [
@@ -55,7 +56,8 @@ export const PERMISSIONS_PAR_ROLE = {
     'examens.read',
     'hospitalisations.read', 'hospitalisations.create', 'hospitalisations.update',
     'medecins.read', 'specialites.read',
-    'indicateurs.read'
+    'indicateurs.read',
+    'rendez-vous.read', 'rendez-vous.create', 'rendez-vous.update'
   ],
 
   [ROLES.SECRETAIRE]: [
@@ -63,7 +65,8 @@ export const PERMISSIONS_PAR_ROLE = {
     'examens.read',
     'hospitalisations.read',
     'medecins.read', 'specialites.read',
-    'indicateurs.read'
+    'indicateurs.read',
+    'rendez-vous.read', 'rendez-vous.create', 'rendez-vous.update', 'rendez-vous.delete'
   ],
 
   [ROLES.INFIRMIER]: [
@@ -73,14 +76,16 @@ export const PERMISSIONS_PAR_ROLE = {
     'examens.read', 'examens.create', 'examens.update',
     'hospitalisations.read', 'hospitalisations.create', 'hospitalisations.update',
     'medecins.read', 'specialites.read',
-    'indicateurs.read'
+    'indicateurs.read',
+    'rendez-vous.read'
   ],
 
   [ROLES.PATIENT]: [
     'consultations.read',
     'ordonnances.read',
     'examens.read',
-    'hospitalisations.read'
+    'hospitalisations.read',
+    'rendez-vous.read', 'rendez-vous.create'
   ]
 }
 

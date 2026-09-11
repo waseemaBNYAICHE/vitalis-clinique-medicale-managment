@@ -23,12 +23,10 @@ import { peut, peutAuMoinsUne } from './rbac.js'
 export const PERMISSION_PAR_ACTION = {
   // Tableau de bord - panneau "Activite rapide"
   //
-  // 'tableauBord.nouveauRendezVous' se rattache a 'indicateurs.read' faute de
-  // mieux : le backend n'expose aucune permission rendez_vous.*, le module
-  // n'ayant pas encore de controller. C'est le meme choix que SCRUM-533 pour
-  // l'entree de menu "Rendez-vous", donc coherent avec l'existant. A revoir
-  // le jour ou la permission dediee sera creee.
-  'tableauBord.nouveauRendezVous': 'indicateurs.read',
+  // SCRUM-605 : 'rendez-vous.create' existe depuis SCRUM-49 et remplace le
+  // pis-aller 'indicateurs.read' utilise tant que le module n'avait pas de
+  // controller. La permission decrit desormais reellement l'action.
+  'tableauBord.nouveauRendezVous': 'rendez-vous.create',
   'tableauBord.nouveauPatient': 'patients.create',
   'tableauBord.consultationRapide': 'consultations.create',
   'tableauBord.demandeExamen': 'examens.create',

@@ -28,7 +28,7 @@ import { peut } from './rbac.js'
 export const ENTREES_NAVIGATION = [
   { libelle: 'Tableau de bord', to: '/dashboard', icone: 'fi-rr-home', permission: null },
   { libelle: 'Patients', to: '/patients', icone: 'fi-rr-users-medical', permission: 'patients.read' },
-  { libelle: 'Rendez-vous', to: '/rendez-vous', icone: 'fi-rr-calendar', permission: 'indicateurs.read' },
+  { libelle: 'Rendez-vous', to: '/rendez-vous', icone: 'fi-rr-calendar', permission: 'rendez-vous.read' },
   { libelle: 'Consultations', to: '/consultations', icone: 'fi-rr-stethoscope', permission: 'consultations.read' },
   { libelle: 'Examens', to: '/examens', icone: 'fi-rr-document', permission: 'examens.read' },
   { libelle: 'Hospitalisations', to: '/hospitalisations', icone: 'fi-rr-bed', permission: 'hospitalisations.read' },
