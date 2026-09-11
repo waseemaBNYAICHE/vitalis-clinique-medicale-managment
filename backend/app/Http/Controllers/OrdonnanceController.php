@@ -25,42 +25,58 @@ class OrdonnanceController extends Controller
         ], 200);
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        $ordonnance = Ordonnance::create(
-            $request->only([
-                'date_ordonnance',
-                'instructions_generales',
-                'duree_traitement',
-                'type',
-                'id_consultation',
-            ])
+    $request->validate([
+        'date_ordonnance' => 'required|date',
+        'instructions_generales' => 'required|string',
+        'duree_traitement' => 'required|string|max:255',
+        'type' => 'required|string|max:255',
+        'id_consultation' => 'required|integer|exists:consultations,id_consultation',
+        ]);
+
+    $ordonnance = Ordonnance::create(
+        $request->only([
+            'date_ordonnance',
+            'instructions_generales',
+            'duree_traitement',
+            'type',
+            'id_consultation',
+        ])
         );
 
-        return response()->json([
-            'message' => 'Ordonnance ajoutée avec succès',
-            'ordonnance' => $ordonnance
-        ], 201);
+    return response()->json([
+        'message' => 'Ordonnance ajoutée avec succès',
+        'ordonnance' => $ordonnance
+       ], 201);
     }
 
-    public function update(Request $request, $id)
-    {
-        $ordonnance = Ordonnance::findOrFail($id);
+   public function update(Request $request, $id)
+   {
+    $ordonnance = Ordonnance::findOrFail($id);
+
+        $request->validate([
+        'date_ordonnance' => 'sometimes|required|date',
+        'instructions_generales' => 'sometimes|required|string',
+        'duree_traitement' => 'sometimes|required|string|max:255',
+        'type' => 'sometimes|required|string|max:255',
+        'id_consultation' => 'sometimes|required|integer|exists:consultations,id_consultation',
+       ]);
 
         $ordonnance->update(
-            $request->only([
-                'date_ordonnance',
-                'instructions_generales',
-                'duree_traitement',
-                'type',
-                'id_consultation',
-            ])
-        );
+        $request->only([
+            'date_ordonnance',
+            'instructions_generales',
+            'duree_traitement',
+            'type',
+            'id_consultation',
+        ])
+       );
 
         return response()->json([
-            'message' => 'Ordonnance modifiée avec succès',
-            'ordonnance' => $ordonnance
-        ], 200);
+        'message' => 'Ordonnance modifiée avec succès',
+        'ordonnance' => $ordonnance
+       ], 200);
     }
 
     public function historiquePatient($idPatient)

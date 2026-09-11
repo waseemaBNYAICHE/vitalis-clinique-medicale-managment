@@ -21,6 +21,15 @@ class LigneOrdonnanceController extends Controller
 
     public function store(Request $request, $idOrdonnance)
     {
+        $request->validate([
+        'dosologie' => 'required|string|max:255',
+        'frequence' => 'required|string|max:255',
+        'duree' => 'required|string|max:255',
+        'quantite' => 'required|integer|min:1',
+        'instructions' => 'required|string',
+        'id_medicament' => 'required|integer|exists:medicaments,id_medicament',
+         ]);
+
         $ligne = LigneOrdonnance::create([
             'dosologie' => $request->dosologie,
             'frequence' => $request->frequence,
@@ -40,6 +49,14 @@ class LigneOrdonnanceController extends Controller
     public function update(Request $request, $id)
     {
         $ligne = LigneOrdonnance::findOrFail($id);
+        $request->validate([
+          'dosologie' => 'sometimes|required|string|max:255',
+          'frequence' => 'sometimes|required|string|max:255',
+          'duree' => 'sometimes|required|string|max:255',
+          'quantite' => 'sometimes|required|integer|min:1',
+          'instructions' => 'sometimes|required|string',
+          'id_medicament' => 'sometimes|required|integer|exists:medicaments,id_medicament',
+        ]);
 
         $ligne->update(
             $request->only([
