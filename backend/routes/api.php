@@ -12,7 +12,7 @@ use App\Http\Controllers\MedecinController;
 use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
-
+use App\Http\Controllers\RendezVousController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -75,7 +75,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
         Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
     });
-
+    // Gestion des rendez-vous (SCRUM-49)
+    Route::get('/rendez-vous', [RendezVousController::class, 'index'])
+        ->middleware('can:rendez-vous.read');
+    Route::get('/rendez-vous/{id}', [RendezVousController::class, 'show'])
+        ->middleware('can:rendez-vous.read');
+    Route::post('/rendez-vous', [RendezVousController::class, 'store'])
+        ->middleware('can:rendez-vous.create');
+    Route::put('/rendez-vous/{id}', [RendezVousController::class, 'update'])
+        ->middleware('can:rendez-vous.update');
+    Route::delete('/rendez-vous/{id}', [RendezVousController::class, 'destroy'])
+        ->middleware('can:rendez-vous.delete');
    // Gestion des patients - reservee au personnel medical/administratif
    
    
