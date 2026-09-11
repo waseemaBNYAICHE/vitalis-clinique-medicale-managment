@@ -19,19 +19,51 @@
       </div>
 
       <!-- NAVIGATION -->
-      <!-- SCRUM-533 : les entrees sont filtrees selon le role (permissions
-           du backend) et selon les routes qui existent reellement. Voir
-           src/navigation.js. -->
       <nav class="sidebar-menu">
 
-        <RouterLink
-          v-for="entree in entreesMenu"
-          :key="entree.to"
-          :to="entree.to"
-          class="menu-item"
-        >
-          <i :class="['fi', entree.icone, 'menu-icon']"></i>
-          <span>{{ entree.libelle }}</span>
+        <RouterLink to="/dashboard" class="menu-item">
+          <i class="fi fi-rr-home menu-icon"></i>
+          <span>Tableau de bord</span>
+        </RouterLink>
+
+        <RouterLink to="/patients" class="menu-item">
+          <i class="fi fi-rr-users-medical menu-icon"></i>
+          <span>Patients</span>
+        </RouterLink>
+
+        <RouterLink to="/rendez-vous" class="menu-item">
+          <i class="fi fi-rr-calendar menu-icon"></i>
+          <span>Rendez-vous</span>
+        </RouterLink>
+
+        <RouterLink to="/consultations" class="menu-item">
+          <i class="fi fi-rr-stethoscope menu-icon"></i>
+          <span>Consultations</span>
+        </RouterLink>
+
+        <RouterLink to="/examens" class="menu-item">
+          <i class="fi fi-rr-document menu-icon"></i>
+          <span>Examens</span>
+        </RouterLink>
+
+        <RouterLink to="/hospitalisations" class="menu-item">
+          <i class="fi fi-rr-bed menu-icon"></i>
+          <span>Hospitalisations</span>
+        </RouterLink>
+
+        <RouterLink to="/facturation" class="menu-item">
+          <i class="fi fi-rr-receipt menu-icon"></i>
+          <span>Facturation</span>
+        </RouterLink>
+
+        <RouterLink to="/utilisateurs" class="menu-item">
+          <i class="fi fi-rr-user-gear menu-icon"></i>
+          <span>Utilisateurs</span>
+        </RouterLink>
+
+        <RouterLink to="/parametres" class="menu-item">
+          <i class="fi fi-rr-settings menu-icon"></i>
+          <span>Paramètres</span>
         </RouterLink>
 
       </nav>
@@ -149,27 +181,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../api'
-import { closeSession, getUser } from '../auth.js'
-import { entreesVisibles } from '../navigation.js'
 
 const router = useRouter()
-
-/* =========================
-   NAVIGATION SELON LE ROLE
-========================= */
-
-// SCRUM-533 : la barre laterale affichait ses neuf liens a tout le monde. Un
-// patient se voyait donc proposer "Patients" et "Utilisateurs", qui lui
-// repondent 403, et six liens menaient a des chemins sans route.
-//
-// entreesVisibles() croise deux filtres : les permissions du role (miroir de
-// la matrice backend, src/rbac.js) et les chemins reellement desservis par le
-// routeur. Une entree reapparaitra d'elle-meme quand sa route sera ecrite.
-//
-// Rappel : cela ne protege rien, c'est de l'affichage. Le backend refuse un
-// acces interdit par un 403, que le lien ait ete montre ou non.
-const entreesMenu = computed(() => entreesVisibles())
 
 /* =========================
    SEARCH
@@ -180,33 +193,32 @@ const searchText = ref('')
    USER
 ========================= */
 
-// SCRUM-531 : la session se lit via auth.js, seul module a connaitre les
-// cles de stockage. Ce composant les recopiait ('user', 'token') et refaisait
-// le JSON.parse de son cote : deux implementations a maintenir, dont une qui
-// serait restee en arriere le jour ou les cles changent. auth.js gere deja le
-// cas d'une donnee illisible.
-const parsedUser = getUser() ?? {}
+const storedUser =
+  localStorage.getItem('user') ||
+  sessionStorage.getItem('user')
+
+let parsedUser = {}
+
+try {
+  parsedUser = storedUser
+    ? JSON.parse(storedUser)
+    : {}
+} catch (error) {
+  parsedUser = {}
+}
 
 const imageError = ref(false)
 
-// SCRUM-531 : sans session lisible, l'en-tete affichait "Administrateur" et
-// un role 'administrateur'. Un defaut qui accorde le role le plus eleve est
-// un defaut qui echoue du mauvais cote : c'est precisement la valeur sur
-// laquelle SCRUM-533 et SCRUM-534 s'appuieront pour decider ce qui est
-// visible. On repart donc d'une identite neutre et sans privilege.
-//
-// L'autorisation reelle reste cote backend : cette valeur ne sert qu'a
-// l'affichage.
 const userName = computed(() => {
   return (
     parsedUser?.name ||
     parsedUser?.nom ||
-    'Utilisateur'
+    'Administrateur'
   )
 })
 
 const userRole = computed(() => {
-  return parsedUser?.role || null
+  return parsedUser?.role || 'administrateur'
 })
 
 const formattedRole = computed(() => {
@@ -255,16 +267,12 @@ const currentYear = new Date().getFullYear()
    LOGOUT
 ========================= */
 
-// SCRUM-531 : la deconnexion se contentait de vider le stockage du
-// navigateur. Le jeton Sanctum restait donc valide cote serveur jusqu'a son
-// expiration (12 h) : sur un poste partage de la clinique, un jeton recupere
-// apres coup continuait d'ouvrir l'API alors que l'utilisateur se croyait
-// deconnecte. La route POST /api/logout existait deja et revoque le jeton
-// courant - elle n'etait simplement jamais appelee.
-//
-// closeSession() revoque puis efface, et efface meme si la revocation echoue.
 const logout = async () => {
-  await closeSession(() => api.post('/logout'))
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+
+  sessionStorage.removeItem('token')
+  sessionStorage.removeItem('user')
 
   await router.push('/login')
 }
