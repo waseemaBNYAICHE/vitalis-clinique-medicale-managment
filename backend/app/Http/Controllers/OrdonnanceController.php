@@ -126,9 +126,22 @@ class OrdonnanceController extends Controller
     {
         $ordonnance = $this->trouverOuRefuser(Ordonnance::find($id), $request);
 
+        // Avant : a-t-il le droit de toucher a CETTE ordonnance ?
         Gate::authorize('ordonnances.update', $ordonnance);
 
         $valide = $request->validate($this->regles(creation: false));
+
+        // SCRUM-651 - Apres : la modification ne doit pas servir a deplacer
+        // l'ordonnance vers la consultation d'un confrere.
+        //
+        // id_consultation determine a quel patient et a quel medecin
+        // l'ordonnance appartient. Sans ce second controle, un medecin
+        // pouvait rattacher une prescription au dossier d'un patient qu'il ne
+        // suit pas : le patient l'aurait vue apparaitre comme legitime dans
+        // son historique medicamenteux. C'est la meme protection que celle
+        // posee sur les rendez-vous par SCRUM-605, qui manquait ici.
+        $apresModification = (clone $ordonnance)->fill($valide);
+        Gate::authorize('ordonnances.update', $apresModification);
 
         $ordonnance->update($valide);
 

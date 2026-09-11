@@ -466,6 +466,125 @@ class OrdonnancesAccesTest extends TestCase
         $this->assertDatabaseHas('medecins', ['id_medecin' => $idMedecin]);
     }
 
+    // ------------------- SCRUM-651 : reattribution d une ordonnance
+
+    /**
+     * Modifier une ordonnance permet d'en changer id_consultation, et c'est
+     * cette cle qui determine a quel patient et a quel medecin elle
+     * appartient. Sans controle APRES modification, un medecin pouvait
+     * deplacer une prescription vers la consultation d'un confrere : le
+     * patient de ce confrere aurait vu apparaitre dans son historique un
+     * traitement prescrit par quelqu'un qui ne le suit pas.
+     *
+     * Meme protection que celle posee sur les rendez-vous par SCRUM-605.
+     */
+    public function test_un_medecin_ne_deplace_pas_son_ordonnance_vers_un_confrere(): void
+    {
+        $idMedecinA = $this->creerMedecin('Alami');
+        $idMedecinB = $this->creerMedecin('Bennani');
+        $patientDeA = $this->creerPatient('PatientDeA');
+        $patientDeB = $this->creerPatient('PatientDeB');
+
+        $dossierA = $this->creerOrdonnance($patientDeA->id_patient, $idMedecinA);
+        $dossierB = $this->creerOrdonnance($patientDeB->id_patient, $idMedecinB);
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecinA]));
+
+        $this->putJson("/api/ordonnances/{$dossierA['ordonnance']->id_ordonnance}", [
+            'date_ordonnance' => now()->toDateString(),
+            'instructions_generales' => 'Traitement deplace',
+            'duree_traitement' => '30 jours',
+            'type' => 'medicament',
+            'id_consultation' => $dossierB['consultation']->id_consultation,
+        ])->assertStatus(403);
+
+        // L'ordonnance est restee rattachee a sa consultation d'origine.
+        $this->assertDatabaseHas('ordonnances', [
+            'id_ordonnance' => $dossierA['ordonnance']->id_ordonnance,
+            'id_consultation' => $dossierA['consultation']->id_consultation,
+        ]);
+    }
+
+    /**
+     * Reciproquement : on ne s'approprie pas l'ordonnance d'un confrere en la
+     * rattachant a sa propre consultation. Le controle AVANT modification
+     * s'en charge deja, mais la regle merite d'etre figee.
+     */
+    public function test_un_medecin_ne_sapproprie_pas_lordonnance_dun_confrere(): void
+    {
+        $idMedecinA = $this->creerMedecin('Alami');
+        $idMedecinB = $this->creerMedecin('Bennani');
+        $patientDeA = $this->creerPatient('PatientDeA');
+        $patientDeB = $this->creerPatient('PatientDeB');
+
+        $dossierA = $this->creerOrdonnance($patientDeA->id_patient, $idMedecinA);
+        $dossierB = $this->creerOrdonnance($patientDeB->id_patient, $idMedecinB);
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecinA]));
+
+        $this->putJson("/api/ordonnances/{$dossierB['ordonnance']->id_ordonnance}", [
+            'date_ordonnance' => now()->toDateString(),
+            'instructions_generales' => 'Recuperee',
+            'duree_traitement' => '30 jours',
+            'type' => 'medicament',
+            'id_consultation' => $dossierA['consultation']->id_consultation,
+        ])->assertStatus(403);
+
+        $this->assertDatabaseHas('ordonnances', [
+            'id_ordonnance' => $dossierB['ordonnance']->id_ordonnance,
+            'id_consultation' => $dossierB['consultation']->id_consultation,
+        ]);
+    }
+
+    /**
+     * La creation etait deja correctement refusee : on la fige pour que le
+     * correctif de la modification ne masque pas une regression sur ce
+     * chemin-la.
+     */
+    public function test_un_medecin_ne_prescrit_pas_sur_la_consultation_dun_confrere(): void
+    {
+        $idMedecinA = $this->creerMedecin('Alami');
+        $idMedecinB = $this->creerMedecin('Bennani');
+        $patientDeB = $this->creerPatient('PatientDeB');
+
+        $dossierB = $this->creerOrdonnance($patientDeB->id_patient, $idMedecinB);
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecinA]));
+
+        $this->postJson('/api/ordonnances', [
+            'date_ordonnance' => now()->toDateString(),
+            'instructions_generales' => 'Prescription injectee',
+            'duree_traitement' => '30 jours',
+            'type' => 'medicament',
+            'id_consultation' => $dossierB['consultation']->id_consultation,
+        ])->assertStatus(403);
+
+        $this->assertDatabaseMissing('ordonnances', [
+            'instructions_generales' => 'Prescription injectee',
+        ]);
+    }
+
+    /**
+     * Le medecin doit continuer a modifier normalement ses propres
+     * ordonnances : le double controle ne doit pas bloquer l'usage legitime.
+     */
+    public function test_un_medecin_modifie_son_ordonnance_sur_sa_propre_consultation(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+        $dossier = $this->creerOrdonnance($patient->id_patient, $idMedecin);
+
+        Sanctum::actingAs($this->utilisateur('medecin', ['id_medecin' => $idMedecin]));
+
+        $this->putJson("/api/ordonnances/{$dossier['ordonnance']->id_ordonnance}", [
+            'date_ordonnance' => now()->toDateString(),
+            'instructions_generales' => 'Posologie revue',
+            'duree_traitement' => '14 jours',
+            'type' => 'medicament',
+            'id_consultation' => $dossier['consultation']->id_consultation,
+        ])->assertStatus(200);
+    }
+
     // ------------------------- SCRUM-567 : bornes sur les entrees
 
     /**
