@@ -50,18 +50,23 @@ class LigneOrdonnanceController extends Controller
 
     public function store(Request $request, $idOrdonnance)
     {
-        $this->ordonnanceAutorisee($idOrdonnance, 'ordonnances.update', $request);
+        $request->validate([
+        'dosologie' => 'required|string|max:255',
+        'frequence' => 'required|string|max:255',
+        'duree' => 'required|string|max:255',
+        'quantite' => 'required|integer|min:1',
+        'instructions' => 'required|string',
+        'id_medicament' => 'required|integer|exists:medicaments,id_medicament',
+         ]);
 
-        // SCRUM-564 : les champs etaient repris tels quels. id_medicament en
-        // particulier n'etait pas verifie, ce qui laissait creer une ligne
-        // pointant vers un medicament inexistant.
-        $valide = $request->validate([
-            'dosologie' => ['required', 'string', 'max:255'],
-            'frequence' => ['required', 'string', 'max:255'],
-            'duree' => ['required', 'string', 'max:255'],
-            'quantite' => ['required', 'integer', 'min:1'],
-            'instructions' => ['nullable', 'string', 'max:2000'],
-            'id_medicament' => ['required', 'integer', 'exists:medicaments,id_medicament'],
+        $ligne = LigneOrdonnance::create([
+            'dosologie' => $request->dosologie,
+            'frequence' => $request->frequence,
+            'duree' => $request->duree,
+            'quantite' => $request->quantite,
+            'instructions' => $request->instructions,
+            'id_ordonnance' => $idOrdonnance,
+            'id_medicament' => $request->id_medicament,
         ]);
 
         $ligne = LigneOrdonnance::create($valide + ['id_ordonnance' => $idOrdonnance]);
@@ -74,7 +79,15 @@ class LigneOrdonnanceController extends Controller
 
     public function update(Request $request, $id)
     {
-        $ligne = $this->trouverOuRefuser(LigneOrdonnance::find($id), $request);
+        $ligne = LigneOrdonnance::findOrFail($id);
+        $request->validate([
+          'dosologie' => 'sometimes|required|string|max:255',
+          'frequence' => 'sometimes|required|string|max:255',
+          'duree' => 'sometimes|required|string|max:255',
+          'quantite' => 'sometimes|required|integer|min:1',
+          'instructions' => 'sometimes|required|string',
+          'id_medicament' => 'sometimes|required|integer|exists:medicaments,id_medicament',
+        ]);
 
         // La ligne est rattachee a son ordonnance par PerimetreDossier.
         Gate::authorize('ordonnances.update', $ligne);

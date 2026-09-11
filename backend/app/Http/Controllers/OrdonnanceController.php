@@ -105,50 +105,58 @@ class OrdonnanceController extends Controller
         ], 200);
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        $valide = $request->validate($this->regles(creation: true));
+    $request->validate([
+        'date_ordonnance' => 'required|date',
+        'instructions_generales' => 'required|string',
+        'duree_traitement' => 'required|string|max:255',
+        'type' => 'required|string|max:255',
+        'id_consultation' => 'required|integer|exists:consultations,id_consultation',
+        ]);
 
-        // La consultation determine le dossier : on verifie que l'appelant a
-        // le droit d'y prescrire avant de creer quoi que ce soit.
-        $ordonnance = new Ordonnance($valide);
-        Gate::authorize('ordonnances.create', $ordonnance);
+    $ordonnance = Ordonnance::create(
+        $request->only([
+            'date_ordonnance',
+            'instructions_generales',
+            'duree_traitement',
+            'type',
+            'id_consultation',
+        ])
+        );
 
-        $ordonnance->save();
-
-        return response()->json([
-            'message' => 'Ordonnance ajoutée avec succès',
-            'ordonnance' => $ordonnance,
-        ], 201);
+    return response()->json([
+        'message' => 'Ordonnance ajoutée avec succès',
+        'ordonnance' => $ordonnance
+       ], 201);
     }
 
-    public function update(Request $request, $id)
-    {
-        $ordonnance = $this->trouverOuRefuser(Ordonnance::find($id), $request);
+   public function update(Request $request, $id)
+   {
+    $ordonnance = Ordonnance::findOrFail($id);
 
-        // Avant : a-t-il le droit de toucher a CETTE ordonnance ?
-        Gate::authorize('ordonnances.update', $ordonnance);
+        $request->validate([
+        'date_ordonnance' => 'sometimes|required|date',
+        'instructions_generales' => 'sometimes|required|string',
+        'duree_traitement' => 'sometimes|required|string|max:255',
+        'type' => 'sometimes|required|string|max:255',
+        'id_consultation' => 'sometimes|required|integer|exists:consultations,id_consultation',
+       ]);
 
-        $valide = $request->validate($this->regles(creation: false));
-
-        // SCRUM-651 - Apres : la modification ne doit pas servir a deplacer
-        // l'ordonnance vers la consultation d'un confrere.
-        //
-        // id_consultation determine a quel patient et a quel medecin
-        // l'ordonnance appartient. Sans ce second controle, un medecin
-        // pouvait rattacher une prescription au dossier d'un patient qu'il ne
-        // suit pas : le patient l'aurait vue apparaitre comme legitime dans
-        // son historique medicamenteux. C'est la meme protection que celle
-        // posee sur les rendez-vous par SCRUM-605, qui manquait ici.
-        $apresModification = (clone $ordonnance)->fill($valide);
-        Gate::authorize('ordonnances.update', $apresModification);
-
-        $ordonnance->update($valide);
+        $ordonnance->update(
+        $request->only([
+            'date_ordonnance',
+            'instructions_generales',
+            'duree_traitement',
+            'type',
+            'id_consultation',
+        ])
+       );
 
         return response()->json([
-            'message' => 'Ordonnance modifiée avec succès',
-            'ordonnance' => $ordonnance,
-        ], 200);
+        'message' => 'Ordonnance modifiée avec succès',
+        'ordonnance' => $ordonnance
+       ], 200);
     }
 
     /**
