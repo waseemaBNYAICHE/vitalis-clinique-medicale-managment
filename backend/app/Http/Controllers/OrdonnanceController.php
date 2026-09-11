@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * SCRUM-564 / SCRUM-566 - Ordonnances.
@@ -123,6 +124,30 @@ class OrdonnanceController extends Controller
         'patient' => $ordonnance->consultation?->patient(),
         'medecin' => $ordonnance->consultation?->medecin(),
          ], 200);
+    }
+
+    public function telecharger(Request $request, $id)
+    {
+        $ordonnance = $this->trouverOuRefuser(
+        Ordonnance::with([
+            'consultation.rendezVous.patient',
+            'consultation.rendezVous.medecin',
+            'lignes.medicament',
+        ])->find($id),
+        $request
+         );
+
+        Gate::authorize('ordonnances.read', $ordonnance);
+
+        $pdf = Pdf::loadView('ordonnances.pdf', [
+        'ordonnance' => $ordonnance,
+        'patient' => $ordonnance->consultation?->patient(),
+        'medecin' => $ordonnance->consultation?->medecin(),
+        ]);
+
+         return $pdf->download(
+        'ordonnance-' . $ordonnance->id_ordonnance . '.pdf'
+        );
     }
 
 
