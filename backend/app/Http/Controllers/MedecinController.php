@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Medecin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MedecinController extends Controller
 {
@@ -27,14 +28,17 @@ class MedecinController extends Controller
 
     public function store(Request $request)
     {
+    // SCRUM-567 : bornes alignees sur le schema (VARCHAR(255),
+    // DECIMAL(10,2)). Sans elles, une valeur surdimensionnee passait la
+    // validation et n'echouait qu'en base, en 500.
     $validated = $request->validate([
-        'matricule' => 'required|string|unique:medecins,matricule',
-        'nom' => 'required|string',
-        'prenom' => 'required|string',
-        'telephone' => 'required|string',
-        'email' => 'required|email|unique:medecins,email',
+        'matricule' => 'required|string|max:255|unique:medecins,matricule',
+        'nom' => 'required|string|max:255',
+        'prenom' => 'required|string|max:255',
+        'telephone' => 'required|string|max:20',
+        'email' => 'required|email|max:255|unique:medecins,email',
         'date_embauche' => 'required|date',
-        'tarif_consultation' => 'required|numeric',
+        'tarif_consultation' => 'required|numeric|min:0|max:99999999.99',
         'id_specialite' => 'required|exists:specialites,id_specialite',
     ]);
 
@@ -51,13 +55,13 @@ class MedecinController extends Controller
     $medecin = Medecin::findOrFail($id);
 
     $validated = $request->validate([
-        'matricule' => 'required|string|unique:medecins,matricule,' . $id . ',id_medecin',
-        'nom' => 'required|string',
-        'prenom' => 'required|string',
-        'telephone' => 'required|string',
-        'email' => 'required|email|unique:medecins,email,' . $id . ',id_medecin',
+        'matricule' => 'required|string|max:255|unique:medecins,matricule,' . $id . ',id_medecin',
+        'nom' => 'required|string|max:255',
+        'prenom' => 'required|string|max:255',
+        'telephone' => 'required|string|max:20',
+        'email' => 'required|email|max:255|unique:medecins,email,' . $id . ',id_medecin',
         'date_embauche' => 'required|date',
-        'tarif_consultation' => 'required|numeric',
+        'tarif_consultation' => 'required|numeric|min:0|max:99999999.99',
         'id_specialite' => 'required|exists:specialites,id_specialite',
     ]);
 
@@ -72,6 +76,26 @@ class MedecinController extends Controller
 public function destroy($id)
    {
     $medecin = Medecin::findOrFail($id);
+
+    // SCRUM-563 : un medecin est reference par les rendez-vous, les
+    // hospitalisations et eventuellement un compte utilisateur. Sans ce
+    // controle, la contrainte de cle etrangere remontait en PDOException,
+    // donc en 500 avec la trace SQL quand APP_DEBUG est actif. Meme
+    // traitement que PatientController : un conflit metier vaut 409.
+    $dependances = [
+        'rendez-vous' => DB::table('rendez_vous')->where('id_medecin', $medecin->id_medecin)->exists(),
+        'hospitalisations' => DB::table('hospitalisations')->where('id_medecin', $medecin->id_medecin)->exists(),
+        'compte utilisateur' => DB::table('users')->where('id_medecin', $medecin->id_medecin)->exists(),
+    ];
+
+    $bloquantes = array_keys(array_filter($dependances));
+
+    if ($bloquantes !== []) {
+        return response()->json([
+            'message' => 'Impossible de supprimer ce medecin car des '
+                . implode(', ', $bloquantes) . ' lui sont associes.'
+        ], 409);
+    }
 
     $medecin->delete();
 

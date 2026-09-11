@@ -12,7 +12,7 @@ use App\Http\Controllers\MedecinController;
 use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
-
+use App\Http\Controllers\RendezVousController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -75,7 +75,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
         Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
     });
-
+    // Gestion des rendez-vous (SCRUM-49)
+    Route::get('/rendez-vous', [RendezVousController::class, 'index'])
+        ->middleware('can:rendez-vous.read');
+    Route::get('/rendez-vous/{id}', [RendezVousController::class, 'show'])
+        ->middleware('can:rendez-vous.read');
+    Route::post('/rendez-vous', [RendezVousController::class, 'store'])
+        ->middleware('can:rendez-vous.create');
+    Route::put('/rendez-vous/{id}', [RendezVousController::class, 'update'])
+        ->middleware('can:rendez-vous.update');
+    Route::delete('/rendez-vous/{id}', [RendezVousController::class, 'destroy'])
+        ->middleware('can:rendez-vous.delete');
    // Gestion des patients - reservee au personnel medical/administratif
    
    
@@ -144,24 +154,53 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/specialites/{id}', [SpecialiteController::class, 'destroy'])
         ->middleware('can:specialites.delete');
 
-        // Gestion des ordonnances
-    Route::get('/ordonnances', [OrdonnanceController::class, 'index']);
-    Route::get('/ordonnances/{id}', [OrdonnanceController::class, 'show']);
-    Route::post('/ordonnances', [OrdonnanceController::class, 'store']);
-    Route::put('/ordonnances/{id}', [OrdonnanceController::class, 'update']);
-    Route::delete('/ordonnances/{id}', [OrdonnanceController::class, 'destroy']);
+    // Gestion des ordonnances
+    //
+    // SCRUM-564 : ces routes n'exigeaient qu'un compte valide. Une ordonnance
+    // est une donnee de sante, et /api/register est publique : n'importe qui
+    // pouvait s'inscrire puis lire, creer, modifier ou SUPPRIMER l'ordonnance
+    // de n'importe quel patient de la clinique.
+    //
+    // Les permissions utilisees existent depuis SCRUM-524 ; elles n'avaient
+    // simplement jamais ete appliquees. La suppression reste reservee a
+    // l'administrateur, comme pour tous les dossiers medicaux.
+    //
+    // Le cloisonnement "les siennes" (un medecin ses patients, un patient son
+    // dossier) est applique dans le controller, ou l'ordonnance visee est
+    // connue : le middleware can: ne voit que la permission, pas le dossier.
+    Route::get('/ordonnances', [OrdonnanceController::class, 'index'])
+        ->middleware('can:ordonnances.read');
+    Route::get('/ordonnances/{id}', [OrdonnanceController::class, 'show'])
+        ->middleware('can:ordonnances.read');
+    Route::post('/ordonnances', [OrdonnanceController::class, 'store'])
+        ->middleware('can:ordonnances.create');
+    Route::put('/ordonnances/{id}', [OrdonnanceController::class, 'update'])
+        ->middleware('can:ordonnances.update');
+    Route::delete('/ordonnances/{id}', [OrdonnanceController::class, 'destroy'])
+        ->middleware('can:ordonnances.delete');
 
     // Gestion du contenu des ordonnances
-    Route::get('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'index']);
-    Route::post('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'store']);
-    Route::put('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'update']);
-    Route::delete('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'destroy']);
-    
-    // Gestion d'historique d'ordonnances
+    //
+    // Les lignes portent le medicament, la posologie et la duree : elles
+    // suivent exactement le regime de l'ordonnance qui les contient.
+    Route::get('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'index'])
+        ->middleware('can:ordonnances.read');
+    Route::post('/ordonnances/{idOrdonnance}/lignes', [LigneOrdonnanceController::class, 'store'])
+        ->middleware('can:ordonnances.update');
+    Route::put('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'update'])
+        ->middleware('can:ordonnances.update');
+    Route::delete('/lignes-ordonnance/{id}', [LigneOrdonnanceController::class, 'destroy'])
+        ->middleware('can:ordonnances.update');
+
+    // Historique des ordonnances d'un patient
+    //
+    // SCRUM-564 : l'identifiant du patient vient de l'URL. Sans cloisonnement,
+    // il suffisait de le changer pour lire l'historique medicamenteux de
+    // n'importe qui. Le controller restreint le resultat au perimetre du role.
     Route::get(
         '/patients/{idPatient}/ordonnances/historique',
         [OrdonnanceController::class, 'historiquePatient']
-    );
+    )->middleware('can:ordonnances.read');
 });
 
 // Health check

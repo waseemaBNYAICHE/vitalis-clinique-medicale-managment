@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Specialite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SpecialiteController extends Controller
 {
@@ -27,9 +28,12 @@ class SpecialiteController extends Controller
 
     public function store(Request $request)
     {
+    // SCRUM-567 : bornes alignees sur le schema (VARCHAR(255),
+    // DECIMAL(10,2)). Sans elles, une valeur surdimensionnee passait la
+    // validation et n'echouait qu'en base, en 500.
     $validated = $request->validate([
-        'nom_specialite' => 'required|string',
-        'description' => 'nullable|string',
+        'nom_specialite' => 'required|string|max:255',
+        'description' => 'nullable|string|max:2000',
     ]);
 
     $specialite = Specialite::create($validated);
@@ -45,8 +49,8 @@ class SpecialiteController extends Controller
     $specialite = Specialite::findOrFail($id);
 
     $validated = $request->validate([
-        'nom_specialite' => 'required|string',
-        'description' => 'nullable|string',
+        'nom_specialite' => 'required|string|max:255',
+        'description' => 'nullable|string|max:2000',
     ]);
 
     $specialite->update($validated);
@@ -60,6 +64,15 @@ class SpecialiteController extends Controller
 public function destroy($id)
    {
     $specialite = Specialite::findOrFail($id);
+
+    // SCRUM-563 : meme raison que pour les medecins - une specialite encore
+    // rattachee a un medecin faisait remonter la contrainte de cle etrangere
+    // en 500 au lieu d'un conflit metier.
+    if (DB::table('medecins')->where('id_specialite', $specialite->id_specialite)->exists()) {
+        return response()->json([
+            'message' => 'Impossible de supprimer cette specialite car des medecins y sont rattaches.'
+        ], 409);
+    }
 
     $specialite->delete();
 

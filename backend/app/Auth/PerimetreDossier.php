@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Consultation;
 use App\Models\DemandeExamen;
 use App\Models\Hospitalisation;
+use App\Models\LigneOrdonnance;
 use App\Models\Ordonnance;
 use App\Models\Patient;
 use App\Models\RendezVous;
@@ -76,6 +77,23 @@ final class PerimetreDossier
     }
 
     /**
+     * Cet utilisateur est-il limite a ses propres dossiers ?
+     *
+     * SCRUM-568 - Sert a ne pas reveler l'existence d'un dossier auquel on
+     * n'a pas droit. Pour un role au perimetre global, "introuvable" est une
+     * information legitime (404) ; pour un role restreint, distinguer
+     * "n'existe pas" de "pas le votre" permettrait d'enumerer les dossiers de
+     * la clinique en faisant varier l'identifiant.
+     */
+    public static function perimetreRestreint(User $user): bool
+    {
+        $role = Role::tryFrom((string) $user->role);
+
+        // Role inconnu : traite comme restreint, donc sans droit de savoir.
+        return $role === null || ! $role->accedeATousLesDossiers();
+    }
+
+    /**
      * Remonte la chaine des cles etrangeres jusqu'au patient et au medecin.
      *
      * La hierarchie du MLD est : rendez-vous -> consultation -> ordonnance /
@@ -114,6 +132,10 @@ final class PerimetreDossier
 
             $dossier instanceof Resultat => self::viaDemandeExamen($dossier->id_demande_examen),
 
+            // SCRUM-564 - Une ligne d'ordonnance est un medicament prescrit :
+            // elle appartient au meme dossier que l'ordonnance qui la porte.
+            $dossier instanceof LigneOrdonnance => self::viaOrdonnance($dossier->id_ordonnance),
+
             default => null,
         };
     }
@@ -149,6 +171,22 @@ final class PerimetreDossier
         return $consultation === null
             ? null
             : self::viaRendezVous($consultation->id_rendez_vous);
+    }
+
+    /**
+     * @return array{id_patient: int|null, id_medecin: int|null}|null
+     */
+    private static function viaOrdonnance(?int $idOrdonnance): ?array
+    {
+        if ($idOrdonnance === null) {
+            return null;
+        }
+
+        $ordonnance = Ordonnance::find($idOrdonnance);
+
+        return $ordonnance === null
+            ? null
+            : self::viaConsultation($ordonnance->id_consultation);
     }
 
     /**

@@ -51,7 +51,18 @@ enum Permission: string
     case HOSPITALISATIONS_CREATE = 'hospitalisations.create';
     case HOSPITALISATIONS_UPDATE = 'hospitalisations.update';
     case HOSPITALISATIONS_DELETE = 'hospitalisations.delete';
-
+ // SCRUM-49 - Gestion des rendez-vous '( bax n3adlo les acces Gestion des rendez-vous  )
+    //
+    // La suppression reste reservee a l'administrateur et au secretariat :
+    // annuler un rendez-vous engage un patient et un medecin, ce n'est pas
+    // un geste que tout le personnel doit pouvoir faire seul. Le medecin
+    // gere ses rendez-vous (lecture, creation, mise a jour) mais ne les
+    // supprime pas ; le patient peut consulter et prendre rendez-vous, sans
+    // pouvoir le modifier ou l'annuler lui-meme (voir accueil/secretariat).
+    case RENDEZ_VOUS_READ = 'rendez-vous.read';
+    case RENDEZ_VOUS_CREATE = 'rendez-vous.create';
+    case RENDEZ_VOUS_UPDATE = 'rendez-vous.update';
+    case RENDEZ_VOUS_DELETE = 'rendez-vous.delete';
     // SCRUM-526 - Referentiel medecins et specialites.
     //
     // Ces routes etaient protegees par 'roles.manage', une permission qui ne

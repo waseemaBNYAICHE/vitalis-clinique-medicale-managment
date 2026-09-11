@@ -64,6 +64,13 @@ enum Role: string
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
                 Permission::HOSPITALISATIONS_DELETE,
+                ////Gestion des rendez-vous
+                Permission::RENDEZ_VOUS_READ,
+                Permission::RENDEZ_VOUS_CREATE,
+                Permission::RENDEZ_VOUS_UPDATE,
+                Permission::RENDEZ_VOUS_DELETE,
+                
+                /////////////////////
                 Permission::MEDECINS_READ,
                 Permission::MEDECINS_CREATE,
                 Permission::MEDECINS_UPDATE,
@@ -94,6 +101,11 @@ enum Role: string
                 Permission::HOSPITALISATIONS_READ,
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
+                ////////// Gestion des rendez-vous
+                Permission::RENDEZ_VOUS_READ,
+                Permission::RENDEZ_VOUS_CREATE,
+                Permission::RENDEZ_VOUS_UPDATE,
+                ////////////////
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
                 Permission::INDICATEURS_READ,
@@ -108,6 +120,12 @@ enum Role: string
                 Permission::PATIENTS_UPDATE,
                 Permission::EXAMENS_READ,
                 Permission::HOSPITALISATIONS_READ,
+                //// Gestion des rendez-vous
+                Permission::RENDEZ_VOUS_READ,
+                Permission::RENDEZ_VOUS_CREATE,
+                Permission::RENDEZ_VOUS_UPDATE,
+                Permission::RENDEZ_VOUS_DELETE,
+                /////////
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
                 Permission::INDICATEURS_READ,
@@ -128,6 +146,9 @@ enum Role: string
                 Permission::HOSPITALISATIONS_READ,
                 Permission::HOSPITALISATIONS_CREATE,
                 Permission::HOSPITALISATIONS_UPDATE,
+                //// Gestion des rendez-vous
+                Permission::RENDEZ_VOUS_READ,
+                //////////
                 Permission::MEDECINS_READ,
                 Permission::SPECIALITES_READ,
                 Permission::INDICATEURS_READ,
@@ -140,6 +161,10 @@ enum Role: string
                 Permission::CONSULTATIONS_READ,
                 Permission::ORDONNANCES_READ,
                 Permission::EXAMENS_READ,
+                //// Gestion des rendez-vous
+                Permission::RENDEZ_VOUS_READ,
+                Permission::RENDEZ_VOUS_CREATE,
+                /////////////
                 Permission::HOSPITALISATIONS_READ,
             ],
         };

@@ -76,12 +76,27 @@ class PermissionTest extends TestCase
 
         $this->assertNotEmpty($permissions);
 
+        // SCRUM-605 : la prise de rendez-vous par le patient lui-meme
+        // (SCRUM-49) est la seule ecriture qui lui soit accordee. Tout le
+        // reste doit rester en lecture : il ne modifie ni ne supprime aucun
+        // dossier. Le perimetre "les siens" est applique par PerimetreDossier.
+        $ecrituresAutorisees = [Permission::RENDEZ_VOUS_CREATE];
+
         foreach ($permissions as $permission) {
+            if (in_array($permission, $ecrituresAutorisees, true)) {
+                continue;
+            }
+
             $this->assertStringEndsWith(
                 '.read',
                 $permission->value,
                 "Le role patient ne doit detenir que des permissions de lecture, or il detient {$permission->value}"
             );
+        }
+
+        // Aucune suppression, quelle que soit la ressource.
+        foreach ($permissions as $permission) {
+            $this->assertStringEndsNotWith('.delete', $permission->value);
         }
 
         foreach ([
