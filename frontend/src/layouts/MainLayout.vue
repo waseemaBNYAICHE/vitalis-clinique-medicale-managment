@@ -41,6 +41,11 @@
           <span>Consultations</span>
         </RouterLink>
 
+        <RouterLink to="/ordonnances" class="menu-item">
+          <i class="fi fi-rr-prescription-bottle-pill menu-icon"></i>
+          <span>Ordonnances</span>
+        </RouterLink>
+         
         <RouterLink to="/examens" class="menu-item">
           <i class="fi fi-rr-document menu-icon"></i>
           <span>Examens</span>
