@@ -81,6 +81,12 @@ enum Role: string
                 Permission::SPECIALITES_DELETE,
                 Permission::INDICATEURS_READ,
                 Permission::STATISTIQUES_READ,
+//// Gestion des utilisateurs
+                Permission::ROLES_MANAGE,
+                Permission::USERS_READ,
+                Permission::USERS_CREATE,
+                Permission::USERS_UPDATE,
+                Permission::USERS_DELETE,
             ],
 
             // Consultations/ordonnances/hospitalisations "les siennes" :

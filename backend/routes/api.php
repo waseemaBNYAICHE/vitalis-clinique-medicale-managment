@@ -13,12 +13,20 @@ use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\UserController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
+Route::post('/users', [UserController::class, 'store'])
+    ->middleware('can:users.create');
 
+Route::put('/users/{id}', [UserController::class, 'update'])
+    ->middleware('can:users.update');
+
+Route::delete('/users/{id}', [UserController::class, 'destroy'])
+    ->middleware('can:users.delete');
 // Routes publiques d'authentification
 // SCRUM-510 : ces routes sont accessibles sans jeton, elles sont donc limitees
 // en debit pour empecher la force brute et les envois en masse. Les limiteurs
@@ -66,6 +74,22 @@ Route::middleware('auth:sanctum')->group(function () {
         // rendez-vous.
         Route::get('/dashboard/rendez-vous-du-jour', [DashboardController::class, 'rendezVousDuJour']);
     });
+
+
+// Gestion des utilisateurs (SCRUM-739)
+Route::get('/users', [UserController::class, 'index'])
+    ->middleware('can:users.read');
+Route::get('/users/{id}', [UserController::class, 'show'])
+    ->middleware('can:users.read');
+Route::post('/users', [UserController::class, 'store'])
+    ->middleware('can:users.create');
+Route::put('/users/{id}', [UserController::class, 'update'])
+    ->middleware('can:users.update');
+Route::delete('/users/{id}', [UserController::class, 'destroy'])
+    ->middleware('can:users.delete');
+
+
+
 
     // Donnees de gestion (chiffre d'affaires, tendances, export) : reservees
     // a l'administrateur. Un soignant n'a pas a connaitre le revenu global de
