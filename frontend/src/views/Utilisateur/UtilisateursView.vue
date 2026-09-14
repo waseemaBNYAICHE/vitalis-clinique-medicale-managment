@@ -11,7 +11,10 @@
       <!-- SCRUM-534 : la gestion des comptes est gouvernee par une seule
            permission backend, 'roles.manage', accordee au seul
            administrateur. -->
-      <button class="btn-add-user" v-if="peutAction('utilisateurs.ajouter')">
+      <button
+        class="btn-add-user"
+        v-if="peutAction('utilisateurs.ajouter')"
+      >
         <i class="fi fi-rr-user-add"></i>
         <span>Ajouter un utilisateur</span>
       </button>
@@ -66,121 +69,155 @@
 
           <tbody>
 
-            <tr
-              v-for="user in paginatedUsers"
-              :key="user.id"
-            >
-
-              <!-- USER -->
-              <td>
-                <div class="user-info-cell">
-
-                  <div
-                    class="table-user-avatar"
-                    :class="'avatar-' + ((user.id % 5) + 1)"
-                  >
-                    {{ getInitials(user.name) }}
-                  </div>
-
-                  <div class="user-info-text">
-                    <span class="table-user-name">
-                      {{ user.name }}
-                    </span>
-
-                    <span class="table-user-id">
-                      #{{ user.id }}
-                    </span>
-                  </div>
-
-                </div>
-              </td>
-
-              <!-- EMAIL -->
-              <td class="email-cell">
-                {{ user.email }}
-              </td>
-
-              <!-- ROLE -->
-              <td>
-                <span
-                  class="role-badge"
-                  :class="getRoleClass(user.role)"
-                >
-                  {{ formatRole(user.role) }}
-                </span>
-              </td>
-
-              <!-- STATUS -->
-              <td>
-                <span
-                  class="status-badge"
-                  :class="
-                    user.status === 'actif'
-                      ? 'status-active'
-                      : 'status-inactive'
-                  "
-                >
-                  <span class="status-dot"></span>
-
-                  {{
-                    user.status === 'actif'
-                      ? 'Actif'
-                      : 'Inactif'
-                  }}
-                </span>
-              </td>
-
-              <!-- LAST LOGIN -->
-              <td class="last-login">
-                {{ user.lastLogin }}
-              </td>
-
-              <!-- ACTIONS -->
-              <td>
-                <div class="actions">
-
-                  <button
-                    v-if="peutAction('utilisateurs.consulter')"
-                    class="action-btn view-btn"
-                    title="Voir"
-                  >
-                    <i class="fi fi-rr-eye"></i>
-                  </button>
-
-                  <button
-                    v-if="peutAction('utilisateurs.modifier')"
-                    class="action-btn edit-btn"
-                    title="Modifier"
-                  >
-                    <i class="fi fi-rr-pencil"></i>
-                  </button>
-
-                  <button
-                    v-if="peutAction('utilisateurs.supprimer')"
-                    class="action-btn delete-btn"
-                    title="Supprimer"
-                  >
-                    <i class="fi fi-rr-trash"></i>
-                  </button>
-
-                </div>
-              </td>
-
-            </tr>
-
-            <tr v-if="filteredUsers.length === 0">
+            <!-- CHARGEMENT -->
+            <tr v-if="loading">
               <td colspan="6" class="empty-users">
+                <i class="fi fi-rr-spinner"></i>
 
-                <i class="fi fi-rr-users"></i>
-
-                <h3>Aucun utilisateur trouvé</h3>
+                <h3>Chargement...</h3>
 
                 <p>
-                  Aucun utilisateur ne correspond à votre recherche.
+                  Récupération des utilisateurs depuis le serveur.
+                </p>
+              </td>
+            </tr>
+
+            <!-- ERREUR -->
+            <tr v-else-if="errorMessage">
+              <td colspan="6" class="empty-users">
+
+                <i class="fi fi-rr-exclamation"></i>
+
+                <h3>Erreur</h3>
+
+                <p>
+                  {{ errorMessage }}
                 </p>
 
               </td>
             </tr>
+
+            <!-- UTILISATEURS -->
+            <template v-else>
+
+              <tr
+                v-for="user in paginatedUsers"
+                :key="user.id"
+              >
+
+                <!-- USER -->
+                <td>
+                  <div class="user-info-cell">
+
+                    <div
+                      class="table-user-avatar"
+                      :class="'avatar-' + ((user.id % 5) + 1)"
+                    >
+                      {{ getInitials(user.name) }}
+                    </div>
+
+                    <div class="user-info-text">
+                      <span class="table-user-name">
+                        {{ user.name }}
+                      </span>
+
+                      <span class="table-user-id">
+                        #{{ user.id }}
+                      </span>
+                    </div>
+
+                  </div>
+                </td>
+
+                <!-- EMAIL -->
+                <td class="email-cell">
+                  {{ user.email }}
+                </td>
+
+                <!-- ROLE -->
+                <td>
+                  <span
+                    class="role-badge"
+                    :class="getRoleClass(user.role)"
+                  >
+                    {{ formatRole(user.role) }}
+                  </span>
+                </td>
+
+                <!-- STATUS -->
+                <td>
+                  <span
+                    class="status-badge"
+                    :class="
+                      user.status === 'actif'
+                        ? 'status-active'
+                        : 'status-inactive'
+                    "
+                  >
+                    <span class="status-dot"></span>
+
+                    {{
+                      user.status === 'actif'
+                        ? 'Actif'
+                        : 'Inactif'
+                    }}
+                  </span>
+                </td>
+
+                <!-- LAST LOGIN -->
+                <td class="last-login">
+                  {{ user.lastLogin }}
+                </td>
+
+                <!-- ACTIONS -->
+                <td>
+                  <div class="actions">
+
+                    <button
+                      v-if="peutAction('utilisateurs.consulter')"
+                      class="action-btn view-btn"
+                      title="Voir"
+                    >
+                      <i class="fi fi-rr-eye"></i>
+                    </button>
+
+                    <button
+                      v-if="peutAction('utilisateurs.modifier')"
+                      class="action-btn edit-btn"
+                      title="Modifier"
+                    >
+                      <i class="fi fi-rr-pencil"></i>
+                    </button>
+
+                    <button
+                      v-if="peutAction('utilisateurs.supprimer')"
+                      class="action-btn delete-btn"
+                      title="Supprimer"
+                    >
+                      <i class="fi fi-rr-trash"></i>
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+
+              <!-- AUCUN UTILISATEUR -->
+              <tr v-if="paginatedUsers.length === 0">
+                <td colspan="6" class="empty-users">
+
+                  <i class="fi fi-rr-users"></i>
+
+                  <h3>Aucun utilisateur trouvé</h3>
+
+                  <p>
+                    Aucun utilisateur ne correspond à votre recherche.
+                  </p>
+
+                </td>
+              </tr>
+
+            </template>
 
           </tbody>
 
@@ -196,14 +233,14 @@
           à
           {{ endItem }}
           sur
-          {{ filteredUsers.length }}
+          {{ totalUsers }}
           utilisateurs
         </span>
 
         <div class="pagination-buttons">
 
           <button
-            :disabled="currentPage === 1"
+            :disabled="currentPage === 1 || loading"
             @click="previousPage"
           >
             <i class="fi fi-rr-angle-left"></i>
@@ -214,7 +251,7 @@
           </button>
 
           <button
-            :disabled="currentPage === totalPages"
+            :disabled="currentPage === totalPages || loading"
             @click="nextPage"
           >
             <i class="fi fi-rr-angle-right"></i>
@@ -230,7 +267,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import api, { messageErreur } from '../../api.js'
 import { peutAction } from '../../actions.js'
 
 const search = ref('')
@@ -240,149 +278,118 @@ const statusFilter = ref('')
 const currentPage = ref(1)
 const perPage = 6
 
-/*
-  Données temporaires pour SCRUM-704.
-  Plus tard on pourra les remplacer par l'API backend.
-*/
-const users = ref([
-  {
-    id: 1,
-    name: 'Mounia Stitou',
-    email: 'mounia.stitou@vitalis.ma',
-    role: 'administrateur',
-    status: 'actif',
-    lastLogin: '12/06/2026 - 14:32'
-  },
-  {
-    id: 2,
-    name: 'Ayoub El Fassi',
-    email: 'ayoub.elfassi@vitalis.ma',
-    role: 'medecin',
-    status: 'actif',
-    lastLogin: '11/06/2026 - 10:15'
-  },
-  {
-    id: 3,
-    name: 'Khadija Bennis',
-    email: 'khadija.bennis@vitalis.ma',
-    role: 'secretaire',
-    status: 'actif',
-    lastLogin: '10/06/2026 - 09:20'
-  },
-  {
-    id: 4,
-    name: 'Anas Ouazzani',
-    email: 'anas.ouazzani@vitalis.ma',
-    role: 'infirmier',
-    status: 'inactif',
-    lastLogin: '05/06/2026 - 16:45'
-  },
-  {
-    id: 5,
-    name: 'Ghita Amrani',
-    email: 'ghita.amrani@vitalis.ma',
-    role: 'medecin',
-    status: 'actif',
-    lastLogin: '12/06/2026 - 11:05'
-  },
-  {
-    id: 6,
-    name: 'Zakaria Naciri',
-    email: 'zakaria.naciri@vitalis.ma',
-    role: 'patient',
-    status: 'actif',
-    lastLogin: '09/06/2026 - 08:10'
-  },
-  {
-    id: 7,
-    name: 'Yasmine Belkacem',
-    email: 'yasmine.belkacem@vitalis.ma',
-    role: 'secretaire',
-    status: 'inactif',
-    lastLogin: '01/06/2026 - 12:00'
-  },
-  {
-    id: 8,
-    name: 'Mohamed Fikri',
-    email: 'mohamed.fikri@vitalis.ma',
-    role: 'infirmier',
-    status: 'actif',
-    lastLogin: '12/06/2026 - 13:50'
-  }
-])
+const users = ref([])
+const loading = ref(false)
+const errorMessage = ref('')
 
-const filteredUsers = computed(() => {
-  const term = search.value.trim().toLowerCase()
+const totalUsers = ref(0)
+const lastPage = ref(1)
 
-  return users.value.filter((user) => {
-    const matchesSearch =
-      !term ||
-      user.name.toLowerCase().includes(term) ||
-      user.email.toLowerCase().includes(term) ||
-      user.role.toLowerCase().includes(term)
+/**
+ * Récupération des utilisateurs depuis l'API Laravel.
+ */
+const fetchUsers = async () => {
+  loading.value = true
+  errorMessage.value = ''
 
-    const matchesRole =
-      !roleFilter.value ||
-      user.role === roleFilter.value
+  try {
+    const response = await api.get('/users', {
+      params: {
+        search: search.value || undefined,
 
-    const matchesStatus =
-      !statusFilter.value ||
-      user.status === statusFilter.value
+        role: roleFilter.value || undefined,
 
-    return (
-      matchesSearch &&
-      matchesRole &&
-      matchesStatus
+        statut: statusFilter.value
+          ? statusFilter.value.charAt(0).toUpperCase() +
+            statusFilter.value.slice(1)
+          : undefined,
+
+        page: currentPage.value,
+
+        per_page: perPage,
+      },
+    })
+
+    const result = response.data.users
+
+    /*
+     * Adaptation des données backend au format
+     * utilisé par l'interface frontend.
+     */
+    users.value = result.data.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: (user.statut || '').toLowerCase(),
+      lastLogin: '—',
+    }))
+
+    totalUsers.value = result.total
+    lastPage.value = result.last_page
+
+  } catch (error) {
+    errorMessage.value = messageErreur(
+      error,
+      'Impossible de charger les utilisateurs.'
     )
-  })
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * Utilisateurs affichés sur la page courante.
+ *
+ * La pagination et les filtres sont maintenant
+ * gérés directement par Laravel.
+ */
+const paginatedUsers = computed(() => {
+  return users.value
 })
 
 const totalPages = computed(() => {
-  return Math.max(
-    1,
-    Math.ceil(filteredUsers.value.length / perPage)
-  )
-})
-
-const paginatedUsers = computed(() => {
-  const start =
-    (currentPage.value - 1) * perPage
-
-  return filteredUsers.value.slice(
-    start,
-    start + perPage
-  )
+  return lastPage.value
 })
 
 const startItem = computed(() => {
-  if (filteredUsers.value.length === 0) {
+  if (totalUsers.value === 0) {
     return 0
   }
 
-  return (
-    (currentPage.value - 1) * perPage + 1
-  )
+  return (currentPage.value - 1) * perPage + 1
 })
 
 const endItem = computed(() => {
   return Math.min(
     currentPage.value * perPage,
-    filteredUsers.value.length
+    totalUsers.value
   )
 })
 
-const previousPage = () => {
+/**
+ * Page précédente.
+ */
+const previousPage = async () => {
   if (currentPage.value > 1) {
     currentPage.value--
+    await fetchUsers()
   }
 }
 
-const nextPage = () => {
+/**
+ * Page suivante.
+ */
+const nextPage = async () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
+    await fetchUsers()
   }
 }
 
+/**
+ * Initiales de l'utilisateur.
+ */
 const getInitials = (name) => {
   return name
     .split(' ')
@@ -392,28 +399,49 @@ const getInitials = (name) => {
     .toUpperCase()
 }
 
+/**
+ * Traduction du rôle.
+ */
 const formatRole = (role) => {
   const labels = {
     administrateur: 'Administrateur',
     medecin: 'Médecin',
     secretaire: 'Secrétaire',
     infirmier: 'Infirmier',
-    patient: 'Patient'
+    patient: 'Patient',
   }
 
   return labels[role] || role
 }
 
+/**
+ * Classe CSS du rôle.
+ */
 const getRoleClass = (role) => {
   return `role-${role}`
 }
 
+/**
+ * Recherche et filtres.
+ *
+ * À chaque modification :
+ * - retour à la première page
+ * - nouvelle requête vers Laravel
+ */
 watch(
   [search, roleFilter, statusFilter],
-  () => {
+  async () => {
     currentPage.value = 1
+    await fetchUsers()
   }
 )
+
+/**
+ * Chargement initial.
+ */
+onMounted(() => {
+  fetchUsers()
+})
 </script>
 
 <style src="../../styles/utilisateurs.css"></style>
