@@ -98,4 +98,16 @@ enum Permission: string
     // ou EXAMENS_READ, qu'un patient detient pour SES propres dossiers.
     case INDICATEURS_READ = 'indicateurs.read';
     case STATISTIQUES_READ = 'statistiques.read';
+
+
+
+        // SCRUM-739 - Gestion des comptes utilisateurs.
+    //
+    // Distincte de ROLES_MANAGE : gerer un compte (creer, modifier ses
+    // informations, desactiver) n'est pas la meme operation que modifier son
+    // role. Reservee a l'administrateur, seul habilite a gerer les comptes.
+    case USERS_READ = 'users.read';
+    case USERS_CREATE = 'users.create';
+    case USERS_UPDATE = 'users.update';
+    case USERS_DELETE = 'users.delete';
 }
