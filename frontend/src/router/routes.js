@@ -19,7 +19,8 @@ export const routes = [
     path: '/login',
     name: 'login',
     component: () => import('../views/LoginView.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false },
+    meta: { hideAiDrawer:true }
   },
   {
     path: '/reset-password',
@@ -70,6 +71,20 @@ export const routes = [
         name: 'patients',
         component: () => import('../views/Patients/PatientsView.vue'),
         meta: { permission: 'patients.read' }
+      },{
+        path: 'rendez-vous',
+        name: 'rendez-vous',
+        component: () => import('../views/RendezVous/RendezVous.vue'),
+      },
+      {
+        path: 'consultations',
+        name: 'consultations',
+        component: () => import('../views/Consultations/ConsultationsView.vue'),
+      },
+      {
+        path: 'ordonnances',
+        name: 'ordonnances',
+        component: () => import('../views/Ordonnances/OrdonnancesView.vue'),
       },
       {
         path: 'patients/new',
