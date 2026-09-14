@@ -7,6 +7,7 @@ use App\Models\RendezVous;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 /**
  * SCRUM-605 / SCRUM-607 - Rendez-vous.
@@ -53,20 +54,22 @@ class RendezVousController extends Controller
      *
      * @return array<string, array<int, string>>
      */
-    private function regles(bool $creation): array
-    {
-        return [
-            'date_rendez_vous' => $creation
-                ? ['required', 'date', 'after_or_equal:today']
-                : ['required', 'date'],
-            'heure_debut' => ['required', 'date_format:H:i'],
-            'heure_fin' => ['required', 'date_format:H:i', 'after:heure_debut'],
-            'motif' => ['required', 'string', 'max:255'],
-            'statut' => ['required', 'string', 'max:50'],
-            'id_patient' => ['required', 'integer', 'exists:patients,id_patient'],
-            'id_medecin' => ['required', 'integer', 'exists:medecins,id_medecin'],
-        ];
-    }
+private function regles(bool $creation): array
+{
+    return [
+        'date_rendez_vous' => $creation
+            ? ['required', 'date', 'after_or_equal:today']
+            : ['required', 'date'],
+        'heure_debut' => ['required', 'date_format:H:i'],
+        'heure_fin' => ['required', 'date_format:H:i', 'after:heure_debut'],
+        'motif' => ['required', 'string', 'max:255'],
+        'statut' => ['required', 'string', Rule::in([
+            'Confirmé', 'En attente', 'En cours', 'Annulé',
+        ])],
+        'id_patient' => ['required', 'integer', 'exists:patients,id_patient'],
+        'id_medecin' => ['required', 'integer', 'exists:medecins,id_medecin'],
+    ];
+}
 
     /**
      * Restreint une requete au perimetre du role qui la formule.
