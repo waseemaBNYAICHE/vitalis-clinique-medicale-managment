@@ -473,4 +473,123 @@ class RendezVousAccesTest extends TestCase
         $this->deleteJson("/api/rendez-vous/{$rdv->id_rendez_vous}")->assertStatus(200);
         $this->assertDatabaseMissing('rendez_vous', ['id_rendez_vous' => $rdv->id_rendez_vous]);
     }
+
+        // ----------------------------------------- SCRUM-583 : conflits
+
+    public function test_creation_dun_rendez_vous_en_conflit_est_refusee(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient1 = $this->creerPatient('Patient1');
+        $patient2 = $this->creerPatient('Patient2');
+
+        RendezVous::create([
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Premier rendez-vous',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient1->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $reponse = $this->postJson('/api/rendez-vous', [
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:30',
+            'heure_fin' => '11:30',
+            'motif' => 'Rendez-vous en conflit',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient2->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        $reponse
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Conflit de rendez-vous : le médecin n’est pas disponible pendant cette période.');
+
+        $this->assertDatabaseCount('rendez_vous', 1);
+    }
+
+    public function test_modification_dun_rendez_vous_en_conflit_est_refusee(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient1 = $this->creerPatient('Patient1');
+        $patient2 = $this->creerPatient('Patient2');
+
+        $date = now()->addDay()->toDateString();
+
+        $premier = RendezVous::create([
+            'date_rendez_vous' => $date,
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Premier rendez-vous',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient1->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        $second = RendezVous::create([
+            'date_rendez_vous' => $date,
+            'heure_debut' => '12:00:00',
+            'heure_fin' => '13:00:00',
+            'motif' => 'Deuxième rendez-vous',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient2->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $reponse = $this->putJson("/api/rendez-vous/{$second->id_rendez_vous}", [
+            'date_rendez_vous' => $date,
+            'heure_debut' => '10:30',
+            'heure_fin' => '11:30',
+            'motif' => 'Modification en conflit',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient2->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        $reponse->assertStatus(409);
+
+        $this->assertDatabaseHas('rendez_vous', [
+            'id_rendez_vous' => $second->id_rendez_vous,
+            'heure_debut' => '12:00:00',
+            'heure_fin' => '13:00:00',
+        ]);
+    }
+
+    public function test_deux_rendez_vous_contigus_ne_sont_pas_en_conflit(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient1 = $this->creerPatient('Patient1');
+        $patient2 = $this->creerPatient('Patient2');
+
+        $date = now()->addDay()->toDateString();
+
+        RendezVous::create([
+            'date_rendez_vous' => $date,
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Premier rendez-vous',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient1->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $this->postJson('/api/rendez-vous', [
+            'date_rendez_vous' => $date,
+            'heure_debut' => '11:00',
+            'heure_fin' => '12:00',
+            'motif' => 'Rendez-vous suivant',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient2->id_patient,
+            'id_medecin' => $idMedecin,
+        ])->assertStatus(201);
+
+        $this->assertDatabaseCount('rendez_vous', 2);
+    }
 }
