@@ -14,6 +14,7 @@ use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\FactureController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -234,6 +235,15 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
         '/patients/{idPatient}/ordonnances/historique',
         [OrdonnanceController::class, 'historiquePatient']
     )->middleware('can:ordonnances.read');
+
+
+    //Gestion des factures
+    Route::get('/factures', [FactureController::class, 'index']);
+    Route::get('/factures/{id}', [FactureController::class, 'show']);
+    Route::post('/factures', [FactureController::class, 'store']);
+    Route::put('/factures/{id}', [FactureController::class, 'update']);
+    Route::delete('/factures/{id}', [FactureController::class, 'destroy']);
+
 });
 
 // Health check
