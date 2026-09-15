@@ -97,6 +97,32 @@ private function regles(bool $creation): array
             ? $requete->where('id_medecin', $utilisateur->id_medecin)
             : $requete->where('id_patient', $utilisateur->id_patient);
     }
+
+    private function aUnConflit(
+    int $idMedecin,
+    string $date,
+    string $heureDebut,
+    string $heureFin,
+    ?int $idRendezVous = null
+): bool {
+    return RendezVous::query()
+        ->where('id_medecin', $idMedecin)
+        ->where('date_rendez_vous', $date)
+        ->when(
+            $idRendezVous !== null,
+            fn ($query) => $query->where(
+                'id_rendez_vous',
+                '!=',
+                $idRendezVous
+            )
+        )
+        ->where(function ($query) use ($heureDebut, $heureFin) {
+            $query
+                ->where('heure_debut', '<', $heureFin)
+                ->where('heure_fin', '>', $heureDebut);
+        })
+        ->exists();
+}
 public function disponibilite(Request $request)
 {
     $valide = $request->validate([
@@ -125,23 +151,15 @@ public function disponibilite(Request $request)
         ],
     ]);
 
-    $conflit = RendezVous::query()
-        ->where('id_medecin', $valide['id_medecin'])
-        ->where('date_rendez_vous', $valide['date_rendez_vous'])
-        ->when(
-            isset($valide['id_rendez_vous']),
-            fn ($query) => $query->where(
-                'id_rendez_vous',
-                '!=',
-                $valide['id_rendez_vous']
-            )
-        )
-        ->where(function ($query) use ($valide) {
-            $query
-                ->where('heure_debut', '<', $valide['heure_fin'])
-                ->where('heure_fin', '>', $valide['heure_debut']);
-        })
-        ->exists();
+    $conflit = $this->aUnConflit(
+    (int) $valide['id_medecin'],
+    $valide['date_rendez_vous'],
+    $valide['heure_debut'],
+    $valide['heure_fin'],
+    isset($valide['id_rendez_vous'])
+        ? (int) $valide['id_rendez_vous']
+        : null
+);
 
     if ($conflit) {
         return response()->json([
@@ -176,10 +194,21 @@ public function disponibilite(Request $request)
         // Le rendez-vous n'est pas encore enregistre : la Gate lit ses cles
         // etrangeres pour verifier qu'un patient ne prend rendez-vous que
         // pour lui-meme, et un medecin que pour son propre agenda.
-        $rendezVous = new RendezVous($valide);
-        Gate::authorize('rendez-vous.create', $rendezVous);
+      $rendezVous = new RendezVous($valide);
+Gate::authorize('rendez-vous.create', $rendezVous);
 
-        $rendezVous->save();
+if ($this->aUnConflit(
+    (int) $valide['id_medecin'],
+    $valide['date_rendez_vous'],
+    $valide['heure_debut'],
+    $valide['heure_fin']
+)) {
+    return response()->json([
+        'message' => 'Conflit de rendez-vous : le médecin n’est pas disponible pendant cette période.',
+    ], 409);
+}
+
+$rendezVous->save();
 
         return response()->json([
             'message' => 'Rendez-vous créé avec succès',
@@ -219,10 +248,22 @@ public function disponibilite(Request $request)
         // rendez-vous de quelqu'un d'autre, ni a le faire sortir de son
         // perimetre. On evalue la Gate sur les valeurs demandees avant de
         // les enregistrer.
-        $apresModification = (clone $rendezVous)->fill($valide);
-        Gate::authorize('rendez-vous.update', $apresModification);
+       $apresModification = (clone $rendezVous)->fill($valide);
+Gate::authorize('rendez-vous.update', $apresModification);
 
-        $rendezVous->update($valide);
+if ($this->aUnConflit(
+    (int) $valide['id_medecin'],
+    $valide['date_rendez_vous'],
+    $valide['heure_debut'],
+    $valide['heure_fin'],
+    (int) $rendezVous->id_rendez_vous
+)) {
+    return response()->json([
+        'message' => 'Conflit de rendez-vous : le médecin n’est pas disponible pendant cette période.',
+    ], 409);
+}
+
+$rendezVous->update($valide);
 
         return response()->json([
             'message' => 'Rendez-vous modifié avec succès',
