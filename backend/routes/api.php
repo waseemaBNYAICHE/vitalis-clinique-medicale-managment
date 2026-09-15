@@ -113,7 +113,9 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
         ->middleware('can:rendez-vous.update');
     Route::delete('/rendez-vous/{id}', [RendezVousController::class, 'destroy'])
         ->middleware('can:rendez-vous.delete');
-   // Gestion des patients - reservee au personnel medical/administratif
+    Route::patch('/rendez-vous/{id}/annuler', [RendezVousController::class, 'annuler'])
+      ->middleware('can:rendez-vous.update');
+        // Gestion des patients - reservee au personnel medical/administratif
    
    
    // SCRUM-518 : chaque route exige une PERMISSION plutot qu'une liste de
