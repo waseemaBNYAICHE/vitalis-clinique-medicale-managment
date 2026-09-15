@@ -604,6 +604,75 @@ class RendezVousAccesTest extends TestCase
             'heure_fin' => '11:00:00',
             'motif' => 'Consultation',
             'statut' => 'Confirmé',
+    // ----------------------------------------- SCRUM-53 : statuts
+
+public function test_creation_avec_un_statut_valide_est_acceptee(): void
+{
+    $idMedecin = $this->creerMedecin('Alami');
+    $patient = $this->creerPatient('Patient1');
+
+    Sanctum::actingAs($this->utilisateur('administrateur'));
+
+    $reponse = $this->postJson('/api/rendez-vous', [
+        'date_rendez_vous' => now()->addDay()->toDateString(),
+        'heure_debut' => '10:00',
+        'heure_fin' => '11:00',
+        'motif' => 'Consultation',
+        'statut' => 'Confirmé',
+        'id_patient' => $patient->id_patient,
+        'id_medecin' => $idMedecin,
+    ]);
+
+    $reponse->assertStatus(201);
+
+    $this->assertDatabaseHas('rendez_vous', [
+        'statut' => 'Confirmé',
+    ]);
+}
+
+public function test_creation_avec_un_statut_invalide_est_refusee(): void
+{
+    $idMedecin = $this->creerMedecin('Alami');
+    $patient = $this->creerPatient('Patient1');
+
+    Sanctum::actingAs($this->utilisateur('administrateur'));
+
+    $reponse = $this->postJson('/api/rendez-vous', [
+        'date_rendez_vous' => now()->addDay()->toDateString(),
+        'heure_debut' => '10:00',
+        'heure_fin' => '11:00',
+        'motif' => 'Consultation',
+        'statut' => 'Statut invalide',
+        'id_patient' => $patient->id_patient,
+        'id_medecin' => $idMedecin,
+    ]);
+
+    $reponse
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['statut']);
+}
+
+public function test_tous_les_statuts_autorises_sont_acceptes(): void
+{
+    $statuts = [
+        'Confirmé',
+        'En attente',
+        'En cours',
+        'Annulé',
+    ];
+
+    Sanctum::actingAs($this->utilisateur('administrateur'));
+
+    foreach ($statuts as $statut) {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+
+        $reponse = $this->postJson('/api/rendez-vous', [
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:00',
+            'heure_fin' => '11:00',
+            'motif' => 'Consultation',
+            'statut' => $statut,
             'id_patient' => $patient->id_patient,
             'id_medecin' => $idMedecin,
         ]);
@@ -687,4 +756,7 @@ class RendezVousAccesTest extends TestCase
                 'Impossible d’annuler ce rendez-vous car une consultation y est rattachée.'
             );
     }
+        $reponse->assertStatus(201);
+    }
+}
 }

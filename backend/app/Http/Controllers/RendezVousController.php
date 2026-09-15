@@ -63,9 +63,16 @@ private function regles(bool $creation): array
         'heure_debut' => ['required', 'date_format:H:i'],
         'heure_fin' => ['required', 'date_format:H:i', 'after:heure_debut'],
         'motif' => ['required', 'string', 'max:255'],
-        'statut' => ['required', 'string', Rule::in([
-            'Confirmé', 'En attente', 'En cours', 'Annulé',
-        ])],
+        'statut' => [
+    'required',
+    'string',
+    Rule::in([
+        'Confirmé',
+        'En attente',
+        'En cours',
+        'Annulé',
+    ]),
+],
         'id_patient' => ['required', 'integer', 'exists:patients,id_patient'],
         'id_medecin' => ['required', 'integer', 'exists:medecins,id_medecin'],
     ];
