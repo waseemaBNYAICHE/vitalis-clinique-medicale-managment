@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Consultation;
 use App\Models\Facture;
+use App\Models\Hospitalisation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class FactureController extends Controller
 {
@@ -44,19 +48,7 @@ class FactureController extends Controller
                 'date'
             ],
 
-            'montant_total' => [
-                'required',
-                'numeric',
-                'min:0'
-            ],
-
             'remise' => [
-                'required',
-                'numeric',
-                'min:0'
-            ],
-
-            'montant_net' => [
                 'required',
                 'numeric',
                 'min:0'
@@ -85,6 +77,23 @@ class FactureController extends Controller
                 'exists:hospitalisations,id_hospitalisation'
             ],
         ]);
+
+        $montantTotal = $this->calculerMontantTotal(
+            $validated['id_consultation'] ?? null,
+            $validated['id_hospitalisation'] ?? null,
+            $validated['date_facture']
+        );
+
+        $remise = (float) $validated['remise'];
+
+        if ($remise > $montantTotal) {
+            throw ValidationException::withMessages([
+                'remise' => 'La remise ne peut pas dépasser le montant total.'
+            ]);
+        }
+
+        $validated['montant_total'] = $montantTotal;
+        $validated['montant_net'] = $montantTotal - $remise;
 
         $facture = Facture::create($validated);
 
@@ -115,21 +124,7 @@ class FactureController extends Controller
                 'date'
             ],
 
-            'montant_total' => [
-                'sometimes',
-                'required',
-                'numeric',
-                'min:0'
-            ],
-
             'remise' => [
-                'sometimes',
-                'required',
-                'numeric',
-                'min:0'
-            ],
-
-            'montant_net' => [
                 'sometimes',
                 'required',
                 'numeric',
@@ -164,12 +159,107 @@ class FactureController extends Controller
             ],
         ]);
 
+        $idConsultation = array_key_exists('id_consultation', $validated)
+            ? $validated['id_consultation']
+            : $facture->id_consultation;
+
+        $idHospitalisation = array_key_exists('id_hospitalisation', $validated)
+            ? $validated['id_hospitalisation']
+            : $facture->id_hospitalisation;
+
+        $dateFacture = $validated['date_facture']
+            ?? $facture->date_facture;
+
+        $remise = array_key_exists('remise', $validated)
+            ? (float) $validated['remise']
+            : (float) $facture->remise;
+
+        $montantTotal = $this->calculerMontantTotal(
+            $idConsultation,
+            $idHospitalisation,
+            $dateFacture
+        );
+
+        if ($remise > $montantTotal) {
+            throw ValidationException::withMessages([
+                'remise' => 'La remise ne peut pas dépasser le montant total.'
+            ]);
+        }
+
+        $validated['montant_total'] = $montantTotal;
+        $validated['montant_net'] = $montantTotal - $remise;
+
         $facture->update($validated);
 
         return response()->json([
             'message' => 'Facture modifiée avec succès',
             'facture' => $facture
         ], 200);
+    }
+
+    // Calcul automatique du montant total
+    private function calculerMontantTotal(
+        $idConsultation,
+        $idHospitalisation,
+        $dateFacture
+    ): float {
+        if (!$idConsultation && !$idHospitalisation) {
+            throw ValidationException::withMessages([
+                'facture' => 'Une consultation ou une hospitalisation est obligatoire.'
+            ]);
+        }
+
+        $montantTotal = 0;
+
+        // Cas consultation
+        if ($idConsultation) {
+            $consultation = Consultation::findOrFail($idConsultation);
+
+            $medecin = $consultation->medecin();
+
+            if (!$medecin) {
+                throw ValidationException::withMessages([
+                    'id_consultation' => 'Aucun médecin associé à cette consultation.'
+                ]);
+            }
+
+            $montantTotal += (float) $medecin->tarif_consultation;
+        }
+
+        // Cas hospitalisation
+        if ($idHospitalisation) {
+            $hospitalisation = Hospitalisation::with('chambre')
+                ->findOrFail($idHospitalisation);
+
+            if (!$hospitalisation->chambre) {
+                throw ValidationException::withMessages([
+                    'id_hospitalisation' => 'Aucune chambre associée à cette hospitalisation.'
+                ]);
+            }
+
+            $dateEntree = Carbon::parse($hospitalisation->date_entree);
+
+            $dateFin = $hospitalisation->date_sortie
+                ? Carbon::parse($hospitalisation->date_sortie)
+                : Carbon::parse($dateFacture);
+
+            if ($dateFin->lt($dateEntree)) {
+                throw ValidationException::withMessages([
+                    'date_facture' => 'La date de fin ne peut pas être antérieure à la date d’entrée.'
+                ]);
+            }
+
+            $nombreJours = max(
+                1,
+                $dateEntree->diffInDays($dateFin)
+            );
+
+            $montantTotal +=
+                $nombreJours *
+                (float) $hospitalisation->chambre->tarif_journalier;
+        }
+
+        return round($montantTotal, 2);
     }
 
     // Supprimer une facture

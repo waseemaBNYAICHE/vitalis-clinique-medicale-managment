@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Facture extends Model
 {
@@ -19,4 +20,22 @@ class Facture extends Model
         'id_consultation',
         'id_hospitalisation',
     ];
+
+    public function consultation(): BelongsTo
+    {
+        return $this->belongsTo(
+            Consultation::class,
+            'id_consultation',
+            'id_consultation'
+        );
+    }
+
+    public function hospitalisation(): BelongsTo
+    {
+        return $this->belongsTo(
+            Hospitalisation::class,
+            'id_hospitalisation',
+            'id_hospitalisation'
+        );
+    }
 }
