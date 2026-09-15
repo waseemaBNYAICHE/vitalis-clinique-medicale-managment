@@ -97,7 +97,64 @@ private function regles(bool $creation): array
             ? $requete->where('id_medecin', $utilisateur->id_medecin)
             : $requete->where('id_patient', $utilisateur->id_patient);
     }
+public function disponibilite(Request $request)
+{
+    $valide = $request->validate([
+        'id_medecin' => [
+            'required',
+            'integer',
+            'exists:medecins,id_medecin',
+        ],
+        'date_rendez_vous' => [
+            'required',
+            'date',
+        ],
+        'heure_debut' => [
+            'required',
+            'date_format:H:i',
+        ],
+        'heure_fin' => [
+            'required',
+            'date_format:H:i',
+            'after:heure_debut',
+        ],
+        'id_rendez_vous' => [
+            'nullable',
+            'integer',
+            'exists:rendez_vous,id_rendez_vous',
+        ],
+    ]);
 
+    $conflit = RendezVous::query()
+        ->where('id_medecin', $valide['id_medecin'])
+        ->where('date_rendez_vous', $valide['date_rendez_vous'])
+        ->when(
+            isset($valide['id_rendez_vous']),
+            fn ($query) => $query->where(
+                'id_rendez_vous',
+                '!=',
+                $valide['id_rendez_vous']
+            )
+        )
+        ->where(function ($query) use ($valide) {
+            $query
+                ->where('heure_debut', '<', $valide['heure_fin'])
+                ->where('heure_fin', '>', $valide['heure_debut']);
+        })
+        ->exists();
+
+    if ($conflit) {
+        return response()->json([
+            'disponible' => false,
+            'message' => 'Le médecin n’est pas disponible pendant cette période.',
+        ], 200);
+    }
+
+    return response()->json([
+        'disponible' => true,
+        'message' => 'Le médecin est disponible pendant cette période.',
+    ], 200);
+}
     public function index(Request $request)
     {
         $rendezVous = $this->limiterAuPerimetre(RendezVous::query(), $request)

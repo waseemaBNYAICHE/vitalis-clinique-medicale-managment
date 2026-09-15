@@ -88,9 +88,6 @@ Route::put('/users/{id}', [UserController::class, 'update'])
 Route::delete('/users/{id}', [UserController::class, 'destroy'])
     ->middleware('can:users.delete');
 
-
-
-
     // Donnees de gestion (chiffre d'affaires, tendances, export) : reservees
     // a l'administrateur. Un soignant n'a pas a connaitre le revenu global de
     // la clinique pour exercer.
@@ -99,9 +96,15 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
         Route::get('/dashboard/statistiques-mensuelles', [DashboardController::class, 'statistiquesMensuelles']);
         Route::get('/dashboard/export-statistiques', [DashboardController::class, 'exportStatistiques']);
     });
+
+
     // Gestion des rendez-vous (SCRUM-49)
     Route::get('/rendez-vous', [RendezVousController::class, 'index'])
         ->middleware('can:rendez-vous.read');
+
+    Route::get('/rendez-vous/disponibilite', [RendezVousController::class, 'disponibilite'])
+        ->middleware('can:rendez-vous.read');
+
     Route::get('/rendez-vous/{id}', [RendezVousController::class, 'show'])
         ->middleware('can:rendez-vous.read');
     Route::post('/rendez-vous', [RendezVousController::class, 'store'])
