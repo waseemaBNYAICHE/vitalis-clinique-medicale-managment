@@ -300,4 +300,32 @@ $rendezVous->update($valide);
             'message' => 'Rendez-vous supprimé avec succès',
         ], 200);
     }
+    public function annuler(Request $request, $id)
+    {
+        $rendezVous = $this->trouverOuRefuser(RendezVous::find($id), $request);
+
+        Gate::authorize('rendez-vous.update', $rendezVous);
+
+        // Un rendez-vous déjà terminé ou déjà annulé ne peut pas être annulé.
+        if (in_array($rendezVous->statut, ['Annulé', 'Terminé'], true)) {
+            return response()->json([
+                'message' => 'Ce rendez-vous ne peut plus être annulé (statut actuel : '.$rendezVous->statut.').',
+            ], 409);
+        }
+
+        // Une consultation déjà rattachée signifie que le rendez-vous a eu lieu.
+        if ($rendezVous->consultation()->exists()) {
+            return response()->json([
+                'message' => 'Impossible d’annuler ce rendez-vous car une consultation y est rattachée.',
+            ], 409);
+        }
+
+        $rendezVous->statut = 'Annulé';
+        $rendezVous->save();
+
+        return response()->json([
+            'message' => 'Rendez-vous annulé avec succès',
+            'rendez_vous' => $rendezVous,
+        ], 200);
+    }
 }

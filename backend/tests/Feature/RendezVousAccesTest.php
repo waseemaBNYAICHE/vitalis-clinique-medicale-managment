@@ -592,6 +592,18 @@ class RendezVousAccesTest extends TestCase
 
         $this->assertDatabaseCount('rendez_vous', 2);
     }
+
+        public function test_annuler_un_rendez_vous_modifie_son_statut(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+
+        $rendezVous = RendezVous::create([
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Consultation',
+            'statut' => 'Confirmé',
     // ----------------------------------------- SCRUM-53 : statuts
 
 public function test_creation_avec_un_statut_valide_est_acceptee(): void
@@ -665,6 +677,85 @@ public function test_tous_les_statuts_autorises_sont_acceptes(): void
             'id_medecin' => $idMedecin,
         ]);
 
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $reponse = $this->patchJson(
+            "/api/rendez-vous/{$rendezVous->id_rendez_vous}/annuler"
+        );
+
+        $reponse
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Rendez-vous annulé avec succès');
+
+        $this->assertDatabaseHas('rendez_vous', [
+            'id_rendez_vous' => $rendezVous->id_rendez_vous,
+            'statut' => 'Annulé',
+        ]);
+    }
+
+    public function test_un_rendez_vous_deja_annule_ne_peut_pas_etre_annule(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+
+        $rendezVous = RendezVous::create([
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Consultation',
+            'statut' => 'Annulé',
+            'id_patient' => $patient->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $reponse = $this->patchJson(
+            "/api/rendez-vous/{$rendezVous->id_rendez_vous}/annuler"
+        );
+
+        $reponse
+            ->assertStatus(409)
+            ->assertJsonPath(
+                'message',
+                'Ce rendez-vous ne peut plus être annulé (statut actuel : Annulé).'
+            );
+    }
+
+    public function test_un_rendez_vous_avec_une_consultation_ne_peut_pas_etre_annule(): void
+    {
+        $idMedecin = $this->creerMedecin('Alami');
+        $patient = $this->creerPatient('Patient');
+
+        $rendezVous = RendezVous::create([
+            'date_rendez_vous' => now()->addDay()->toDateString(),
+            'heure_debut' => '10:00:00',
+            'heure_fin' => '11:00:00',
+            'motif' => 'Consultation',
+            'statut' => 'Confirmé',
+            'id_patient' => $patient->id_patient,
+            'id_medecin' => $idMedecin,
+        ]);
+
+        Consultation::create([
+            'id_rendez_vous' => $rendezVous->id_rendez_vous,
+            'motif' => 'Consultation médicale',
+            'diagnostic' => 'Diagnostic de test',
+        ]);
+
+        Sanctum::actingAs($this->utilisateur('administrateur'));
+
+        $reponse = $this->patchJson(
+            "/api/rendez-vous/{$rendezVous->id_rendez_vous}/annuler"
+        );
+
+        $reponse
+            ->assertStatus(409)
+            ->assertJsonPath(
+                'message',
+                'Impossible d’annuler ce rendez-vous car une consultation y est rattachée.'
+            );
+    }
         $reponse->assertStatus(201);
     }
 }
