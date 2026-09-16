@@ -245,6 +245,7 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     Route::post('/factures', [FactureController::class, 'store']);
     Route::put('/factures/{id}', [FactureController::class, 'update']);
     Route::patch('/factures/{id}/annuler', [FactureController::class, 'annuler']);
+    Route::get('/patients/{idPatient}/factures', [FactureController::class, 'historiquePatient']);
     Route::delete('/factures/{id}', [FactureController::class, 'destroy']);
 
     // Gestion des paiements

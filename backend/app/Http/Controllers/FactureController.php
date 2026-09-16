@@ -283,6 +283,31 @@ class FactureController extends Controller
     ], 200);
     }
 
+    // Afficher l'historique de facturation d'un patient
+    public function historiquePatient($idPatient)
+    {
+        $factures = Facture::where(function ($query) use ($idPatient) {
+
+        // Factures liées aux consultations du patient
+        $query->whereHas(
+            'consultation.rendezVous',
+            fn ($q) => $q->where('id_patient', $idPatient)
+        )
+
+        // Ou factures liées aux hospitalisations du patient
+        ->orWhereHas(
+            'hospitalisation',
+            fn ($q) => $q->where('id_patient', $idPatient)
+        );
+    })
+    ->orderBy('date_facture', 'desc')
+    ->get();
+
+    return response()->json([
+        'historique' => $factures
+    ], 200);
+    }
+
     // Supprimer une facture
     public function destroy($id)
     {
