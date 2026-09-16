@@ -4,7 +4,8 @@ import { useRouter, useRoute } from 'vue-router'
 import api, { messageErreur } from '../api'
 import { resolveRedirection } from '../router/guards'
 import { saveSession } from '../auth.js'
-
+import ContactAdminModal from '../components/ContactAdminModal.vue'
+const contactAdminModal = ref(null)
 const router = useRouter()
 const route = useRoute()
 
@@ -124,10 +125,11 @@ const login = async () => {
         <div class="separator"><span>ou</span></div>
         <p class="contact">
           Vous n'avez pas de compte ?
-          <a href="#" @click.prevent>Contacter l'administrateur</a>
+          <a href="#" @click.prevent="contactAdminModal.open()"> Contacter l'administrateur</a>
         </p>
       </div>
     </section>
+    <ContactAdminModal ref="contactAdminModal" />
   </main>
 </template>
 <style src="../styles/login.css"></style>
