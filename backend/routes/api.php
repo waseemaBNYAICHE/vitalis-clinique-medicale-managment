@@ -15,6 +15,7 @@ use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\PaiementController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -245,6 +246,12 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     Route::put('/factures/{id}', [FactureController::class, 'update']);
     Route::delete('/factures/{id}', [FactureController::class, 'destroy']);
 
+    // Gestion des paiements
+    Route::get('/paiements', [PaiementController::class, 'index']);
+    Route::get('/paiements/{id}', [PaiementController::class, 'show']);
+    Route::post('/paiements', [PaiementController::class, 'store']);
+    Route::put('/paiements/{id}', [PaiementController::class, 'update']);
+    Route::delete('/paiements/{id}', [PaiementController::class, 'destroy']);
 });
 
 // Health check
