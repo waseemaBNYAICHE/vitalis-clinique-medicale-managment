@@ -1,28 +1,28 @@
 <template>
   <section class="users-page">
-
     <!-- HEADER -->
     <div class="users-header">
       <div>
         <h1>Gestion des utilisateurs</h1>
-        <p>Gérez les comptes et les droits d'accès des utilisateurs.</p>
+
+        <p>
+          Gérez les comptes et les droits d'accès des utilisateurs.
+        </p>
       </div>
 
-      <!-- SCRUM-534 : la gestion des comptes est gouvernee par une seule
-           permission backend, 'roles.manage', accordee au seul
-           administrateur. -->
       <button
-        class="btn-add-user"
         v-if="peutAction('utilisateurs.ajouter')"
+        type="button"
+        class="btn-add-user"
+        @click="openCreateModal"
       >
         <i class="fi fi-rr-user-add"></i>
         <span>Ajouter un utilisateur</span>
       </button>
     </div>
 
-    <!-- FILTERS -->
+    <!-- FILTRES -->
     <div class="users-toolbar">
-
       <div class="users-search">
         <i class="fi fi-rr-search"></i>
 
@@ -33,7 +33,10 @@
         />
       </div>
 
-      <select v-model="roleFilter" class="filter-select">
+      <select
+        v-model="roleFilter"
+        class="filter-select"
+      >
         <option value="">Tous les rôles</option>
         <option value="administrateur">Administrateur</option>
         <option value="medecin">Médecin</option>
@@ -42,20 +45,20 @@
         <option value="patient">Patient</option>
       </select>
 
-      <select v-model="statusFilter" class="filter-select">
+      <select
+        v-model="statusFilter"
+        class="filter-select"
+      >
         <option value="">Tous les statuts</option>
         <option value="actif">Actif</option>
         <option value="inactif">Inactif</option>
       </select>
-
     </div>
 
-    <!-- TABLE -->
+    <!-- TABLEAU -->
     <div class="users-card">
-
       <div class="table-responsive">
         <table class="users-table">
-
           <thead>
             <tr>
               <th>Utilisateur</th>
@@ -68,10 +71,12 @@
           </thead>
 
           <tbody>
-
             <!-- CHARGEMENT -->
             <tr v-if="loading">
-              <td colspan="6" class="empty-users">
+              <td
+                colspan="6"
+                class="empty-users"
+              >
                 <i class="fi fi-rr-spinner"></i>
 
                 <h3>Chargement...</h3>
@@ -84,34 +89,40 @@
 
             <!-- ERREUR -->
             <tr v-else-if="errorMessage">
-              <td colspan="6" class="empty-users">
-
+              <td
+                colspan="6"
+                class="empty-users"
+              >
                 <i class="fi fi-rr-exclamation"></i>
 
                 <h3>Erreur</h3>
 
-                <p>
-                  {{ errorMessage }}
-                </p>
+                <p>{{ errorMessage }}</p>
 
+                <button
+                  type="button"
+                  class="btn-retry"
+                  @click="fetchUsers"
+                >
+                  Réessayer
+                </button>
               </td>
             </tr>
 
             <!-- UTILISATEURS -->
             <template v-else>
-
               <tr
-                v-for="user in paginatedUsers"
+                v-for="user in users"
                 :key="user.id"
               >
-
-                <!-- USER -->
+                <!-- UTILISATEUR -->
                 <td>
                   <div class="user-info-cell">
-
                     <div
                       class="table-user-avatar"
-                      :class="'avatar-' + ((user.id % 5) + 1)"
+                      :class="
+                        'avatar-' + ((user.id % 5) + 1)
+                      "
                     >
                       {{ getInitials(user.name) }}
                     </div>
@@ -125,7 +136,6 @@
                         #{{ user.id }}
                       </span>
                     </div>
-
                   </div>
                 </td>
 
@@ -134,7 +144,7 @@
                   {{ user.email }}
                 </td>
 
-                <!-- ROLE -->
+                <!-- RÔLE -->
                 <td>
                   <span
                     class="role-badge"
@@ -144,7 +154,7 @@
                   </span>
                 </td>
 
-                <!-- STATUS -->
+                <!-- STATUT -->
                 <td>
                   <span
                     class="status-badge"
@@ -164,7 +174,7 @@
                   </span>
                 </td>
 
-                <!-- LAST LOGIN -->
+                <!-- DERNIÈRE CONNEXION -->
                 <td class="last-login">
                   {{ user.lastLogin }}
                 </td>
@@ -172,40 +182,60 @@
                 <!-- ACTIONS -->
                 <td>
                   <div class="actions">
-
+                    <!-- CONSULTER -->
                     <button
-                      v-if="peutAction('utilisateurs.consulter')"
+                      v-if="
+                        peutAction(
+                          'utilisateurs.consulter'
+                        )
+                      "
+                      type="button"
                       class="action-btn view-btn"
                       title="Voir"
+                      @click="viewUser(user)"
                     >
                       <i class="fi fi-rr-eye"></i>
                     </button>
 
+                    <!-- MODIFIER -->
                     <button
-                      v-if="peutAction('utilisateurs.modifier')"
+                      v-if="
+                        peutAction(
+                          'utilisateurs.modifier'
+                        )
+                      "
+                      type="button"
                       class="action-btn edit-btn"
                       title="Modifier"
+                      @click="openEditModal(user)"
                     >
                       <i class="fi fi-rr-pencil"></i>
                     </button>
 
+                    <!-- SUPPRIMER -->
                     <button
-                      v-if="peutAction('utilisateurs.supprimer')"
+                      v-if="
+                        peutAction(
+                          'utilisateurs.supprimer'
+                        )
+                      "
+                      type="button"
                       class="action-btn delete-btn"
                       title="Supprimer"
+                      @click="openDeleteModal(user)"
                     >
                       <i class="fi fi-rr-trash"></i>
                     </button>
-
                   </div>
                 </td>
-
               </tr>
 
               <!-- AUCUN UTILISATEUR -->
-              <tr v-if="paginatedUsers.length === 0">
-                <td colspan="6" class="empty-users">
-
+              <tr v-if="users.length === 0">
+                <td
+                  colspan="6"
+                  class="empty-users"
+                >
                   <i class="fi fi-rr-users"></i>
 
                   <h3>Aucun utilisateur trouvé</h3>
@@ -213,20 +243,15 @@
                   <p>
                     Aucun utilisateur ne correspond à votre recherche.
                   </p>
-
                 </td>
               </tr>
-
             </template>
-
           </tbody>
-
         </table>
       </div>
 
       <!-- PAGINATION -->
       <div class="users-pagination">
-
         <span class="pagination-info">
           Affichage de
           {{ startItem }}
@@ -238,56 +263,155 @@
         </span>
 
         <div class="pagination-buttons">
-
           <button
-            :disabled="currentPage === 1 || loading"
+            type="button"
+            :disabled="
+              currentPage === 1 ||
+              loading
+            "
             @click="previousPage"
           >
             <i class="fi fi-rr-angle-left"></i>
           </button>
 
-          <button class="page-active">
+          <button
+            type="button"
+            class="page-active"
+          >
             {{ currentPage }}
           </button>
 
           <button
-            :disabled="currentPage === totalPages || loading"
+            type="button"
+            :disabled="
+              currentPage >= totalPages ||
+              loading
+            "
             @click="nextPage"
           >
             <i class="fi fi-rr-angle-right"></i>
           </button>
-
         </div>
-
       </div>
-
     </div>
 
+    <!-- AJOUTER / MODIFIER -->
+    <UserFormModal
+      :open="showFormModal"
+      :loading="savingUser"
+      :mode="formMode"
+      :user="editingUser"
+      @close="closeFormModal"
+      @submit="saveUser"
+    />
+
+    <!-- CONSULTER -->
+    <UserDetailsModal
+      :open="showDetailsModal"
+      :user="selectedUser"
+      :loading="loadingDetails"
+      @close="closeDetailsModal"
+    />
+
+    <!-- SUPPRIMER -->
+    <DeleteUserModal
+      :open="showDeleteModal"
+      :user="userToDelete"
+      :loading="deletingUser"
+      @close="closeDeleteModal"
+      @confirm="deleteUser"
+    />
   </section>
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
-import api, { messageErreur } from '../../api.js'
-import { peutAction } from '../../actions.js'
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 
-const search = ref('')
-const roleFilter = ref('')
-const statusFilter = ref('')
+import api, {
+  messageErreur,
+} from '../../api.js'
 
-const currentPage = ref(1)
-const perPage = 6
+import {
+  peutAction,
+} from '../../actions.js'
+
+import {
+  useNotification,
+} from '../../composables/useNotification.js'
+
+import UserFormModal from '../../components/utilisateurs/UserFormModal.vue'
+
+import UserDetailsModal from '../../components/utilisateurs/UserDetailsModal.vue'
+
+import DeleteUserModal from '../../components/utilisateurs/DeleteUserModal.vue'
+
+/* ==============================
+   NOTIFICATIONS
+================================ */
+
+const {
+  success,
+  error: notifyError,
+  warning,
+} = useNotification()
+
+/* ==============================
+   LISTE ET FILTRES
+================================ */
 
 const users = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
 
+const search = ref('')
+const roleFilter = ref('')
+const statusFilter = ref('')
+
+/* ==============================
+   PAGINATION
+================================ */
+
+const currentPage = ref(1)
+const perPage = 6
+
 const totalUsers = ref(0)
 const lastPage = ref(1)
 
-/**
- * Récupération des utilisateurs depuis l'API Laravel.
- */
+/* ==============================
+   AJOUTER / MODIFIER
+================================ */
+
+const showFormModal = ref(false)
+const savingUser = ref(false)
+
+const formMode = ref('create')
+const editingUser = ref(null)
+
+/* ==============================
+   CONSULTER
+================================ */
+
+const showDetailsModal = ref(false)
+const selectedUser = ref(null)
+const loadingDetails = ref(false)
+
+/* ==============================
+   SUPPRIMER
+================================ */
+
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
+const deletingUser = ref(false)
+
+/* ==============================
+   CHARGER LES UTILISATEURS
+================================ */
+
 const fetchUsers = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -295,42 +419,55 @@ const fetchUsers = async () => {
   try {
     const response = await api.get('/users', {
       params: {
-        search: search.value || undefined,
+        search:
+          search.value || undefined,
 
-        role: roleFilter.value || undefined,
+        role:
+          roleFilter.value || undefined,
 
         statut: statusFilter.value
-          ? statusFilter.value.charAt(0).toUpperCase() +
+          ? statusFilter.value
+              .charAt(0)
+              .toUpperCase() +
             statusFilter.value.slice(1)
           : undefined,
 
         page: currentPage.value,
-
         per_page: perPage,
       },
     })
 
     const result = response.data.users
 
-    /*
-     * Adaptation des données backend au format
-     * utilisé par l'interface frontend.
-     */
     users.value = result.data.map((user) => ({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      status: (user.statut || '').toLowerCase(),
-      lastLogin: '—',
+
+      statut:
+        user.statut || 'Inactif',
+
+      status: (
+        user.statut || 'Inactif'
+      ).toLowerCase(),
+
+      id_medecin:
+        user.id_medecin,
+
+      id_patient:
+        user.id_patient,
+
+      lastLogin: formatLastLogin(
+        user.derniere_connexion
+      ),
     }))
 
     totalUsers.value = result.total
     lastPage.value = result.last_page
-
-  } catch (error) {
+  } catch (requestError) {
     errorMessage.value = messageErreur(
-      error,
+      requestError,
       'Impossible de charger les utilisateurs.'
     )
   } finally {
@@ -338,15 +475,233 @@ const fetchUsers = async () => {
   }
 }
 
-/**
- * Utilisateurs affichés sur la page courante.
- *
- * La pagination et les filtres sont maintenant
- * gérés directement par Laravel.
- */
-const paginatedUsers = computed(() => {
-  return users.value
-})
+/* ==============================
+   OUVRIR LE FORMULAIRE D'AJOUT
+================================ */
+
+const openCreateModal = () => {
+  formMode.value = 'create'
+  editingUser.value = null
+  showFormModal.value = true
+}
+
+/* ==============================
+   OUVRIR LE FORMULAIRE DE MODIFICATION
+================================ */
+
+const openEditModal = (user) => {
+  formMode.value = 'edit'
+
+  editingUser.value = {
+    ...user,
+
+    statut:
+      user.statut ||
+      (
+        user.status === 'actif'
+          ? 'Actif'
+          : 'Inactif'
+      ),
+  }
+
+  showFormModal.value = true
+}
+
+/* ==============================
+   FERMER LE FORMULAIRE
+================================ */
+
+const closeFormModal = () => {
+  if (savingUser.value) {
+    return
+  }
+
+  showFormModal.value = false
+  editingUser.value = null
+  formMode.value = 'create'
+}
+
+/* ==============================
+   AJOUTER OU MODIFIER
+================================ */
+
+const saveUser = async (formData) => {
+  if (
+    formMode.value === 'create' &&
+    formData.password !==
+      formData.password_confirmation
+  ) {
+    warning(
+      'Les mots de passe ne correspondent pas.'
+    )
+
+    return
+  }
+
+  savingUser.value = true
+
+  try {
+    if (formMode.value === 'edit') {
+      const response = await api.put(
+        `/users/${editingUser.value.id}`,
+        formData
+      )
+
+      success(
+        response.data.message ||
+        'Utilisateur modifié avec succès.'
+      )
+    } else {
+      const response = await api.post(
+        '/users',
+        formData
+      )
+
+      success(
+        response.data.message ||
+        'Utilisateur ajouté avec succès.'
+      )
+
+      currentPage.value = 1
+    }
+
+    /*
+     * Fermer directement la fenêtre.
+     * closeFormModal ne peut pas être appelée
+     * pendant savingUser = true.
+     */
+    showFormModal.value = false
+    editingUser.value = null
+    formMode.value = 'create'
+
+    await fetchUsers()
+  } catch (requestError) {
+    notifyError(
+      messageErreur(
+        requestError,
+
+        formMode.value === 'edit'
+          ? "Impossible de modifier l'utilisateur."
+          : "Impossible d'ajouter l'utilisateur."
+      )
+    )
+  } finally {
+    savingUser.value = false
+  }
+}
+
+/* ==============================
+   CONSULTER UN UTILISATEUR
+================================ */
+
+const viewUser = async (user) => {
+  showDetailsModal.value = true
+  selectedUser.value = null
+  loadingDetails.value = true
+
+  try {
+    const response = await api.get(
+      `/users/${user.id}`
+    )
+
+    selectedUser.value =
+      response.data.user
+  } catch (requestError) {
+    showDetailsModal.value = false
+
+    notifyError(
+      messageErreur(
+        requestError,
+        "Impossible de charger les informations de l'utilisateur."
+      )
+    )
+  } finally {
+    loadingDetails.value = false
+  }
+}
+
+const closeDetailsModal = () => {
+  if (loadingDetails.value) {
+    return
+  }
+
+  showDetailsModal.value = false
+  selectedUser.value = null
+}
+
+/* ==============================
+   OUVRIR LA CONFIRMATION DE SUPPRESSION
+================================ */
+
+const openDeleteModal = (user) => {
+  userToDelete.value = user
+  showDeleteModal.value = true
+}
+
+/* ==============================
+   FERMER LA CONFIRMATION
+================================ */
+
+const closeDeleteModal = () => {
+  if (deletingUser.value) {
+    return
+  }
+
+  showDeleteModal.value = false
+  userToDelete.value = null
+}
+
+/* ==============================
+   SUPPRIMER UN UTILISATEUR
+================================ */
+
+const deleteUser = async () => {
+  if (!userToDelete.value) {
+    return
+  }
+
+  deletingUser.value = true
+
+  try {
+    const response = await api.delete(
+      `/users/${userToDelete.value.id}`
+    )
+
+    success(
+      response.data.message ||
+      'Utilisateur supprimé avec succès.'
+    )
+
+    showDeleteModal.value = false
+    userToDelete.value = null
+
+    /*
+     * Si le dernier utilisateur de la page
+     * est supprimé, revenir à la page précédente.
+     */
+    if (
+      users.value.length === 1 &&
+      currentPage.value > 1
+    ) {
+      currentPage.value--
+    }
+
+    await fetchUsers()
+  } catch (requestError) {
+    notifyError(
+      messageErreur(
+        requestError,
+        "Impossible de supprimer l'utilisateur."
+      )
+    )
+  } finally {
+    deletingUser.value = false
+  }
+}
+
+/* ==============================
+   PAGINATION
+================================ */
 
 const totalPages = computed(() => {
   return lastPage.value
@@ -357,7 +712,11 @@ const startItem = computed(() => {
     return 0
   }
 
-  return (currentPage.value - 1) * perPage + 1
+  return (
+    (currentPage.value - 1) *
+      perPage +
+    1
+  )
 })
 
 const endItem = computed(() => {
@@ -367,78 +726,105 @@ const endItem = computed(() => {
   )
 })
 
-/**
- * Page précédente.
- */
 const previousPage = async () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    await fetchUsers()
+  if (currentPage.value <= 1) {
+    return
   }
+
+  currentPage.value--
+
+  await fetchUsers()
 }
 
-/**
- * Page suivante.
- */
 const nextPage = async () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    await fetchUsers()
+  if (
+    currentPage.value >= totalPages.value
+  ) {
+    return
   }
+
+  currentPage.value++
+
+  await fetchUsers()
 }
 
-/**
- * Initiales de l'utilisateur.
- */
-const getInitials = (name) => {
+/* ==============================
+   FORMATAGE
+================================ */
+
+const getInitials = (name = '') => {
   return name
     .split(' ')
+    .filter(Boolean)
     .map((item) => item.charAt(0))
     .slice(0, 2)
     .join('')
     .toUpperCase()
 }
 
-/**
- * Traduction du rôle.
- */
 const formatRole = (role) => {
   const labels = {
-    administrateur: 'Administrateur',
-    medecin: 'Médecin',
-    secretaire: 'Secrétaire',
-    infirmier: 'Infirmier',
-    patient: 'Patient',
+    administrateur:
+      'Administrateur',
+
+    medecin:
+      'Médecin',
+
+    secretaire:
+      'Secrétaire',
+
+    infirmier:
+      'Infirmier',
+
+    patient:
+      'Patient',
   }
 
-  return labels[role] || role
+  return labels[role] || role || '—'
 }
 
-/**
- * Classe CSS du rôle.
- */
 const getRoleClass = (role) => {
   return `role-${role}`
 }
 
-/**
- * Recherche et filtres.
- *
- * À chaque modification :
- * - retour à la première page
- * - nouvelle requête vers Laravel
- */
+const formatLastLogin = (date) => {
+  if (!date) {
+    return '—'
+  }
+
+  return new Date(date).toLocaleString(
+    'fr-FR'
+  )
+}
+
+/* ==============================
+   FILTRES
+================================ */
+
+let filterTimer = null
+
 watch(
-  [search, roleFilter, statusFilter],
-  async () => {
-    currentPage.value = 1
-    await fetchUsers()
+  [
+    search,
+    roleFilter,
+    statusFilter,
+  ],
+
+  () => {
+    clearTimeout(filterTimer)
+
+    filterTimer = setTimeout(async () => {
+      currentPage.value = 1
+
+      await fetchUsers()
+    }, 350)
   }
 )
 
-/**
- * Chargement initial.
- */
+/* ==============================
+   CHARGEMENT INITIAL
+================================ */
+
 onMounted(() => {
   fetchUsers()
 })

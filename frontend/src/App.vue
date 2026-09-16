@@ -1,6 +1,9 @@
+
 <script setup>
 import { useRoute } from 'vue-router'
+
 import AiPredictionDrawer from './components/ai/AiPredictionDrawer.vue'
+import ToastNotification from './components/notifications/ToastNotification.vue'
 
 const route = useRoute()
 </script>
@@ -8,5 +11,9 @@ const route = useRoute()
 <template>
   <RouterView />
 
-  <AiPredictionDrawer v-if="!route.meta.hideAiDrawer" />
+  <AiPredictionDrawer
+    v-if="!route.meta.hideAiDrawer"
+  />
+
+  <ToastNotification />
 </template>
