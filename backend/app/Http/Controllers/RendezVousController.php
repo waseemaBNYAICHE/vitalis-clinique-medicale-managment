@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\RendezVous;
+use App\Models\User;
+use App\Notifications\RendezVousCreeNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-
 /**
  * SCRUM-605 / SCRUM-607 - Rendez-vous.
  *
@@ -217,11 +218,26 @@ if ($this->aUnConflit(
 
 $rendezVous->save();
 
-        return response()->json([
-            'message' => 'Rendez-vous créé avec succès',
-            'rendez_vous' => $rendezVous,
-        ], 201);
-    }
+$patientUser = User::where('id_patient', $rendezVous->id_patient)->first();
+$medecinUser = User::where('id_medecin', $rendezVous->id_medecin)->first();
+
+if ($patientUser) {
+    $patientUser->notify(
+        new RendezVousCreeNotification($rendezVous)
+    );
+}
+
+if ($medecinUser && (!$patientUser || $medecinUser->id !== $patientUser->id)) {
+    $medecinUser->notify(
+        new RendezVousCreeNotification($rendezVous)
+    );
+}
+
+return response()->json([
+    'message' => 'Rendez-vous créé avec succès',
+    'rendez_vous' => $rendezVous,
+], 201);
+}
 
     public function show(Request $request, $id)
     {
