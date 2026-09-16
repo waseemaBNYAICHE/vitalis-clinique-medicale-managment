@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Paiement;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Enums\StatutFacture;
+use App\Models\Facture;
+use Illuminate\Validation\ValidationException;
 
 class PaiementController extends Controller
 {
@@ -77,7 +80,27 @@ class PaiementController extends Controller
             ],
         ]);
 
+        // Vérifier que le paiement ne dépasse pas le reste à payer
+        $facture = Facture::findOrFail($validated['id_facture']);
+
+        $totalDejaPaye = (float) $facture->paiements()
+         ->where('statut', 'valide')
+         ->sum('montant_paye');
+
+        $resteAPayer = (float) $facture->montant_net - $totalDejaPaye;
+
+        if (
+             $validated['statut'] === 'valide'
+             && (float) $validated['montant_paye'] > $resteAPayer
+            ) {
+        throw ValidationException::withMessages([
+            'montant_paye' => 'Le montant du paiement dépasse le reste à payer.'
+        ]);
+        }   
+
         $paiement = Paiement::create($validated);
+
+        $this->synchroniserStatutFacture($facture);
 
         return response()->json([
             'message' => 'Paiement ajouté avec succès',
@@ -89,6 +112,9 @@ class PaiementController extends Controller
     public function update(Request $request, $id)
     {
         $paiement = Paiement::findOrFail($id);
+
+        // Conserver l'ancienne facture avant la modification
+        $ancienneFacture = Facture::findOrFail($paiement->id_facture);
 
         $validated = $request->validate([
             'date_paiement' => [
@@ -143,7 +169,37 @@ class PaiementController extends Controller
             ],
         ]);
 
+        // Vérifier le reste à payer lors de la modification d'un paiement
+     $idFacture = $validated['id_facture'] ?? $paiement->id_facture;
+     $montantPaye = (float) ($validated['montant_paye'] ?? $paiement->montant_paye);
+     $statut = $validated['statut'] ?? $paiement->statut;
+
+     $facture = Facture::findOrFail($idFacture);
+
+     $totalAutresPaiements = (float) $facture->paiements()
+      ->where('statut', 'valide')
+      ->where('id_paiement', '!=', $paiement->id_paiement)
+      ->sum('montant_paye');
+
+     $resteAPayer = (float) $facture->montant_net - $totalAutresPaiements;
+
+      if (
+         $statut === 'valide'
+         && $montantPaye > $resteAPayer
+         ) {
+      throw ValidationException::withMessages([
+        'montant_paye' => 'Le montant du paiement dépasse le reste à payer.'
+     ]);
+    }
+
         $paiement->update($validated);
+
+        $this->synchroniserStatutFacture($facture);
+
+        // Resynchroniser aussi l'ancienne facture si le paiement a changé de facture
+        if ($ancienneFacture->id_facture !== $facture->id_facture) {
+        $this->synchroniserStatutFacture($ancienneFacture);
+    }
 
         return response()->json([
             'message' => 'Paiement modifié avec succès',
@@ -152,14 +208,42 @@ class PaiementController extends Controller
     }
 
     // Supprimer un paiement
-    public function destroy($id)
+   public function destroy($id)
+   {
+    $paiement = Paiement::findOrFail($id);
+
+    // Récupérer la facture avant de supprimer le paiement
+    $facture = Facture::findOrFail($paiement->id_facture);
+
+    $paiement->delete();
+
+    // Mettre à jour le statut de la facture après la suppression
+    $this->synchroniserStatutFacture($facture);
+
+    return response()->json([
+        'message' => 'Paiement supprimé avec succès'
+    ], 200);
+    }
+
+    // Mettre à jour automatiquement le statut de la facture selon le total des paiements validés    
+    private function synchroniserStatutFacture(Facture $facture): void
     {
-        $paiement = Paiement::findOrFail($id);
+    $totalPaye = (float) $facture->paiements()
+        ->where('statut', 'valide')
+        ->sum('montant_paye');
 
-        $paiement->delete();
+    $montantNet = (float) $facture->montant_net;
 
-        return response()->json([
-            'message' => 'Paiement supprimé avec succès'
-        ], 200);
+    if ($totalPaye <= 0) {
+        $statut = StatutFacture::IMPAYEE->value;
+    } elseif ($totalPaye < $montantNet) {
+        $statut = StatutFacture::PARTIELLE->value;
+    } else {
+        $statut = StatutFacture::PAYEE->value;
+    }
+
+    $facture->update([
+        'statut_paiement' => $statut
+    ]);
     }
 }
