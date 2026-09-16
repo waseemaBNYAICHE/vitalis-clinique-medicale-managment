@@ -328,4 +328,21 @@ $rendezVous->update($valide);
             'rendez_vous' => $rendezVous,
         ], 200);
     }
+    public function historiquePatient(Request $request, $idPatient)
+{
+    $requete = RendezVous::where('id_patient', $idPatient);
+
+    $rendezVous = $this->limiterAuPerimetre($requete, $request)
+        ->with([
+            'patient:'.implode(',', self::COLONNES_PATIENT),
+            'medecin:'.implode(',', self::COLONNES_MEDECIN),
+        ])
+        ->orderBy('date_rendez_vous', 'desc')
+        ->orderBy('heure_debut', 'desc')
+        ->get();
+
+    return response()->json([
+        'historique' => $rendezVous,
+    ], 200);
+}
 }
