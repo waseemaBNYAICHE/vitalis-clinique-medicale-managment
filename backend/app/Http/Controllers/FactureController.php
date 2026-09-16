@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Enums\StatutFacture;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class FactureController extends Controller
 {
@@ -306,6 +307,62 @@ class FactureController extends Controller
     return response()->json([
         'historique' => $factures
     ], 200);
+    }
+
+    // Afficher une facture pour impression
+    public function imprimer($id)
+    {
+        $facture = Facture::with([
+        'consultation.rendezVous.patient',
+        'consultation.rendezVous.medecin',
+        'hospitalisation.patient',
+        'hospitalisation.medecin',
+        'hospitalisation.chambre',
+        'paiements',
+        ])->findOrFail($id);
+
+        $patient = $facture->consultation?->rendezVous?->patient
+        ?? $facture->hospitalisation?->patient;
+
+        $medecin = $facture->consultation?->rendezVous?->medecin
+        ?? $facture->hospitalisation?->medecin;
+
+          return response()->json([
+        'facture' => $facture,
+        'patient' => $patient,
+        'medecin' => $medecin,
+    ], 200);
+    }
+
+    // Télécharger une facture au format PDF
+    public function telecharger($id)
+    { 
+    $facture = Facture::with([
+        'consultation.rendezVous.patient',
+        'consultation.rendezVous.medecin',
+        'hospitalisation.patient',
+        'hospitalisation.medecin',
+        'hospitalisation.chambre',
+        'paiements',
+        ])->findOrFail($id);
+
+    // Déterminer le patient concerné par la facture
+         $patient = $facture->consultation?->rendezVous?->patient
+        ?? $facture->hospitalisation?->patient;
+
+    // Déterminer le médecin concerné
+         $medecin = $facture->consultation?->rendezVous?->medecin
+        ?? $facture->hospitalisation?->medecin;
+
+        $pdf = Pdf::loadView('factures.pdf', [
+        'facture' => $facture,
+        'patient' => $patient,
+        'medecin' => $medecin,
+    ]);
+
+    return $pdf->download(
+        'facture-' . $facture->numero_facture . '.pdf'
+    );
     }
 
     // Supprimer une facture
