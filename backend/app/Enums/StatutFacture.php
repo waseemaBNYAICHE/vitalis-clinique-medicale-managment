@@ -7,4 +7,5 @@ enum StatutFacture: string
     case IMPAYEE = 'impayee';
     case PARTIELLE = 'partielle';
     case PAYEE = 'payee';
+    case ANNULEE = 'annulee';
 }

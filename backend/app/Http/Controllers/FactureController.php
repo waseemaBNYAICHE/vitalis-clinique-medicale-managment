@@ -261,6 +261,28 @@ class FactureController extends Controller
         return round($montantTotal, 2);
     }
 
+    // Annuler une facture
+    public function annuler($id)
+    {
+    $facture = Facture::findOrFail($id);
+
+    // Vérifier si la facture est déjà annulée
+    if ($facture->statut_paiement === StatutFacture::ANNULEE->value) {
+        return response()->json([
+            'message' => 'Cette facture est déjà annulée.'
+        ], 409);
+    }
+
+    $facture->update([
+        'statut_paiement' => StatutFacture::ANNULEE->value
+    ]);
+
+    return response()->json([
+        'message' => 'Facture annulée avec succès',
+        'facture' => $facture
+    ], 200);
+    }
+
     // Supprimer une facture
     public function destroy($id)
     {
