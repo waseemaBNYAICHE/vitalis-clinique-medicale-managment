@@ -287,7 +287,7 @@ if ($this->aUnConflit(
 }
 
 $rendezVous->update($valide);
-
+    foreach (User::where('id_patient', $rendezVous->id_patient)->orWhere('id_medecin', $rendezVous->id_medecin)->get() as $u) { $u->notify(new \App\Notifications\RendezVousModifieNotification($rendezVous)); }
         return response()->json([
             'message' => 'Rendez-vous modifié avec succès',
             'rendez_vous' => $rendezVous,
@@ -338,7 +338,7 @@ $rendezVous->update($valide);
 
         $rendezVous->statut = 'Annulé';
         $rendezVous->save();
-
+        foreach (User::where('id_patient', $rendezVous->id_patient)->orWhere('id_medecin', $rendezVous->id_medecin)->get() as $u) { $u->notify(new \App\Notifications\RendezVousAnnuleNotification($rendezVous)); }
         return response()->json([
             'message' => 'Rendez-vous annulé avec succès',
             'rendez_vous' => $rendezVous,
