@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Enums\StatutFacture;
 
 class FactureController extends Controller
 {
@@ -56,8 +57,7 @@ class FactureController extends Controller
 
             'statut_paiement' => [
                 'required',
-                'string',
-                'max:255'
+                Rule::enum(StatutFacture::class)
             ],
 
             'observations' => [
@@ -132,12 +132,11 @@ class FactureController extends Controller
             ],
 
             'statut_paiement' => [
-                'sometimes',
-                'required',
-                'string',
-                'max:255'
+            'sometimes',
+            'required',
+             Rule::enum(StatutFacture::class)
             ],
-
+            
             'observations' => [
                 'sometimes',
                 'nullable',
