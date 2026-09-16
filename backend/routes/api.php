@@ -105,7 +105,8 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
 
     Route::get('/rendez-vous/disponibilite', [RendezVousController::class, 'disponibilite'])
         ->middleware('can:rendez-vous.read');
-
+    Route::get('/patients/{idPatient}/rendez-vous/historique', [RendezVousController::class, 'historiquePatient'])
+        ->middleware('can:rendez-vous.read');
     Route::get('/rendez-vous/{id}', [RendezVousController::class, 'show'])
         ->middleware('can:rendez-vous.read');
     Route::post('/rendez-vous', [RendezVousController::class, 'store'])
