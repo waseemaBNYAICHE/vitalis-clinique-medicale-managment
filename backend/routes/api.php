@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    // Assistant médical IA
+    Route::post('/ai/predict', [AiController::class, 'predict']);
 
     // Tableau de bord principal.
     //
@@ -70,7 +72,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
         Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
         Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
-
         // Agenda du jour : contient le nom des patients et le MOTIF de leur
         // venue. Le controller restreint en plus le medecin a ses propres
         // rendez-vous.
