@@ -261,8 +261,9 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
 
     // Gestion des hospitalisations 
     Route::get('/hospitalisations', [HospitalisationController::class, 'index']);
-    Route::get('/hospitalisations/{id}', [HospitalisationController::class, 'show']);
     Route::post('/hospitalisations', [HospitalisationController::class, 'store']);
+    Route::post('/hospitalisations/admettre', [HospitalisationController::class, 'admettre']);
+    Route::get('/hospitalisations/{id}', [HospitalisationController::class, 'show']);
     Route::put('/hospitalisations/{id}', [HospitalisationController::class, 'update']);
     Route::delete('/hospitalisations/{id}', [HospitalisationController::class, 'destroy']);
 });
