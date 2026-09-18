@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import AnimatedAiIcon from './AnimatedAiIcon.vue'
-
+import api from '../../api.js'
 const drawerState = ref('collapsed')
 const activeStep = ref(1)
 const isLoading = ref(false)
@@ -27,29 +27,18 @@ const symptoms = [
   { id: 'headache', label: 'Mal de tête', icon: '🤕' },
   { id: 'fatigue', label: 'Fatigue', icon: '😴' },
   { id: 'sore_throat', label: 'Mal de gorge', icon: '🗣️' },
-  {
-    id: 'shortness_breath',
-    label: 'Essoufflement',
-    icon: '💨'
-  },
-  {
-    id: 'chest_pain',
-    label: 'Douleur thoracique',
-    icon: '❤️'
-  },
+  { id: 'runny_nose', label: 'Nez qui coule', icon: '🤧' },
+  { id: 'shortness_of_breath', label: 'Essoufflement', icon: '💨' },
+  { id: 'chest_pain', label: 'Douleur thoracique', icon: '❤️' },
   { id: 'nausea', label: 'Nausée', icon: '🤢' },
-  {
-    id: 'muscle_pain',
-    label: 'Douleur musculaire',
-    icon: '💪'
-  },
-  {
-    id: 'runny_nose',
-    label: 'Nez qui coule',
-    icon: '🤧'
-  },
+  { id: 'vomiting', label: 'Vomissements', icon: '🤮' },
   { id: 'diarrhea', label: 'Diarrhée', icon: '🩺' },
-  { id: 'other', label: 'Autre', icon: '•••' }
+  { id: 'abdominal_pain', label: 'Douleur abdominale', icon: '🩹' },
+  { id: 'skin_rash', label: 'Éruption cutanée', icon: '🔴' },
+  { id: 'itching', label: 'Démangeaisons', icon: '✋' },
+  { id: 'joint_pain', label: 'Douleur articulaire', icon: '🦴' },
+  { id: 'muscle_pain', label: 'Douleur musculaire', icon: '💪' },
+  { id: 'dizziness', label: 'Vertiges', icon: '💫' }
 ]
 
 const patientIsValid = computed(() => {
@@ -188,19 +177,28 @@ const predictDisease = async () => {
   errorMessage.value = ''
   isLoading.value = true
 
-  // Simulation temporaire avant la connexion à l’API Laravel.
-  await new Promise((resolve) => {
-    setTimeout(resolve, 2200)
-  })
+  try {
+    const response = await api.post('/ai/predict', {
+      symptoms: selectedSymptoms.value
+    })
 
-  prediction.value = {
-    disease: 'Infection respiratoire probable',
-    confidence: 87,
-    recommendation:
-      'Une consultation médicale est recommandée pour confirmer le diagnostic.'
+    prediction.value = response.data
+  } catch (error) {
+    console.error('Erreur lors de la prédiction IA :', error)
+
+    if (error.response?.status === 400) {
+      errorMessage.value =
+        'Les symptômes sélectionnés ne sont pas valides.'
+    } else if (error.response?.status === 503) {
+      errorMessage.value =
+        'Le service IA est temporairement indisponible.'
+    } else {
+      errorMessage.value =
+        'Impossible d’effectuer la prédiction. Veuillez réessayer.'
+    }
+  } finally {
+    isLoading.value = false
   }
-
-  isLoading.value = false
 }
 
 const resetPrediction = () => {
