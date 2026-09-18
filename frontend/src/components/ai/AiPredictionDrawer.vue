@@ -638,9 +638,56 @@ const resetPrediction = () => {
               </div>
             </div>
 
-            <p class="recommendation">
-              {{ prediction.recommendation }}
-            </p>
+            <div
+  v-if="prediction.recommendation"
+  class="recommendation-section"
+>
+  <div class="speciality-card">
+    <span class="recommendation-label">
+      Spécialité recommandée
+    </span>
+
+    <strong>
+      {{ prediction.recommendation.speciality }}
+    </strong>
+  </div>
+
+  <div
+    v-if="prediction.recommendation.doctors?.length"
+    class="doctors-section"
+  >
+    <span class="recommendation-label">
+      Médecin(s) recommandé(s)
+    </span>
+
+    <div
+      v-for="doctor in prediction.recommendation.doctors"
+      :key="doctor.id_medecin"
+      class="doctor-card"
+    >
+      <div class="doctor-avatar">
+        👨‍⚕️
+      </div>
+
+      <div class="doctor-info">
+        <strong>
+          Dr {{ doctor.prenom }} {{ doctor.nom }}
+        </strong>
+
+        <small>
+          {{ prediction.recommendation.speciality }}
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <p
+    v-else
+    class="no-doctor-message"
+  >
+    Aucun médecin correspondant n'est disponible dans la base.
+  </p>
+</div>
 
             <button
               class="secondary-button full-width"
