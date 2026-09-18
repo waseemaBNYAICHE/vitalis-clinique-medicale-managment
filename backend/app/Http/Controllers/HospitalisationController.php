@@ -123,9 +123,9 @@ class HospitalisationController extends Controller
 
 
         // Admettre un patient
-        public function admettre(Request $request)
-    {
-         $validated = $request->validate([
+    public function admettre(Request $request)
+   {
+        $validated = $request->validate([
         'date_entree' => ['required', 'date'],
         'heure_entree' => ['required', 'date_format:H:i'],
         'motif_hospitalisation' => ['required', 'string'],
@@ -151,34 +151,54 @@ class HospitalisationController extends Controller
         ],
     ]);
 
-    $hospitalisation = DB::transaction(function () use ($validated) {
+        $hospitalisation = DB::transaction(function () use ($validated) {
 
         $chambre = Chambre::findOrFail($validated['id_chambre']);
 
-        if ($chambre->statut !== 'disponible') {
-            throw ValidationException::withMessages([
-                'id_chambre' => 'Cette chambre n\'est pas disponible.'
-            ]);
-    }
+        // Compter les patients actuellement hospitalisés dans cette chambre
+        $nombrePatients = Hospitalisation::where(
+            'id_chambre',
+            $chambre->id_chambre
+        )
+        ->where('statut', 'en_cours')
+        ->count();
 
+        // Vérifier si la capacité maximale est atteinte
+        if ($nombrePatients >= $chambre->capacite) {
+            throw ValidationException::withMessages([
+                'id_chambre' => 'Cette chambre a atteint sa capacité maximale.'
+            ]);
+        }
+
+        // Créer l'hospitalisation
         $hospitalisation = Hospitalisation::create([
             ...$validated,
             'date_sortie' => null,
             'statut' => 'en_cours',
         ]);
 
-        $chambre->update([
-            'statut' => 'occupee'
-        ]);
+        // Le nouveau patient doit maintenant être compté
+        $nombrePatients++;
+
+        // La chambre devient occupée seulement lorsqu'elle est complète
+        if ($nombrePatients >= $chambre->capacite) {
+            $chambre->update([
+                'statut' => 'occupee'
+            ]);
+        } else {
+            $chambre->update([
+                'statut' => 'disponible'
+            ]);
+        }
 
         return $hospitalisation;
     });
 
-    return response()->json([
+        return response()->json([
         'message' => 'Patient admis avec succès',
         'hospitalisation' => $hospitalisation
     ], 201);
-    }
+}
 
     // Supprimer une hospitalisation
     public function destroy($id)
