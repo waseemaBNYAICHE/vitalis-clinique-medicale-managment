@@ -198,7 +198,52 @@ class HospitalisationController extends Controller
         'message' => 'Patient admis avec succès',
         'hospitalisation' => $hospitalisation
     ], 201);
-}
+    }
+
+
+    public function sortir(Request $request, $id)
+    {
+        $validated = $request->validate([
+        'date_sortie' => ['required', 'date'],
+    ]);
+
+        $hospitalisation = DB::transaction(function () use ($validated, $id) {
+
+        $hospitalisation = Hospitalisation::findOrFail($id);
+
+        if ($hospitalisation->statut !== 'en_cours') {
+            throw ValidationException::withMessages([
+                'hospitalisation' => 'Cette hospitalisation est déjà terminée.'
+            ]);
+        }
+
+        if ($validated['date_sortie'] < $hospitalisation->date_entree) {
+            throw ValidationException::withMessages([
+                'date_sortie' => 'La date de sortie ne peut pas être antérieure à la date d\'entrée.'
+            ]);
+        }
+
+        // Terminer l'hospitalisation
+        $hospitalisation->update([
+            'date_sortie' => $validated['date_sortie'],
+            'statut' => 'terminee',
+        ]);
+
+        // Une place vient de se libérer dans la chambre
+        $chambre = Chambre::findOrFail($hospitalisation->id_chambre);
+
+        $chambre->update([
+            'statut' => 'disponible'
+        ]);
+
+        return $hospitalisation;
+    });
+
+    return response()->json([
+        'message' => 'Sortie du patient enregistrée avec succès',
+        'hospitalisation' => $hospitalisation
+    ], 200);
+    }
 
     // Supprimer une hospitalisation
     public function destroy($id)
