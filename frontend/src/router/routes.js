@@ -86,16 +86,35 @@ export const routes = [
         name: 'ordonnances',
         component: () => import('../views/Ordonnances/OrdonnancesView.vue'),
       },
-      {
-        path: 'patients/new',
-        name: 'patient-create',
-        component: () => import('../views/Patients/PatientCreateView.vue'),
-        meta: { permission: 'patients.create' }
-      },
+      
       {
         path: 'utilisateurs',
         name: 'utilisateurs',
         component: () => import('../views/Utilisateur/UtilisateursView.vue'),
+        meta: { permission: 'roles.manage' }
+      },
+      {
+        path: 'examens',
+        name: 'examens',
+        component: () => import('../views/Examens/ExamensView.vue'),
+        meta: { permission: 'examens.read' }
+      },
+      {
+        path: 'hospitalisations',
+        name: 'hospitalisations',
+        component: () => import('../views/Hospitalisations/HospitalisationsView.vue'),
+        meta: { permission: 'hospitalisations.read' }
+      },
+      {
+        path: 'facturation',
+        name: 'facturation',
+        component: () => import('../views/Facturation/FacturationView.vue'),
+        meta: { permission: 'statistiques.read' }
+      },
+      {
+        path: 'parametres',
+        name: 'parametres',
+        component: () => import('../views/Parametres/ParametresView.vue'),
         meta: { permission: 'roles.manage' }
       }
     ]
