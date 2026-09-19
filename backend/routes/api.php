@@ -15,6 +15,7 @@ use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HospitalisationController;
+use App\Http\Controllers\ChambreController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
 /*
@@ -267,6 +268,14 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     Route::get('/hospitalisations/{id}', [HospitalisationController::class, 'show']);
     Route::put('/hospitalisations/{id}', [HospitalisationController::class, 'update']);
     Route::delete('/hospitalisations/{id}', [HospitalisationController::class, 'destroy']);
+
+    // Gestion des chambres 
+    Route::get('/chambres', [ChambreController::class, 'index']);
+    Route::post('/chambres', [ChambreController::class, 'store']);
+    Route::get('/chambres/{id}', [ChambreController::class, 'show']);
+    Route::put('/chambres/{id}', [ChambreController::class, 'update']);
+    Route::delete('/chambres/{id}', [ChambreController::class, 'destroy']);
+
 });
 
 // Health check
