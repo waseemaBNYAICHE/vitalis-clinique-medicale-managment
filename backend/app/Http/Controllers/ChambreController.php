@@ -76,6 +76,29 @@ class ChambreController extends Controller
     }
 
     /**
+   * Rechercher et filtrer les chambres disponibles.
+   */
+   public function disponibles(Request $request)
+   {
+    $query = Chambre::query()
+        ->where('statut', 'disponible');
+
+    // Filtrer par type de chambre
+    if ($request->filled('type_chambre')) {
+        $query->where('type_chambre', $request->input('type_chambre'));
+    }
+
+    // Filtrer par étage
+    if ($request->filled('etage')) {
+        $query->where('etage', $request->input('etage'));
+    }
+
+    $chambres = $query->get();
+
+    return response()->json($chambres, 200);
+    }
+
+    /**
      * Supprimer une chambre.
      */
     public function destroy($id)

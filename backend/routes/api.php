@@ -272,6 +272,7 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     // Gestion des chambres 
     Route::get('/chambres', [ChambreController::class, 'index']);
     Route::post('/chambres', [ChambreController::class, 'store']);
+    Route::get('/chambres/disponibles', [ChambreController::class, 'disponibles']);
     Route::get('/chambres/{id}', [ChambreController::class, 'show']);
     Route::put('/chambres/{id}', [ChambreController::class, 'update']);
     Route::delete('/chambres/{id}', [ChambreController::class, 'destroy']);
