@@ -73,7 +73,6 @@
     <!-- ===================== MAIN CARD ===================== -->
     <div class="hospitalisations-card">
 
-      <!-- SEARCH -->
       <div class="search-section">
 
         <div class="search-box">
@@ -87,7 +86,6 @@
         </div>
 
 
-        <!-- FILTERS -->
         <div class="filters">
 
           <select v-model="statusFilter">
@@ -158,7 +156,6 @@
               </td>
 
 
-              <!-- PATIENT -->
               <td>
                 <div class="patient-info">
 
@@ -175,28 +172,26 @@
               </td>
 
 
-              <!-- CHAMBRE -->
               <td>
                 <div class="room-info">
                   <i class="fi fi-rr-bed"></i>
 
                   <div>
                     <strong>Chambre {{ hospitalisation.chambre }}</strong>
-                    <small>Lit {{ hospitalisation.lit }}</small>
+                    <small v-if="hospitalisation.lit">
+                      Lit {{ hospitalisation.lit }}
+                    </small>
                   </div>
                 </div>
               </td>
 
 
-              <!-- MEDECIN -->
               <td>{{ hospitalisation.medecin }}</td>
 
 
-              <!-- DATE ENTREE -->
               <td>{{ formatDate(hospitalisation.dateEntree) }}</td>
 
 
-              <!-- SORTIE -->
               <td>
                 {{
                   hospitalisation.dateSortiePrevue
@@ -206,7 +201,6 @@
               </td>
 
 
-              <!-- MOTIF -->
               <td>
                 <span class="reason">
                   {{ hospitalisation.motif }}
@@ -214,7 +208,6 @@
               </td>
 
 
-              <!-- STATUS -->
               <td>
                 <span
                   class="status-badge"
@@ -226,7 +219,6 @@
               </td>
 
 
-              <!-- ACTIONS -->
               <td>
                 <div class="actions">
 
@@ -272,7 +264,6 @@
             </tr>
 
 
-            <!-- EMPTY STATE -->
             <tr v-if="filteredHospitalisations.length === 0">
               <td colspan="9">
 
@@ -358,8 +349,8 @@
         <strong>Interface Frontend prête</strong>
 
         <p>
-          La liaison avec les données réelles du Backend Laravel sera
-          finalisée dans SCRUM-750 lorsque les API Hospitalisations seront disponibles.
+          Le formulaire d'admission est préparé pour les données du Backend Laravel.
+          La liaison avec les API sera réalisée dans le ticket de connexion Frontend/Backend.
         </p>
       </div>
     </div>
@@ -408,106 +399,91 @@
 
           <div class="form-grid">
 
+            <!-- PATIENT -->
             <div class="form-group">
               <label>Patient *</label>
 
-              <input
-                v-model="form.patient"
-                type="text"
-                placeholder="Nom et prénom"
-                required
-              />
-            </div>
-
-
-            <div class="form-group">
-              <label>Référence patient</label>
-
-              <input
-                v-model="form.patientReference"
-                type="text"
-                placeholder="Ex : PAT-001"
-              />
-            </div>
-
-
-            <div class="form-group">
-              <label>Chambre *</label>
-
-              <select v-model="form.chambre" required>
-                <option value="">Sélectionner une chambre</option>
+              <select v-model="form.id_patient" required>
+                <option value="">Sélectionner un patient</option>
 
                 <option
-                  v-for="room in rooms"
-                  :key="room"
-                  :value="room"
+                  v-for="patient in patients"
+                  :key="patient.id_patient"
+                  :value="patient.id_patient"
                 >
-                  Chambre {{ room }}
+                  {{ patient.nom }} {{ patient.prenom }}
                 </option>
               </select>
             </div>
 
 
+            <!-- CHAMBRE -->
             <div class="form-group">
-              <label>Lit *</label>
+              <label>Chambre *</label>
 
-              <select v-model="form.lit" required>
-                <option value="">Sélectionner</option>
-                <option value="A">Lit A</option>
-                <option value="B">Lit B</option>
+              <select v-model="form.id_chambre" required>
+                <option value="">Sélectionner une chambre</option>
+
+                <option
+                  v-for="chambre in chambres"
+                  :key="chambre.id_chambre"
+                  :value="chambre.id_chambre"
+                >
+                  Chambre {{ chambre.numero_chambre }}
+                  - {{ chambre.type_chambre }}
+                </option>
               </select>
             </div>
 
 
+            <!-- MEDECIN -->
             <div class="form-group">
               <label>Médecin responsable *</label>
 
-              <input
-                v-model="form.medecin"
-                type="text"
-                placeholder="Dr. ..."
-                required
-              />
+              <select v-model="form.id_medecin" required>
+                <option value="">Sélectionner un médecin</option>
+
+                <option
+                  v-for="medecin in medecins"
+                  :key="medecin.id_medecin"
+                  :value="medecin.id_medecin"
+                >
+                  Dr. {{ medecin.nom }} {{ medecin.prenom }}
+                </option>
+              </select>
             </div>
 
 
+            <!-- DATE ENTREE -->
             <div class="form-group">
               <label>Date d'entrée *</label>
 
               <input
-                v-model="form.dateEntree"
+                v-model="form.date_entree"
                 type="date"
                 required
               />
             </div>
 
 
+            <!-- HEURE ENTREE -->
             <div class="form-group">
-              <label>Sortie prévue</label>
+              <label>Heure d'entrée *</label>
 
               <input
-                v-model="form.dateSortiePrevue"
-                type="date"
+                v-model="form.heure_entree"
+                type="time"
+                required
               />
             </div>
 
 
-            <div class="form-group">
-              <label>Statut</label>
-
-              <select v-model="form.statut">
-                <option value="En cours">En cours</option>
-                <option value="Sortie prévue">Sortie prévue</option>
-                <option value="Sortie">Sortie</option>
-              </select>
-            </div>
-
-
+            <!-- MOTIF -->
             <div class="form-group full">
               <label>Motif d'hospitalisation *</label>
 
               <input
-                v-model="form.motif"
+                v-model="form.motif_hospitalisation"
                 type="text"
                 placeholder="Motif de l'hospitalisation"
                 required
@@ -515,6 +491,20 @@
             </div>
 
 
+            <!-- DIAGNOSTIC -->
+            <div class="form-group full">
+              <label>Diagnostic d'entrée *</label>
+
+              <textarea
+                v-model="form.diagnostic_entree"
+                rows="3"
+                placeholder="Diagnostic établi lors de l'admission..."
+                required
+              ></textarea>
+            </div>
+
+
+            <!-- OBSERVATIONS -->
             <div class="form-group full">
               <label>Observations médicales</label>
 
@@ -605,7 +595,9 @@
             <span>Chambre</span>
             <strong>
               Chambre {{ selectedHospitalisation.chambre }}
-              — Lit {{ selectedHospitalisation.lit }}
+              <template v-if="selectedHospitalisation.lit">
+                — Lit {{ selectedHospitalisation.lit }}
+              </template>
             </strong>
           </div>
 
@@ -811,15 +803,85 @@ import {
 
 /*
 |--------------------------------------------------------------------------
-| SCRUM-749
+| SCRUM-758
 |--------------------------------------------------------------------------
-| Interface Hospitalisations Frontend.
+| Formulaire d'admission d'un patient.
 |
-| SCRUM-750 :
-| Les données locales seront remplacées par les API Laravel
-| via frontend/src/api.js.
+| Le formulaire utilise maintenant les champs attendus par
+| l'API Laravel d'admission :
+| id_patient, id_chambre, id_medecin, date_entree,
+| heure_entree, motif_hospitalisation, diagnostic_entree,
+| observations.
+|
+| La connexion aux API sera réalisée dans SCRUM-760.
 |--------------------------------------------------------------------------
 */
+
+
+/* ===================== DEMO REFERENCES ===================== */
+
+/*
+ * Données temporaires utilisées uniquement pour permettre
+ * la sélection dans le formulaire.
+ *
+ * Elles seront remplacées par les données des API dans SCRUM-760.
+ */
+
+const patients = ref([
+  {
+    id_patient: 1,
+    nom: 'Benali',
+    prenom: 'Sara'
+  },
+  {
+    id_patient: 2,
+    nom: 'Amrani',
+    prenom: 'Yassine'
+  },
+  {
+    id_patient: 3,
+    nom: 'El Mansouri',
+    prenom: 'Nadia'
+  }
+])
+
+
+const chambres = ref([
+  {
+    id_chambre: 1,
+    numero_chambre: '101',
+    type_chambre: 'Individuelle'
+  },
+  {
+    id_chambre: 2,
+    numero_chambre: '102',
+    type_chambre: 'Double'
+  },
+  {
+    id_chambre: 3,
+    numero_chambre: '201',
+    type_chambre: 'Soins intensifs'
+  }
+])
+
+
+const medecins = ref([
+  {
+    id_medecin: 1,
+    nom: 'El Amrani',
+    prenom: 'Youssef'
+  },
+  {
+    id_medecin: 2,
+    nom: 'Berrada',
+    prenom: 'Salma'
+  },
+  {
+    id_medecin: 3,
+    nom: 'Alaoui',
+    prenom: 'Mehdi'
+  }
+])
 
 
 /* ===================== ROOMS ===================== */
@@ -836,7 +898,7 @@ const rooms = [
 ]
 
 
-/* ===================== DEMO DATA ===================== */
+/* ===================== DEMO HOSPITALISATIONS ===================== */
 
 const hospitalisations = ref([
   {
@@ -912,19 +974,16 @@ const hospitalisationToExit = ref(null)
 const exitDate = ref('')
 
 
-/* ===================== FORM ===================== */
+/* ===================== ADMISSION FORM ===================== */
 
 const emptyForm = () => ({
-  patient: '',
-  patientReference: '',
-  chambre: '',
-  lit: '',
-  medecin: '',
-  dateEntree: '',
-  dateSortiePrevue: '',
-  dateSortie: '',
-  motif: '',
-  statut: 'En cours',
+  id_patient: '',
+  id_chambre: '',
+  id_medecin: '',
+  date_entree: '',
+  heure_entree: '',
+  motif_hospitalisation: '',
+  diagnostic_entree: '',
   observations: ''
 })
 
@@ -1077,8 +1136,20 @@ const openCreateModal = () => {
 const openEditModal = item => {
   editingHospitalisation.value = item
 
+  /*
+   * L'édition complète sera reliée aux vraies données
+   * backend dans le ticket de connexion API.
+   */
   form.value = {
-    ...item
+    id_patient: item.id_patient || '',
+    id_chambre: item.id_chambre || '',
+    id_medecin: item.id_medecin || '',
+    date_entree: item.date_entree || item.dateEntree || '',
+    heure_entree: item.heure_entree || '',
+    motif_hospitalisation:
+      item.motif_hospitalisation || item.motif || '',
+    diagnostic_entree: item.diagnostic_entree || '',
+    observations: item.observations || ''
   }
 
   formModalOpen.value = true
@@ -1099,32 +1170,40 @@ const closeFormModal = () => {
 const saveHospitalisation = () => {
 
   /*
-   * SCRUM-750 :
-   * POST /hospitalisations
-   * PUT/PATCH /hospitalisations/{id}
+   * SCRUM-758 :
+   * Le formulaire est maintenant conforme aux champs
+   * nécessaires à l'admission.
+   *
+   * SCRUM-760 :
+   * Cette fonction sera remplacée par un appel réel :
+   * POST /hospitalisations/admettre
    */
 
   if (editingHospitalisation.value) {
 
-    const index =
-      hospitalisations.value.findIndex(
-        item =>
-          item.id ===
-          editingHospitalisation.value.id
-      )
-
-    if (index !== -1) {
-      hospitalisations.value[index] = {
-        ...hospitalisations.value[index],
-        ...form.value
-      }
-    }
-
     showNotification(
-      'Hospitalisation modifiée avec succès.'
+      'Le formulaire de modification est prêt pour la connexion API.'
     )
 
   } else {
+
+    const patient = patients.value.find(
+      item =>
+        Number(item.id_patient) ===
+        Number(form.value.id_patient)
+    )
+
+    const chambre = chambres.value.find(
+      item =>
+        Number(item.id_chambre) ===
+        Number(form.value.id_chambre)
+    )
+
+    const medecin = medecins.value.find(
+      item =>
+        Number(item.id_medecin) ===
+        Number(form.value.id_medecin)
+    )
 
     const newId =
       hospitalisations.value.length
@@ -1137,11 +1216,47 @@ const saveHospitalisation = () => {
 
     hospitalisations.value.unshift({
       id: newId,
-      ...form.value
+
+      id_patient: form.value.id_patient,
+      id_chambre: form.value.id_chambre,
+      id_medecin: form.value.id_medecin,
+
+      patient: patient
+        ? `${patient.prenom} ${patient.nom}`
+        : 'Patient',
+
+      patientReference:
+        `PAT-${String(form.value.id_patient).padStart(3, '0')}`,
+
+      chambre: chambre
+        ? chambre.numero_chambre
+        : '',
+
+      lit: '',
+
+      medecin: medecin
+        ? `Dr. ${medecin.prenom} ${medecin.nom}`
+        : '',
+
+      dateEntree: form.value.date_entree,
+
+      dateSortiePrevue: '',
+
+      dateSortie: '',
+
+      motif: form.value.motif_hospitalisation,
+
+      diagnostic_entree:
+        form.value.diagnostic_entree,
+
+      statut: 'En cours',
+
+      observations:
+        form.value.observations
     })
 
     showNotification(
-      'Patient hospitalisé avec succès.'
+      'Formulaire d’admission validé avec succès.'
     )
   }
 
@@ -1253,7 +1368,6 @@ const getInitials = name => {
     .toUpperCase()
 }
 
-
 const formatDate = date => {
 
   if (!date) {
@@ -1269,7 +1383,6 @@ const formatDate = date => {
 
   return parsedDate.toLocaleDateString('fr-FR')
 }
-
 
 const statusClass = status => {
 
