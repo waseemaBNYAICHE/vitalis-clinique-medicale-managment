@@ -50,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     // Assistant médical IA
     Route::post('/ai/predict', [AiController::class, 'predict']);
-
+    Route::post('/ai/chat', [AiController::class, 'chat']);
     // Tableau de bord principal.
     //
     // Seule route /dashboard/* sans permission, et c'est volontaire : le
