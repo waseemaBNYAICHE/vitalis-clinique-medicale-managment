@@ -112,7 +112,7 @@ services:
       CONTAINER_ROLE: app
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       FRONTEND_URL: http://localhost:${VITE_PORT:-5173}
-
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     volumes:
       - ./backend:/var/www/html
       - backend-vendor:/var/www/html/vendor
