@@ -1,0 +1,10 @@
+.module-page{padding:28px;min-height:100%;background:#f6f9fd;color:#243750}
+.module-heading{display:flex;align-items:center;gap:15px;margin-bottom:22px}
+.module-heading p{margin:0 0 5px;color:#91a0b2;font-size:11px}
+.module-heading h1{margin:0;font-size:28px;color:#1d304a}
+.module-heading span{display:block;margin-top:5px;color:#8a99aa;font-size:12px}
+.module-icon{width:54px;height:54px;display:grid;place-items:center;border-radius:15px;background:#2680e8;color:#fff;font-size:22px}
+.module-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border:1px solid #e5edf5;border-radius:15px;box-shadow:0 5px 20px rgba(33,60,94,.04);padding:30px}
+.module-card>i{font-size:32px;color:#2680e8}.module-card h2{margin:14px 0 8px}
+.module-card p{max-width:520px;color:#8a99aa;font-size:12px;line-height:1.7}
+@media(max-width:650px){.module-page{padding:16px}.module-heading{align-items:flex-start}}

@@ -17,6 +17,7 @@
           <p>Clinique Médicale</p>
         </div>
       </div>
+      
 
       <!-- NAVIGATION -->
       <nav class="sidebar-menu">
@@ -96,6 +97,8 @@
         <!-- SEARCH -->
         <div class="topbar-search">
           <i class="fi fi-rr-search"></i>
+
+          
 
           <input
             v-model="searchText"
