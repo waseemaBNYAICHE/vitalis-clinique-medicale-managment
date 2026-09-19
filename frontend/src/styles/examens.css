@@ -1,10 +1,1349 @@
-.module-page{padding:28px;min-height:100%;background:#f6f9fd;color:#243750}
-.module-heading{display:flex;align-items:center;gap:15px;margin-bottom:22px}
-.module-heading p{margin:0 0 5px;color:#91a0b2;font-size:11px}
-.module-heading h1{margin:0;font-size:28px;color:#1d304a}
-.module-heading span{display:block;margin-top:5px;color:#8a99aa;font-size:12px}
-.module-icon{width:54px;height:54px;display:grid;place-items:center;border-radius:15px;background:#2680e8;color:#fff;font-size:22px}
-.module-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border:1px solid #e5edf5;border-radius:15px;box-shadow:0 5px 20px rgba(33,60,94,.04);padding:30px}
-.module-card>i{font-size:32px;color:#2680e8}.module-card h2{margin:14px 0 8px}
-.module-card p{max-width:520px;color:#8a99aa;font-size:12px;line-height:1.7}
-@media(max-width:650px){.module-page{padding:16px}.module-heading{align-items:flex-start}}
+/* =========================================================
+   VITALIS — EXAMENS
+   SCRUM-749 — FINALISATION FRONTEND
+========================================================= */
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.examens-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 28px;
+  box-sizing: border-box;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.page-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.breadcrumb strong {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.breadcrumb i {
+  font-size: 15px;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.title-icon {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 23px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+}
+
+.title-section h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.title-section p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+========================================================= */
+
+.btn-primary {
+  min-height: 46px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 11px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.18);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+.quick-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.quick-card {
+  min-height: 94px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #ffffff;
+  padding: 17px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.quick-card:hover {
+  transform: translateY(-2px);
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.quick-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  font-size: 19px;
+}
+
+.quick-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.quick-icon.orange {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.quick-icon.green {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.quick-card > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.quick-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.quick-card span {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.quick-card .arrow {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   EXAMENS CARD
+========================================================= */
+
+.examens-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+
+/* =========================================================
+   SEARCH SECTION
+========================================================= */
+
+.search-section {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+
+/* =========================================================
+   SEARCH BOX — FULL WIDTH
+========================================================= */
+
+.search-box {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.search-box > i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: #94a3b8;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 16px 0 46px;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  outline: none;
+  background: #ffffff;
+  color: #334155;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.search-box input:hover {
+  border-color: #cbd5e1;
+}
+
+.search-box input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+
+/* =========================================================
+   FILTERS — LARGE FULL WIDTH
+========================================================= */
+
+.filters {
+  width: 100%;
+  display: grid;
+
+  /*
+    Les deux selects occupent tout l'espace disponible.
+    Les deux boutons gardent uniquement la largeur nécessaire.
+  */
+  grid-template-columns:
+    minmax(260px, 1fr)
+    minmax(260px, 1fr)
+    auto
+    auto;
+
+  gap: 12px;
+  align-items: center;
+}
+
+.filters select {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 42px 0 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+  background-color: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filters select:hover {
+  border-color: #93c5fd;
+}
+
+.filters select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+
+/* =========================================================
+   SEARCH BUTTON
+========================================================= */
+
+.btn-search {
+  height: 46px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-search:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   RESET BUTTON
+========================================================= */
+
+.btn-reset {
+  height: 46px;
+  padding: 0 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.btn-reset:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.examens-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.examens-table thead {
+  background: #f8fafc;
+}
+
+.examens-table th {
+  padding: 13px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.examens-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.examens-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.examens-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.examens-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   PATIENT
+========================================================= */
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 165px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.patient-info strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.patient-info small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   EXAM TYPE
+========================================================= */
+
+.exam-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 145px;
+}
+
+.exam-icon {
+  width: 29px;
+  height: 29px;
+  min-width: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #3b82f6;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   PRIORITY
+========================================================= */
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.priority-badge.normal {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.priority-badge.urgent {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.status-badge.completed {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.status-badge.completed .status-dot {
+  background: #22c55e;
+}
+
+.status-badge.progress {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.status-badge.progress .status-dot {
+  background: #3b82f6;
+}
+
+.status-badge.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-badge.pending .status-dot {
+  background: #f97316;
+}
+
+
+/* =========================================================
+   RESULT
+========================================================= */
+
+.result-available {
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result-pending {
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.action-btn.view {
+  color: #2563eb;
+}
+
+.action-btn.view:hover {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.action-btn.edit {
+  color: #d97706;
+}
+
+.action-btn.edit:hover {
+  background: #fffbeb;
+  border-color: #fef3c7;
+}
+
+.action-btn.delete {
+  color: #dc2626;
+}
+
+.action-btn.delete:hover {
+  background: #fef2f2;
+  border-color: #fee2e2;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state {
+  min-height: 280px;
+  padding: 45px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 15px;
+  border-radius: 16px;
+  background: #eff6ff;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.empty-state h3 {
+  margin: 0 0 7px;
+  color: #1e293b;
+  font-size: 17px;
+}
+
+.empty-state p {
+  margin: 0 0 18px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   TABLE FOOTER
+========================================================= */
+
+.table-footer {
+  min-height: 64px;
+  padding: 13px 20px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.table-footer > span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled):not(.active) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.pagination button.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+
+/* =========================================================
+   BACKEND INFORMATION
+========================================================= */
+
+.backend-info {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 18px;
+  padding: 15px 17px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.backend-icon {
+  width: 35px;
+  height: 35px;
+  min-width: 35px;
+  border-radius: 9px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backend-info strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #1e40af;
+  font-size: 13px;
+}
+
+.backend-info p {
+  margin: 0;
+  color: #3b82f6;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   MODAL OVERLAY
+========================================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.2s ease;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.22);
+  animation: modalIn 0.25s ease;
+}
+
+.modal-header {
+  padding: 20px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.modal-header p {
+  margin: 5px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.modal-close {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.modal form {
+  padding: 22px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  outline: none;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input,
+.form-group select {
+  height: 43px;
+  padding: 0 12px;
+}
+
+.form-group textarea {
+  min-height: 90px;
+  padding: 11px 12px;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.modal-footer {
+  margin-top: 22px;
+  padding-top: 17px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancel,
+.btn-save,
+.btn-delete {
+  min-height: 43px;
+  padding: 0 17px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.btn-cancel:hover {
+  background: #f8fafc;
+}
+
+.btn-save {
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.btn-save:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================================
+   VIEW MODAL
+========================================================= */
+
+.view-modal {
+  width: min(680px, 100%);
+  padding-bottom: 22px;
+}
+
+.patient-profile {
+  margin: 22px;
+  padding: 17px;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.large-avatar {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.patient-profile h3 {
+  margin: 0 0 4px;
+  color: #1e293b;
+  font-size: 16px;
+}
+
+.patient-profile span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.details-grid {
+  margin: 0 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  padding: 13px;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+
+.detail-item span {
+  display: block;
+  margin-bottom: 5px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.detail-item strong {
+  color: #334155;
+  font-size: 13px;
+}
+
+.result-section {
+  margin: 15px 22px 0;
+  padding: 15px;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+
+.result-section > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.result-section p {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   DELETE MODAL
+========================================================= */
+
+.delete-modal {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.22);
+  animation: modalIn 0.25s ease;
+}
+
+.delete-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.delete-modal h2 {
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: 19px;
+}
+
+.delete-modal p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.delete-modal > span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.delete-actions {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn-delete {
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-delete:hover {
+  background: #b91c1c;
+}
+
+
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+.notification {
+  position: fixed;
+  z-index: 10000;
+  top: 24px;
+  right: 24px;
+  min-width: 280px;
+  max-width: 420px;
+  padding: 14px 17px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+.notification.success {
+  background: #16a34a;
+}
+
+.notification.error {
+  background: #dc2626;
+}
+
+.notification i {
+  font-size: 17px;
+}
+
+.notification-enter-active,
+.notification-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notification-enter-from,
+.notification-leave-to {
+  opacity: 0;
+  transform: translateX(25px);
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — LARGE TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .btn-search,
+  .btn-reset {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .examens-page {
+    padding: 20px;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-card {
+    min-height: 80px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .examens-page {
+    padding: 15px;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .page-header > .btn-primary {
+    width: 100%;
+  }
+
+  .title-section h1 {
+    font-size: 24px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters select,
+  .btn-search,
+  .btn-reset {
+    width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group.full {
+    grid-column: auto;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .notification {
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-header,
+  .modal form {
+    padding: 17px;
+  }
+
+  .delete-modal {
+    padding: 22px 17px;
+  }
+}
