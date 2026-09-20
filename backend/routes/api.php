@@ -13,6 +13,7 @@ use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HospitalisationController;
 use App\Http\Controllers\ChambreController;

@@ -1,170 +1,179 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
 import gsap from 'gsap'
+import api, { messageErreur } from '../../api'
+import { peutAction } from '../../actions.js'
+import { useNotification } from '../../composables/useNotification.js'
 import '../../styles/consultations.css'
+import ConsultationFormModal from './ConsultationFormModal.vue'
+import ConsultationConfirmModal from './ConsultationConfirmModal.vue'
+
+const { success, error: notifierErreur } = useNotification()
 
 const search = ref('')
 const selectedDoctor = ref('')
 const selectedDate = ref('')
 const selectedStatus = ref('')
 
+const consultations = ref([])
+const loading = ref(false)
+
 const currentPage = ref(1)
-const perPage = 5
+const lastPage = ref(1)
+const total = ref(0)
+const from = ref(0)
+const to = ref(0)
 
-const consultations = ref([
-  {
-    id: 1,
-    patient: 'Karim Bennani',
-    cin: 'CN456789',
-    initials: 'KB',
-    medecin: 'Dr. Samir Alaoui',
-    specialite: 'Médecine générale',
-    date: '10/09/2026',
-    dateISO: '2026-09-10',
-    heure: '10:30',
-    motif: 'Toux persistante',
-    diagnostic: 'Infection respiratoire',
-    statut: 'Terminée'
-  },
-  {
-    id: 2,
-    patient: 'Amina Zahraoui',
-    cin: 'CN987654',
-    initials: 'AZ',
-    medecin: 'Dr. Leila Haddad',
-    specialite: 'Pédiatrie',
-    date: '09/09/2026',
-    dateISO: '2026-09-09',
-    heure: '14:00',
-    motif: 'Fièvre',
-    diagnostic: 'Infection virale',
-    statut: 'Terminée'
-  },
-  {
-    id: 3,
-    patient: 'Samir Alaoui',
-    cin: 'CN112233',
-    initials: 'SA',
-    medecin: 'Dr. Yassine Bennis',
-    specialite: 'Cardiologie',
-    date: '08/09/2026',
-    dateISO: '2026-09-08',
-    heure: '11:15',
-    motif: 'Douleurs thoraciques',
-    diagnostic: 'Hypertension',
-    statut: 'En cours'
-  },
-  {
-    id: 4,
-    patient: 'Leila Haddad',
-    cin: 'CN445566',
-    initials: 'LH',
-    medecin: 'Dr. Samir Alaoui',
-    specialite: 'Médecine générale',
-    date: '07/09/2026',
-    dateISO: '2026-09-07',
-    heure: '16:00',
-    motif: 'Contrôle',
-    diagnostic: 'Diabète',
-    statut: 'Terminée'
-  },
-  {
-    id: 5,
-    patient: 'Youssef El Amrani',
-    cin: 'CN778899',
-    initials: 'YE',
-    medecin: 'Dr. Leila Haddad',
-    specialite: 'Pédiatrie',
-    date: '06/09/2026',
-    dateISO: '2026-09-06',
-    heure: '09:45',
-    motif: 'Allergie',
-    diagnostic: 'Rhinite allergique',
-    statut: 'Annulée'
+const stats = ref({
+  total_consultations: 0,
+  patients_consultes: 0,
+  medecins_actifs: 0,
+  consultations_ce_mois: 0
+})
+
+async function chargerConsultations(page = 1) {
+  loading.value = true
+
+  try {
+    const params = { page }
+    if (search.value.trim()) params.recherche = search.value.trim()
+    if (selectedDoctor.value) params.id_medecin = selectedDoctor.value
+    if (selectedDate.value) params.date = selectedDate.value
+    if (selectedStatus.value) params.statut = selectedStatus.value
+
+    const reponse = await api.get('/consultations', { params })
+    const donnees = reponse.data?.consultations
+
+    consultations.value = donnees?.data ?? []
+    currentPage.value = donnees?.current_page ?? 1
+    lastPage.value = donnees?.last_page ?? 1
+    total.value = donnees?.total ?? 0
+    from.value = donnees?.from ?? 0
+    to.value = donnees?.to ?? 0
+  } catch (error) {
+    notifierErreur(messageErreur(error, 'Impossible de charger les consultations.'))
+  } finally {
+    loading.value = false
   }
-])
+}
 
-const doctors = computed(() => [
-  ...new Set(consultations.value.map(item => item.medecin))
-])
+async function chargerStats() {
+  try {
+    const reponse = await api.get('/consultations/stats')
+    stats.value = reponse.data
+  } catch (error) {
+    notifierErreur(messageErreur(error, 'Impossible de charger les statistiques.'))
+  }
+}
 
-const filteredConsultations = computed(() => {
-  const keyword = search.value.trim().toLowerCase()
+const doctors = computed(() => {
+  const noms = consultations.value
+    .map((c) => c.rendez_vous?.medecin)
+    .filter(Boolean)
+    .map((m) => ({ id: m.id_medecin, nom: `Dr. ${m.nom} ${m.prenom}` }))
 
-  return consultations.value.filter(item => {
-    const matchSearch =
-      !keyword ||
-      item.patient.toLowerCase().includes(keyword) ||
-      item.medecin.toLowerCase().includes(keyword) ||
-      item.motif.toLowerCase().includes(keyword) ||
-      item.diagnostic.toLowerCase().includes(keyword)
-
-    const matchDoctor =
-      !selectedDoctor.value ||
-      item.medecin === selectedDoctor.value
-
-    const matchDate =
-      !selectedDate.value ||
-      item.dateISO === selectedDate.value
-
-    const matchStatus =
-      !selectedStatus.value ||
-      item.statut === selectedStatus.value
-
-    return matchSearch && matchDoctor && matchDate && matchStatus
-  })
+  const uniques = new Map(noms.map((m) => [m.id, m]))
+  return [...uniques.values()]
 })
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredConsultations.value.length / perPage))
-)
-
-const paginatedConsultations = computed(() => {
-  const start = (currentPage.value - 1) * perPage
-
-  return filteredConsultations.value.slice(
-    start,
-    start + perPage
-  )
-})
+function goToPage(page) {
+  if (page >= 1 && page <= lastPage.value) {
+    chargerConsultations(page)
+  }
+}
 
 function resetFilters() {
   search.value = ''
   selectedDoctor.value = ''
   selectedDate.value = ''
   selectedStatus.value = ''
-  currentPage.value = 1
-}
-
-function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
+  chargerConsultations(1)
 }
 
 function statusClass(status) {
-  if (status === 'Terminée') return 'status-completed'
+  if (status === 'Terminé') return 'status-completed'
   if (status === 'En cours') return 'status-progress'
-  if (status === 'Annulée') return 'status-cancelled'
-
+  if (status === 'Annulé') return 'status-cancelled'
+  if (status === 'Confirmé') return 'status-confirmed'
+  if (status === 'En attente') return 'status-pending'
   return ''
 }
 
+function initiales(nom, prenom) {
+  return `${(nom || '').charAt(0)}${(prenom || '').charAt(0)}`.toUpperCase()
+}
+
+// --- Modal formulaire (view/create/edit) ---
+
+const modalOuverte = ref(false)
+const modalMode = ref('view')
+const consultationSelectionnee = ref(null)
+
 function createConsultation() {
-  console.log('Nouvelle consultation')
+  consultationSelectionnee.value = null
+  modalMode.value = 'create'
+  modalOuverte.value = true
 }
 
 function viewConsultation(item) {
-  console.log('Voir', item)
+  consultationSelectionnee.value = item
+  modalMode.value = 'view'
+  modalOuverte.value = true
 }
 
 function editConsultation(item) {
-  console.log('Modifier', item)
+  consultationSelectionnee.value = item
+  modalMode.value = 'edit'
+  modalOuverte.value = true
 }
 
-function deleteConsultation(item) {
-  console.log('Supprimer', item)
+function fermerModal() {
+  modalOuverte.value = false
+  consultationSelectionnee.value = null
 }
+
+async function sauvegarde() {
+  const estCreation = modalMode.value === 'create'
+  fermerModal()
+  await Promise.all([chargerConsultations(currentPage.value), chargerStats()])
+  success(estCreation ? 'Consultation créée avec succès.' : 'Consultation modifiée avec succès.')
+}
+
+// --- Modal confirmation suppression ---
+
+const confirmModalOuverte = ref(false)
+const confirmCible = ref(null)
+const confirmEnCours = ref(false)
+
+function demanderSuppression(item) {
+  confirmCible.value = item
+  confirmModalOuverte.value = true
+}
+
+function fermerConfirmModal() {
+  if (confirmEnCours.value) return
+  confirmModalOuverte.value = false
+  confirmCible.value = null
+}
+
+async function executerSuppression() {
+  const item = confirmCible.value
+  confirmEnCours.value = true
+
+  try {
+    await api.delete(`/consultations/${item.id_consultation}`)
+    success('Consultation supprimée avec succès.')
+    confirmModalOuverte.value = false
+    confirmCible.value = null
+    await Promise.all([chargerConsultations(currentPage.value), chargerStats()])
+  } catch (error) {
+    notifierErreur(messageErreur(error, 'Impossible de supprimer cette consultation.'))
+  } finally {
+    confirmEnCours.value = false
+  }
+}
+
+// --- Ordonnance (hors scope SCRUM-38, place-holders) ---
 
 function createOrdonnance(item) {
   console.log('Nouvelle ordonnance', item)
@@ -183,54 +192,20 @@ function downloadOrdonnance(item) {
 ========================================================= */
 
 onMounted(async () => {
+  await Promise.all([chargerConsultations(1), chargerStats()])
+
   await nextTick()
 
-  const tl = gsap.timeline({
-    defaults: {
-      ease: 'power3.out'
-    }
-  })
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
-  tl.from('.consultations-heading', {
-    y: 18,
-    opacity: 0,
-    duration: 0.55
-  })
-
-    .from(
-      '.consultation-stat-card',
-      {
-        y: 22,
-        opacity: 0,
-        scale: 0.97,
-        stagger: 0.08,
-        duration: 0.5
-      },
-      '-=0.25'
-    )
-
-    .from(
-      '.consultation-filter-card',
-      {
-        y: 18,
-        opacity: 0,
-        duration: 0.45
-      },
-      '-=0.25'
-    )
-
-    .from(
-      '.consultation-table-card',
-      {
-        y: 20,
-        opacity: 0,
-        duration: 0.5
-      },
-      '-=0.2'
-    )
+  tl.from('.consultations-heading', { y: 18, opacity: 0, duration: 0.55 })
+    .from('.consultation-stat-card', { y: 22, opacity: 0, scale: 0.97, stagger: 0.08, duration: 0.5 }, '-=0.25')
+    .from('.consultation-filter-card', { y: 18, opacity: 0, duration: 0.45 }, '-=0.25')
+    .from('.consultation-table-card', { y: 20, opacity: 0, duration: 0.5 }, '-=0.2')
 })
 </script>
 <template>
+
   <section class="consultations-page">
 
     <!-- HEADER -->
@@ -469,6 +444,23 @@ onMounted(async () => {
          window.confirm(), une fois le composant cree sur le modele de
          RendezVousConfirmModal. Pour l'instant la suppression declenche
          directement executerSuppression() via confirmModalOuverte. -->
+    <ConsultationFormModal
+      v-if="modalOuverte"
+      :mode="modalMode"
+      :consultation="consultationSelectionnee"
+      @close="fermerModal"
+      @saved="sauvegarde"
+    />
 
+    <ConsultationConfirmModal
+      :open="confirmModalOuverte"
+      :loading="confirmEnCours"
+      title="Supprimer la consultation ?"
+      :message="`Voulez-vous vraiment supprimer la consultation de ${confirmCible?.rendez_vous?.patient?.nom ?? ''} ${confirmCible?.rendez_vous?.patient?.prenom ?? ''} ?`"
+      warning-text="Cette action est irréversible."
+      confirm-label="Supprimer"
+      @close="fermerConfirmModal"
+      @confirm="executerSuppression"
+    />
   </section>
 </template>
