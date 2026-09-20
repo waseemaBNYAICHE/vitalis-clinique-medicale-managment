@@ -340,21 +340,6 @@
 
 
     <!-- ===================== BACKEND INFO ===================== -->
-      <div class="backend-info">
-        <div class="backend-icon">
-          <i class="fi fi-rr-info"></i>
-        </div>
-
-        <div>
-          <strong>Frontend connecté au Backend</strong>
-
-          <p>
-             Les hospitalisations, les admissions et les sorties des patients
-             sont maintenant synchronisées avec l'API Laravel.
-          </p>
-       </div>
-      </div>
-
 
     <!-- ======================================================
          CREATE / EDIT MODAL
