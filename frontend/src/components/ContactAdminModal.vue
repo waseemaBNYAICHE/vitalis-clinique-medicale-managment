@@ -1,7 +1,8 @@
 <script setup>
 import { reactive, ref } from 'vue'
-
+import api from '../api'
 // SCRUM-546 : interface uniquement. Aucun appel réseau.
+const sending = ref(false)
 const dialog = ref(null)
 const feedback = ref('')
 const form = reactive({ fullName: '', email: '', subject: '', message: '' })
@@ -13,15 +14,37 @@ function open() {
 function close() {
   dialog.value.close()
 }
-function submit() {
-  // La validation HTML vérifie aussi le format de l'adresse e-mail.
+async function submit() {
+  feedback.value = ''
+
   if (Object.values(form).some(value => !value.trim())) {
     feedback.value = 'Veuillez compléter tous les champs, sans utiliser uniquement des espaces.'
     return
   }
-  // À remplacer par le résultat du service lorsque le backend sera disponible.
-  // Ne pas simuler une confirmation d'envoi.
-  feedback.value = "L'envoi est momentanément indisponible. Votre message n'a pas été envoyé. Vous pouvez contacter admin@vitalis.ma depuis votre messagerie."
+
+  sending.value = true
+
+  try {
+    const response = await api.post('/contact-administrateur', {
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
+      subject: form.subject.trim(),
+      message: form.message.trim()
+    })
+
+    feedback.value = response.data.message
+
+    form.fullName = ''
+    form.email = ''
+    form.subject = ''
+    form.message = ''
+  } catch (error) {
+    feedback.value =
+      error.response?.data?.message ||
+      "Une erreur est survenue. Veuillez réessayer."
+  } finally {
+    sending.value = false
+  }
 }
 defineExpose({ open })
 </script>
@@ -65,7 +88,13 @@ defineExpose({ open })
         <p v-if="feedback" class="contact-admin__feedback" role="alert">{{ feedback }}</p>
         <div class="contact-admin__actions">
           <button type="button" class="contact-admin__cancel" @click="close">Annuler</button>
-          <button type="submit" class="contact-admin__send">Envoyer</button>
+          <button
+  type="submit"
+  class="contact-admin__send"
+  :disabled="sending"
+>
+  {{ sending ? 'Envoi...' : 'Envoyer' }}
+</button>
         </div>
       </form>
     </dialog>
