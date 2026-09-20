@@ -80,6 +80,7 @@ export const routes = [
         path: 'consultations',
         name: 'consultations',
         component: () => import('../views/Consultations/ConsultationsView.vue'),
+        meta: { permission: 'consultations.read' }
       },
       {
         path: 'ordonnances',
