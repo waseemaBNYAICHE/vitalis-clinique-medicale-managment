@@ -230,187 +230,114 @@ onMounted(async () => {
     )
 })
 </script>
-
 <template>
   <section class="consultations-page">
 
     <!-- HEADER -->
-
     <div class="consultations-heading">
-
       <div>
-
-        <h1>
-          Gestion des consultations
-        </h1>
-
-        <p class="consultation-subtitle">
-          Consultez et gérez les consultations des patients
-        </p>
+        <h1>Gestion des consultations</h1>
+        <p class="consultation-subtitle">Consultez et gérez les consultations des patients</p>
       </div>
 
       <button
+        v-if="peutAction('consultations.creer')"
         class="new-consultation-btn"
         @click="createConsultation"
       >
         <i class="fi fi-rr-plus"></i>
         Nouvelle consultation
       </button>
-
     </div>
 
     <!-- STATS -->
-
     <div class="consultation-stats">
-
       <article class="consultation-stat-card">
-
         <div class="consultation-stat-icon blue">
           <i class="fi fi-rr-stethoscope"></i>
         </div>
-
         <div>
-          <strong>256</strong>
+          <strong>{{ stats.total_consultations }}</strong>
           <span>Consultations</span>
-          <small>↗ +12%</small>
         </div>
-
       </article>
 
-
       <article class="consultation-stat-card">
-
         <div class="consultation-stat-icon green">
           <i class="fi fi-rr-users"></i>
         </div>
-
         <div>
-          <strong>198</strong>
+          <strong>{{ stats.patients_consultes }}</strong>
           <span>Patients consultés</span>
-          <small>↗ +8%</small>
         </div>
-
       </article>
 
-
       <article class="consultation-stat-card">
-
         <div class="consultation-stat-icon purple">
           <i class="fi fi-rr-user-md"></i>
         </div>
-
         <div>
-          <strong>12</strong>
+          <strong>{{ stats.medecins_actifs }}</strong>
           <span>Médecins</span>
-          <small>↗ +5%</small>
         </div>
-
       </article>
 
-
       <article class="consultation-stat-card">
-
         <div class="consultation-stat-icon orange">
           <i class="fi fi-rr-calendar"></i>
         </div>
-
         <div>
-          <strong>45</strong>
+          <strong>{{ stats.consultations_ce_mois }}</strong>
           <span>Ce mois-ci</span>
-          <small>↗ +18%</small>
         </div>
-
       </article>
-
     </div>
 
     <!-- FILTERS -->
-
     <div class="consultation-filter-card">
-
       <div class="consultation-search">
-
         <i class="fi fi-rr-search"></i>
-
         <input
           v-model="search"
           type="text"
           placeholder="Rechercher par patient, médecin ou diagnostic..."
+          @keyup.enter="chargerConsultations(1)"
         />
-
       </div>
 
-
-      <select v-model="selectedDoctor">
-
-        <option value="">
-          Tous les médecins
+      <select v-model="selectedDoctor" @change="chargerConsultations(1)">
+        <option value="">Tous les médecins</option>
+        <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">
+          {{ doctor.nom }}
         </option>
-
-        <option
-          v-for="doctor in doctors"
-          :key="doctor"
-          :value="doctor"
-        >
-          {{ doctor }}
-        </option>
-
       </select>
 
+      <input v-model="selectedDate" type="date" @change="chargerConsultations(1)" />
 
-      <input
-        v-model="selectedDate"
-        type="date"
-      />
-
-
-      <select v-model="selectedStatus">
-
-        <option value="">
-          Tous les statuts
-        </option>
-
-        <option value="Terminée">
-          Terminée
-        </option>
-
-        <option value="En cours">
-          En cours
-        </option>
-
-        <option value="Annulée">
-          Annulée
-        </option>
-
+      <select v-model="selectedStatus" @change="chargerConsultations(1)">
+        <option value="">Tous les statuts</option>
+        <option value="Terminé">Terminée</option>
+        <option value="En cours">En cours</option>
+        <option value="Annulé">Annulée</option>
       </select>
 
-
-      <button
-        class="filter-icon-btn"
-        title="Filtres"
-      >
+      <button class="filter-icon-btn" title="Filtres" @click="chargerConsultations(1)">
         <i class="fi fi-rr-filter"></i>
       </button>
 
-
-      <button
-        class="reset-consultation-btn"
-        @click="resetFilters"
-      >
+      <button class="reset-consultation-btn" @click="resetFilters">
         <i class="fi fi-rr-refresh"></i>
         Réinitialiser
       </button>
-
     </div>
 
     <!-- TABLE -->
-
     <div class="consultation-table-card">
 
-      <div class="consultation-table-wrapper">
+      <div v-if="loading" class="consultation-empty">Chargement...</div>
 
+      <div v-else class="consultation-table-wrapper">
         <table class="consultation-table">
-
           <thead>
             <tr>
               <th>#</th>
@@ -425,126 +352,60 @@ onMounted(async () => {
           </thead>
 
           <tbody>
-
-            <tr
-              v-for="item in paginatedConsultations"
-              :key="item.id"
-            >
-
-              <td class="consultation-number">
-                {{ item.id }}
-              </td>
-
+            <tr v-for="item in consultations" :key="item.id_consultation">
+              <td class="consultation-number">{{ item.id_consultation }}</td>
 
               <!-- PATIENT -->
-
               <td>
-
                 <div class="consultation-person">
-
                   <div class="consultation-avatar">
-                    {{ item.initials }}
+                    {{ initiales(item.rendez_vous?.patient?.nom, item.rendez_vous?.patient?.prenom) }}
                   </div>
-
                   <div>
-
-                    <strong>
-                      {{ item.patient }}
-                    </strong>
-
-                    <span>
-                      {{ item.cin }}
-                    </span>
-
+                    <strong>{{ item.rendez_vous?.patient?.nom }} {{ item.rendez_vous?.patient?.prenom }}</strong>
+                    <span>{{ item.rendez_vous?.patient?.cin }}</span>
                   </div>
-
                 </div>
-
               </td>
-
 
               <!-- MEDECIN -->
-
               <td>
-
                 <div class="consultation-doctor">
-
-                  <strong>
-                    {{ item.medecin }}
-                  </strong>
-
-                  <span>
-                    {{ item.specialite }}
-                  </span>
-
+                  <strong>Dr. {{ item.rendez_vous?.medecin?.nom }} {{ item.rendez_vous?.medecin?.prenom }}</strong>
+                  <span>{{ item.rendez_vous?.medecin?.specialite?.nom_specialite }}</span>
                 </div>
-
               </td>
-
 
               <!-- DATE -->
-
               <td>
-
                 <div class="consultation-date">
-
-                  <strong>
-                    {{ item.date }}
-                  </strong>
-
-                  <span>
-                    {{ item.heure }}
-                  </span>
-
+                  <strong>{{ item.rendez_vous?.date_rendez_vous }}</strong>
+                  <span>{{ (item.rendez_vous?.heure_debut || '').slice(0, 5) }}</span>
                 </div>
-
               </td>
-
 
               <!-- MOTIF -->
-
-              <td>
-                {{ item.motif }}
-              </td>
-
+              <td>{{ item.motif }}</td>
 
               <!-- DIAGNOSTIC -->
-
-              <td>
-                {{ item.diagnostic }}
-              </td>
-
+              <td>{{ item.diagnostic }}</td>
 
               <!-- STATUS -->
-
               <td>
-
-                <span
-                  class="consultation-status"
-                  :class="statusClass(item.statut)"
-                >
-                  {{ item.statut }}
+                <span class="consultation-status" :class="statusClass(item.rendez_vous?.statut)">
+                  {{ item.rendez_vous?.statut }}
                 </span>
-
               </td>
 
-
               <!-- ACTIONS -->
-
               <td>
-
                 <div class="consultation-actions">
-
-                  <button
-                    title="Voir"
-                    class="consultation-action-btn"
-                    @click="viewConsultation(item)"
-                  >
+                  <button title="Voir" class="consultation-action-btn" @click="viewConsultation(item)">
                     <i class="fi fi-rr-eye"></i>
                   </button>
 
-
                   <button
+                    v-if="peutAction('consultations.modifier')"
                     title="Modifier"
                     class="consultation-action-btn"
                     @click="editConsultation(item)"
@@ -552,112 +413,62 @@ onMounted(async () => {
                     <i class="fi fi-rr-pencil"></i>
                   </button>
 
-
                   <button
+                    v-if="peutAction('consultations.supprimer')"
                     title="Supprimer"
                     class="consultation-action-btn delete"
-                    @click="deleteConsultation(item)"
+                    @click="demanderSuppression(item)"
                   >
                     <i class="fi fi-rr-trash"></i>
                   </button>
 
-
-                  <button
-                    title="Créer ordonnance"
-                    class="consultation-action-btn"
-                    @click="createOrdonnance(item)"
-                  >
+                  <button title="Créer ordonnance" class="consultation-action-btn" @click="createOrdonnance(item)">
                     <i class="fi fi-rr-document"></i>
                   </button>
 
-
-                  <button
-                    title="Imprimer ordonnance"
-                    class="consultation-action-btn"
-                    @click="printOrdonnance(item)"
-                  >
+                  <button title="Imprimer ordonnance" class="consultation-action-btn" @click="printOrdonnance(item)">
                     <i class="fi fi-rr-print"></i>
                   </button>
 
-
-                  <button
-                    title="Télécharger ordonnance"
-                    class="consultation-action-btn"
-                    @click="downloadOrdonnance(item)"
-                  >
+                  <button title="Télécharger ordonnance" class="consultation-action-btn" @click="downloadOrdonnance(item)">
                     <i class="fi fi-rr-download"></i>
                   </button>
-
                 </div>
-
               </td>
-
             </tr>
 
-
-            <tr v-if="paginatedConsultations.length === 0">
-
-              <td
-                colspan="8"
-                class="consultation-empty"
-              >
-                Aucune consultation trouvée.
-              </td>
-
+            <tr v-if="!loading && consultations.length === 0">
+              <td colspan="8" class="consultation-empty">Aucune consultation trouvée.</td>
             </tr>
-
           </tbody>
-
         </table>
-
       </div>
 
-
       <!-- PAGINATION -->
-
       <div class="consultation-table-footer">
-
         <span>
-          Affichage de 1 à
-          {{ paginatedConsultations.length }}
-          sur
-          {{ filteredConsultations.length }}
-          résultats
+          Affichage de {{ from }} à {{ to }} sur {{ total }} résultats
         </span>
 
-
         <div class="consultation-pagination">
-
+          <button :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹</button>
           <button
-            :disabled="currentPage === 1"
-            @click="goToPage(currentPage - 1)"
-          >
-            ‹
-          </button>
-
-
-          <button
-            v-for="page in totalPages"
+            v-for="page in lastPage"
             :key="page"
             :class="{ active: currentPage === page }"
             @click="goToPage(page)"
           >
             {{ page }}
           </button>
-
-
-          <button
-            :disabled="currentPage === totalPages"
-            @click="goToPage(currentPage + 1)"
-          >
-            ›
-          </button>
-
+          <button :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">›</button>
         </div>
-
       </div>
-
     </div>
+
+    <!-- TODO SCRUM-614-style : ConsultationConfirmModal pour remplacer
+         window.confirm(), une fois le composant cree sur le modele de
+         RendezVousConfirmModal. Pour l'instant la suppression declenche
+         directement executerSuppression() via confirmModalOuverte. -->
 
   </section>
 </template>
