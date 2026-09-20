@@ -205,6 +205,10 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     // connue : le middleware can: ne voit que la permission, pas le dossier.
     Route::get('/ordonnances', [OrdonnanceController::class, 'index'])
         ->middleware('can:ordonnances.read');
+        Route::get(
+    '/ordonnances/consultations-disponibles',
+    [OrdonnanceController::class, 'consultationsDisponibles']
+)->middleware('can:ordonnances.create');
     Route::get('/ordonnances/{id}', [OrdonnanceController::class, 'show'])
         ->middleware('can:ordonnances.read');
     Route::get('/ordonnances/{id}/imprimer', [OrdonnanceController::class, 'imprimer'])
