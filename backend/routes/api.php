@@ -252,7 +252,19 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     Route::get('/factures/{id}/imprimer', [FactureController::class, 'imprimer']);
     Route::get('/factures/{id}/telecharger', [FactureController::class, 'telecharger']);
     Route::delete('/factures/{id}', [FactureController::class, 'destroy']);
-
+// Gestion des consultations (SCRUM-37)
+Route::get('/consultations/stats', [ConsultationController::class, 'stats'])
+    ->middleware('can:consultations.read');
+Route::get('/consultations', [ConsultationController::class, 'index'])
+    ->middleware('can:consultations.read');
+Route::get('/consultations/{id}', [ConsultationController::class, 'show'])
+    ->middleware('can:consultations.read');
+Route::post('/consultations', [ConsultationController::class, 'store'])
+    ->middleware('can:consultations.create');
+Route::put('/consultations/{id}', [ConsultationController::class, 'update'])
+    ->middleware('can:consultations.update');
+Route::delete('/consultations/{id}', [ConsultationController::class, 'destroy'])
+    ->middleware('can:consultations.delete');
     // Gestion des paiements
     Route::get('/paiements', [PaiementController::class, 'index']);
     Route::get('/paiements/{id}', [PaiementController::class, 'show']);
