@@ -187,5 +187,4 @@ onMounted(fetchDashboard)
 
     </main>
 </template>
-
 <style src="../../styles/dashboard.css"></style>

@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +13,12 @@ use App\Http\Controllers\SpecialiteController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\LigneOrdonnanceController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\HospitalisationController;
+use App\Http\Controllers\ChambreController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\PaiementController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -47,7 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-
+    // Assistant médical IA
+    Route::post('/ai/predict', [AiController::class, 'predict']);
+    Route::post('/ai/chat', [AiController::class, 'chat']);
     // Tableau de bord principal.
     //
     // Seule route /dashboard/* sans permission, et c'est volontaire : le
@@ -69,7 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/rendez-vous-count', [DashboardController::class, 'nombreRendezVous']);
         Route::get('/dashboard/consultations-count', [DashboardController::class, 'nombreConsultations']);
         Route::get('/dashboard/examens-en-attente', [DashboardController::class, 'examensEnAttente']);
-
         // Agenda du jour : contient le nom des patients et le MOTIF de leur
         // venue. Le controller restreint en plus le medecin a ses propres
         // rendez-vous.
@@ -243,7 +248,47 @@ Route::delete('/users/{id}', [UserController::class, 'destroy'])
     Route::get('/factures/{id}', [FactureController::class, 'show']);
     Route::post('/factures', [FactureController::class, 'store']);
     Route::put('/factures/{id}', [FactureController::class, 'update']);
+    Route::patch('/factures/{id}/annuler', [FactureController::class, 'annuler']);
+    Route::get('/patients/{idPatient}/factures', [FactureController::class, 'historiquePatient']);
+    Route::get('/factures/{id}/imprimer', [FactureController::class, 'imprimer']);
+    Route::get('/factures/{id}/telecharger', [FactureController::class, 'telecharger']);
     Route::delete('/factures/{id}', [FactureController::class, 'destroy']);
+// Gestion des consultations (SCRUM-37)
+Route::get('/consultations/stats', [ConsultationController::class, 'stats'])
+    ->middleware('can:consultations.read');
+Route::get('/consultations', [ConsultationController::class, 'index'])
+    ->middleware('can:consultations.read');
+Route::get('/consultations/{id}', [ConsultationController::class, 'show'])
+    ->middleware('can:consultations.read');
+Route::post('/consultations', [ConsultationController::class, 'store'])
+    ->middleware('can:consultations.create');
+Route::put('/consultations/{id}', [ConsultationController::class, 'update'])
+    ->middleware('can:consultations.update');
+Route::delete('/consultations/{id}', [ConsultationController::class, 'destroy'])
+    ->middleware('can:consultations.delete');
+    // Gestion des paiements
+    Route::get('/paiements', [PaiementController::class, 'index']);
+    Route::get('/paiements/{id}', [PaiementController::class, 'show']);
+    Route::post('/paiements', [PaiementController::class, 'store']);
+    Route::put('/paiements/{id}', [PaiementController::class, 'update']);
+    Route::delete('/paiements/{id}', [PaiementController::class, 'destroy']);
+
+    // Gestion des hospitalisations 
+    Route::get('/hospitalisations', [HospitalisationController::class, 'index']);
+    Route::post('/hospitalisations', [HospitalisationController::class, 'store']);
+    Route::post('/hospitalisations/admettre', [HospitalisationController::class, 'admettre']);
+    Route::patch('/hospitalisations/{id}/sortir', [HospitalisationController::class, 'sortir']);
+    Route::get('/hospitalisations/{id}', [HospitalisationController::class, 'show']);
+    Route::put('/hospitalisations/{id}', [HospitalisationController::class, 'update']);
+    Route::delete('/hospitalisations/{id}', [HospitalisationController::class, 'destroy']);
+
+    // Gestion des chambres 
+    Route::get('/chambres', [ChambreController::class, 'index']);
+    Route::post('/chambres', [ChambreController::class, 'store']);
+    Route::get('/chambres/disponibles', [ChambreController::class, 'disponibles']);
+    Route::get('/chambres/{id}', [ChambreController::class, 'show']);
+    Route::put('/chambres/{id}', [ChambreController::class, 'update']);
+    Route::delete('/chambres/{id}', [ChambreController::class, 'destroy']);
 
 });
 

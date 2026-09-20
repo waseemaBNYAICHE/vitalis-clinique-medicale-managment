@@ -10,4 +10,4 @@ COPY data/ ./data/
 COPY models/ ./models/
 COPY src/ ./src/
 
-CMD ["python", "src/predict.py"]
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]

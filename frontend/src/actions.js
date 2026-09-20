@@ -36,12 +36,24 @@ export const PERMISSION_PAR_ACTION = {
   'patients.modifier': 'patients.update',
   'patients.supprimer': 'patients.delete',
 
+  // SCRUM-614 - Liaison frontend/backend du module Rendez-vous.
+  'rendezVous.creer': 'rendez-vous.create',
+  'rendezVous.modifier': 'rendez-vous.update',
+  'rendezVous.supprimer': 'rendez-vous.delete',
+  'rendezVous.annuler': 'rendez-vous.update',
+
+    // SCRUM-37/38 - Liaison frontend/backend du module Consultations.
+  'consultations.creer': 'consultations.create',
+  'consultations.modifier': 'consultations.update',
+  'consultations.supprimer': 'consultations.delete',
+  
   // Comptes utilisateurs : le backend ne connait qu'une permission pour tout
   // ce module, 'roles.manage', accordee au seul administrateur.
   'utilisateurs.ajouter': 'roles.manage',
   'utilisateurs.consulter': 'roles.manage',
   'utilisateurs.modifier': 'roles.manage',
   'utilisateurs.supprimer': 'roles.manage'
+  
 }
 
 /**
