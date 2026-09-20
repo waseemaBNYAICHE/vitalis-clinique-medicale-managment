@@ -19,6 +19,7 @@ use App\Http\Controllers\HospitalisationController;
 use App\Http\Controllers\ChambreController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\ContactAdministrateurController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -43,6 +44,8 @@ Route::middleware('throttle:auth-public')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+    Route::post('/contact-administrateur', [ContactAdministrateurController::class, 'store']);
 });
 
 
