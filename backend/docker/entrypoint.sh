@@ -65,6 +65,12 @@ if [ "$ROLE" = "app" ]; then
 
         log "running migrations"
         php artisan migrate --force --no-ansi
+
+        # Seed the initial Vitalis data only when the database is empty.
+        if [ "$(php artisan tinker --execute='echo \App\Models\User::count();' 2>/dev/null | tr -dc '0-9')" = "0" ]; then
+            log "database is empty - seeding initial data"
+            php artisan db:seed --force --no-ansi
+        fi
     fi
 
     log "ready"

@@ -577,44 +577,7 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        DB::table('chambres')->insert([
-            [
-                'id_chambre' => 1,
-                'numero_chambre' => '101',
-                'type_chambre' => 'Individuelle',
-                'etage' => '1er étage',
-                'capacite' => 1,
-                'tarif_journalier' => 650,
-                'statut' => 'disponible',
-                'description' => 'Chambre individuelle climatisée.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_chambre' => 2,
-                'numero_chambre' => '102',
-                'type_chambre' => 'Double',
-                'etage' => '1er étage',
-                'capacite' => 2,
-                'tarif_journalier' => 450,
-                'statut' => 'occupee',
-                'description' => 'Chambre double avec salle de bain.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id_chambre' => 3,
-                'numero_chambre' => '201',
-                'type_chambre' => 'Soins intensifs',
-                'etage' => '2e étage',
-                'capacite' => 1,
-                'tarif_journalier' => 1800,
-                'statut' => 'occupee',
-                'description' => 'Chambre de surveillance intensive.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+       $this->call(ChambreSeeder::class);
 
         /*
         |--------------------------------------------------------------------------
