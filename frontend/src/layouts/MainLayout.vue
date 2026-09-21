@@ -1,104 +1,116 @@
 <template>
   <div class="app-layout">
 
-    <!-- =========================
+    <!-- =====================================================
          SIDEBAR
-    ========================== -->
+    ====================================================== -->
     <aside class="sidebar">
 
-      <!-- BRAND -->
+      <!-- LOGO -->
       <div class="sidebar-brand">
-        <div class="brand-icon">
-          <i class="fi fi-rr-heart"></i>
-        </div>
+
+        <img
+          src="../assets/vitalis-ai-logo.png"
+          alt="VITALIS Clinique Médicale"
+          class="brand-logo"
+        />
 
         <div class="brand-text">
           <h1>VITALIS</h1>
           <p>Clinique Médicale</p>
         </div>
-      </div>
-      
 
-      <!-- NAVIGATION -->
+      </div>
+
+
+      <!-- ===================================================
+           MENU DYNAMIQUE
+      ==================================================== -->
       <nav class="sidebar-menu">
 
-        <RouterLink to="/dashboard" class="menu-item">
-          <i class="fi fi-rr-home menu-icon"></i>
-          <span>Tableau de bord</span>
-        </RouterLink>
+        <RouterLink
+          v-for="item in visibleMenuItems"
+          :key="item.route"
+          :to="item.route"
+          class="menu-item"
+        >
 
-        <RouterLink to="/patients" class="menu-item">
-          <i class="fi fi-rr-users-medical menu-icon"></i>
-          <span>Patients</span>
-        </RouterLink>
+          <i
+            :class="[item.icon, 'menu-icon']"
+          ></i>
 
-        <RouterLink to="/rendez-vous" class="menu-item">
-          <i class="fi fi-rr-calendar menu-icon"></i>
-          <span>Rendez-vous</span>
-        </RouterLink>
+          <span>
+            {{ item.displayLabel }}
+          </span>
 
-        <RouterLink to="/consultations" class="menu-item">
-          <i class="fi fi-rr-stethoscope menu-icon"></i>
-          <span>Consultations</span>
-        </RouterLink>
-
-        <RouterLink to="/ordonnances" class="menu-item">
-          <i class="fi fi-rr-prescription-bottle-pill menu-icon"></i>
-          <span>Ordonnances</span>
-        </RouterLink>
-         
-        <RouterLink to="/examens" class="menu-item">
-          <i class="fi fi-rr-document menu-icon"></i>
-          <span>Examens</span>
-        </RouterLink>
-
-        <RouterLink to="/hospitalisations" class="menu-item">
-          <i class="fi fi-rr-bed menu-icon"></i>
-          <span>Hospitalisations</span>
-        </RouterLink>
-
-        <RouterLink to="/facturation" class="menu-item">
-          <i class="fi fi-rr-receipt menu-icon"></i>
-          <span>Facturation</span>
-        </RouterLink>
-
-        <RouterLink to="/utilisateurs" class="menu-item">
-          <i class="fi fi-rr-user-gear menu-icon"></i>
-          <span>Utilisateurs</span>
-        </RouterLink>
-
-        <RouterLink to="/parametres" class="menu-item">
-          <i class="fi fi-rr-settings menu-icon"></i>
-          <span>Paramètres</span>
         </RouterLink>
 
       </nav>
 
-      <!-- LOGOUT -->
-      <button
-        class="menu-item logout-item"
-        type="button"
-        @click="logout"
-      >
-        <i class="fi fi-rr-sign-out-alt menu-icon"></i>
-        <span>Déconnexion</span>
-      </button>
+
+      <!-- ===================================================
+           PROFIL EN BAS DU SIDEBAR
+      ==================================================== -->
+      <div class="sidebar-user">
+
+        <div class="sidebar-user-avatar">
+
+          <img
+            v-if="userPhoto"
+            :src="userPhoto"
+            :alt="userName"
+            @error="handleImageError"
+          />
+
+          <span v-else>
+            {{ userInitial }}
+          </span>
+
+        </div>
+
+
+        <div class="sidebar-user-info">
+
+          <strong>
+            {{ userName }}
+          </strong>
+
+          <span>
+            {{ formattedRole }}
+          </span>
+
+        </div>
+
+
+        <!-- DECONNEXION -->
+        <button
+          type="button"
+          class="sidebar-logout"
+          title="Déconnexion"
+          @click="logout"
+        >
+          <i class="fi fi-rr-sign-out-alt"></i>
+        </button>
+
+      </div>
 
     </aside>
 
-    <!-- =========================
-         MAIN AREA
-    ========================== -->
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
     <div class="main-area">
 
-      <!-- TOPBAR -->
+      <!-- ===================================================
+           TOPBAR
+      ==================================================== -->
       <header class="topbar">
 
         <!-- SEARCH -->
         <div class="topbar-search">
-          <i class="fi fi-rr-search"></i>
 
-          
+          <i class="fi fi-rr-search"></i>
 
           <input
             v-model="searchText"
@@ -106,10 +118,62 @@
             placeholder="Rechercher..."
             aria-label="Rechercher"
           />
+
         </div>
 
-        <!-- RIGHT SIDE -->
+
+        <!-- =================================================
+             ACTIONS DROITE
+        ================================================== -->
         <div class="topbar-actions">
+
+          <!-- =================================================
+               SELECTEUR DE ROLE
+               DEMO FRONTEND UNIQUEMENT
+          ================================================== -->
+          <div class="role-selector">
+
+            <div class="role-selector-icon">
+              <i class="fi fi-rr-user-gear"></i>
+            </div>
+
+            <div class="role-selector-content">
+
+              <span class="role-selector-label">
+                Vue utilisateur
+              </span>
+
+              <select
+                v-model="selectedRole"
+                @change="changeRole"
+              >
+
+                <option value="administrateur">
+                  Administrateur
+                </option>
+
+                <option value="medecin">
+                  Médecin
+                </option>
+
+                <option value="secretaire">
+                  Secrétaire
+                </option>
+
+                <option value="infirmier">
+                  Infirmier
+                </option>
+
+                <option value="patient">
+                  Patient
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
 
           <!-- NOTIFICATIONS -->
           <button
@@ -117,66 +181,53 @@
             type="button"
             title="Notifications"
           >
+
             <i class="fi fi-rr-bell"></i>
-            <span class="notification-dot"></span>
+
+            <span
+              class="notification-dot"
+            ></span>
+
           </button>
-
-          <!-- PROFILE -->
-          <div class="user-profile">
-
-            <div class="user-avatar">
-
-              <img
-                v-if="userPhoto"
-                :src="userPhoto"
-                :alt="userName"
-                @error="handleImageError"
-              />
-
-              <span v-else>
-                {{ userInitial }}
-              </span>
-
-            </div>
-
-            <div class="user-details">
-
-              <span class="user-name">
-                {{ userName }}
-              </span>
-
-              <span class="user-role">
-                {{ formattedRole }}
-              </span>
-
-            </div>
-
-            <i
-              class="fi fi-rr-angle-small-down user-chevron"
-            ></i>
-
-          </div>
 
         </div>
 
       </header>
 
-      <!-- PAGE -->
+
+      <!-- ===================================================
+           PAGE
+      ==================================================== -->
       <main class="main-content">
+
         <RouterView />
+
       </main>
 
-      <!-- FOOTER -->
+
+      <!-- ===================================================
+           FOOTER
+      ==================================================== -->
       <footer class="main-footer">
 
         <div class="footer-left">
-          © {{ currentYear }} VITALIS – Gestion intelligence de votre clinique.
+
+          © {{ currentYear }} VITALIS –
+          Gestion intelligente de votre clinique.
           Tous droits réservés.
+
         </div>
 
+
         <div class="footer-right">
+
           <i class="fi fi-rr-heart"></i>
-          <span>Une meilleure santé, un meilleur avenir.</span>
+
+          <span>
+            Une meilleure santé,
+            un meilleur avenir.
+          </span>
+
         </div>
 
       </footer>
@@ -186,104 +237,591 @@
   </div>
 </template>
 
+
 <script setup>
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+
+import {
+  computed,
+  ref
+} from 'vue'
+
+import {
+  useRouter
+} from 'vue-router'
+
+
+/* =========================================================
+   ROUTER
+========================================================= */
 
 const router = useRouter()
 
-/* =========================
+
+/* =========================================================
    SEARCH
-========================= */
+========================================================= */
+
 const searchText = ref('')
 
-/* =========================
-   USER
-========================= */
+
+/* =========================================================
+   UTILISATEUR CONNECTE
+========================================================= */
 
 const storedUser =
   localStorage.getItem('user') ||
   sessionStorage.getItem('user')
 
+
 let parsedUser = {}
 
+
 try {
+
   parsedUser = storedUser
     ? JSON.parse(storedUser)
     : {}
+
 } catch (error) {
+
+  console.error(
+    'Erreur lecture utilisateur :',
+    error
+  )
+
   parsedUser = {}
 }
 
-const imageError = ref(false)
 
-const userName = computed(() => {
-  return (
-    parsedUser?.name ||
-    parsedUser?.nom ||
-    'Administrateur'
+/* =========================================================
+   ROLE REEL DE L'UTILISATEUR
+========================================================= */
+
+const realUserRole =
+  (
+    parsedUser?.role ||
+    'administrateur'
   )
-})
+    .toString()
+    .toLowerCase()
+    .trim()
+
+
+/* =========================================================
+   ROLE DE DEMONSTRATION
+
+   Ce rôle sert uniquement à tester les interfaces.
+   Il ne modifie PAS le rôle réel dans PostgreSQL.
+========================================================= */
+
+const selectedRole = ref(
+  sessionStorage.getItem(
+    'vitalis_demo_role'
+  ) || realUserRole
+)
+
+
+/* =========================================================
+   ROLE ACTUEL UTILISE PAR L'INTERFACE
+========================================================= */
 
 const userRole = computed(() => {
-  return parsedUser?.role || 'administrateur'
+
+  return selectedRole.value
+
 })
 
-const formattedRole = computed(() => {
-  const role = userRole.value
 
-  if (!role) {
-    return 'Utilisateur'
+/* =========================================================
+   CHANGEMENT ROLE DEMO
+========================================================= */
+
+const changeRole = () => {
+
+  sessionStorage.setItem(
+    'vitalis_demo_role',
+    selectedRole.value
+  )
+
+  /*
+   * On retourne au dashboard.
+   *
+   * Le menu est recalculé automatiquement
+   * grâce à visibleMenuItems.
+   */
+
+  router.push('/dashboard')
+}
+
+
+/* =========================================================
+   NOM UTILISATEUR
+========================================================= */
+
+const userName = computed(() => {
+
+  /*
+   * Laravel :
+   * prenom + nom
+   */
+
+  if (
+    parsedUser?.prenom ||
+    parsedUser?.nom
+  ) {
+
+    return `${parsedUser?.prenom ?? ''} ${parsedUser?.nom ?? ''}`
+      .trim()
   }
 
-  return role
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+
+  /*
+   * Cas name
+   */
+
+  if (parsedUser?.name) {
+
+    return parsedUser.name
+  }
+
+
+  return 'Utilisateur'
 })
+
+
+/* =========================================================
+   LABEL ROLE
+========================================================= */
+
+const roleLabels = {
+
+  administrateur:
+    'Administrateur',
+
+  medecin:
+    'Médecin',
+
+  secretaire:
+    'Secrétaire',
+
+  infirmier:
+    'Infirmier',
+
+  patient:
+    'Patient'
+
+}
+
+
+const formattedRole = computed(() => {
+
+  return (
+    roleLabels[userRole.value] ||
+    'Utilisateur'
+  )
+
+})
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
 
 const userInitial = computed(() => {
-  return userName.value
-    ? userName.value.charAt(0).toUpperCase()
-    : 'A'
+
+  const name =
+    userName.value.trim()
+
+
+  if (!name) {
+
+    return 'U'
+  }
+
+
+  const parts =
+    name.split(/\s+/)
+
+
+  if (parts.length >= 2) {
+
+    return (
+      parts[0].charAt(0) +
+      parts[1].charAt(0)
+    ).toUpperCase()
+  }
+
+
+  return name
+    .charAt(0)
+    .toUpperCase()
+
 })
 
+
+/* =========================================================
+   PHOTO
+========================================================= */
+
+const imageError = ref(false)
+
+
 const userPhoto = computed(() => {
+
   if (imageError.value) {
+
     return null
   }
 
-  return (
+
+  /*
+   * Photo backend
+   */
+
+  const backendPhoto =
     parsedUser?.photo_profil ||
     parsedUser?.photo ||
-    parsedUser?.avatar ||
+    parsedUser?.avatar
+
+
+  if (backendPhoto) {
+
+    return backendPhoto
+  }
+
+
+  /*
+   * Photo locale Paramètres
+   */
+
+  return (
+    localStorage.getItem(
+      'vitalis_profile_photo'
+    ) ||
     null
   )
+
 })
 
+
 const handleImageError = () => {
+
   imageError.value = true
+
 }
 
-/* =========================
+
+/* =========================================================
+   MENU
+========================================================= */
+
+const menuItems = [
+
+  {
+    label:
+      'Tableau de bord',
+
+    route:
+      '/dashboard',
+
+    icon:
+      'fi fi-rr-home',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'secretaire',
+      'infirmier',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Patients',
+
+    route:
+      '/patients',
+
+    icon:
+      'fi fi-rr-users-medical',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'secretaire',
+      'infirmier'
+    ]
+  },
+
+
+  {
+    label:
+      'Rendez-vous',
+
+    patientLabel:
+      'Mes rendez-vous',
+
+    route:
+      '/rendez-vous',
+
+    icon:
+      'fi fi-rr-calendar',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'secretaire',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Consultations',
+
+    patientLabel:
+      'Mes consultations',
+
+    route:
+      '/consultations',
+
+    icon:
+      'fi fi-rr-stethoscope',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Ordonnances',
+
+    patientLabel:
+      'Mes ordonnances',
+
+    route:
+      '/ordonnances',
+
+    icon:
+      'fi fi-rr-prescription-bottle-pill',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Examens',
+
+    patientLabel:
+      'Mes examens',
+
+    route:
+      '/examens',
+
+    icon:
+      'fi fi-rr-document',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'infirmier',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Hospitalisations',
+
+    patientLabel:
+      'Mes hospitalisations',
+
+    route:
+      '/hospitalisations',
+
+    icon:
+      'fi fi-rr-bed',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'secretaire',
+      'infirmier',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Facturation',
+
+    patientLabel:
+      'Mes factures',
+
+    route:
+      '/facturation',
+
+    icon:
+      'fi fi-rr-receipt',
+
+    roles: [
+      'administrateur',
+      'secretaire',
+      'patient'
+    ]
+  },
+
+
+  {
+    label:
+      'Utilisateurs',
+
+    route:
+      '/utilisateurs',
+
+    icon:
+      'fi fi-rr-user-gear',
+
+    roles: [
+      'administrateur'
+    ]
+  },
+
+
+  {
+    label:
+      'Paramètres',
+
+    route:
+      '/parametres',
+
+    icon:
+      'fi fi-rr-settings',
+
+    roles: [
+      'administrateur',
+      'medecin',
+      'secretaire',
+      'infirmier',
+      'patient'
+    ]
+  }
+
+]
+
+
+/* =========================================================
+   FILTRAGE DU MENU
+========================================================= */
+
+const visibleMenuItems = computed(() => {
+
+  const role =
+    userRole.value
+
+
+  return menuItems
+
+    .filter(item => {
+
+      return item.roles.includes(role)
+
+    })
+
+    .map(item => {
+
+      const displayLabel =
+
+        role === 'patient' &&
+        item.patientLabel
+
+          ? item.patientLabel
+
+          : item.label
+
+
+      return {
+
+        ...item,
+
+        displayLabel
+
+      }
+
+    })
+
+})
+
+
+/* =========================================================
    FOOTER
-========================= */
+========================================================= */
 
-const currentYear = new Date().getFullYear()
+const currentYear =
+  new Date().getFullYear()
 
-/* =========================
+
+/* =========================================================
    LOGOUT
-========================= */
+========================================================= */
 
 const logout = async () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
 
-  sessionStorage.removeItem('token')
-  sessionStorage.removeItem('user')
+  /*
+   * Supprimer authentification
+   */
 
-  await router.push('/login')
+  localStorage.removeItem(
+    'token'
+  )
+
+  localStorage.removeItem(
+    'user'
+  )
+
+
+  sessionStorage.removeItem(
+    'token'
+  )
+
+  sessionStorage.removeItem(
+    'user'
+  )
+
+
+  /*
+   * Supprimer mode démonstration
+   */
+
+  sessionStorage.removeItem(
+    'vitalis_demo_role'
+  )
+
+
+  /*
+   * Login
+   */
+
+  await router.push(
+    '/login'
+  )
+
 }
 </script>
+
 
 <style src="../styles/MainLayout.css"></style>
