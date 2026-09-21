@@ -40,12 +40,13 @@ class DemandeExamenController extends Controller
     {
         $validated = $request->validate([
             'date_demande' => ['required', 'date'],
+            'type_examen' => ['required', 'string', 'max:255'],
             'niveau_urgence' => ['required', 'string'],
             'indications_cliniques' => ['required', 'string'],
             'statut' => ['required', 'string'],
             'date_prevue' => ['required', 'date'],
-            'date_realisation' => ['required', 'date'],
-            'observation' => ['required', 'string'],
+            'date_realisation' => ['nullable', 'date'],
+            'observation' => ['nullable', 'string'],
 
             'id_consultation' => [
                 'required',
@@ -69,12 +70,13 @@ class DemandeExamenController extends Controller
 
         $validated = $request->validate([
             'date_demande' => ['sometimes', 'required', 'date'],
+            'type_examen' => ['sometimes', 'required', 'string', 'max:255'],
             'niveau_urgence' => ['sometimes', 'required', 'string'],
             'indications_cliniques' => ['sometimes', 'required', 'string'],
             'statut' => ['sometimes', 'required', 'string'],
             'date_prevue' => ['sometimes', 'required', 'date'],
-            'date_realisation' => ['sometimes', 'required', 'date'],
-            'observation' => ['sometimes', 'required', 'string'],
+            'date_realisation' => ['sometimes', 'nullable', 'date'],
+            'observation' => ['sometimes', 'nullable', 'string'],
 
             'id_consultation' => [
                 'sometimes',

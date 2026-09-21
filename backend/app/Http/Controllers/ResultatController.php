@@ -39,12 +39,11 @@ class ResultatController extends Controller
         $validated = $request->validate([
             'date_resultat' => ['required', 'date'],
             'resultat_detaille' => ['required', 'string'],
-            'conclusion' => ['required', 'string'],
-            'valeurs_mesurees' => ['required', 'string'],
-            'fichier_resultat' => ['required', 'string'],
-            'image_resultat' => ['required', 'string'],
-            'observations' => ['required', 'string'],
-
+            'conclusion' => ['nullable', 'string'],
+            'valeurs_mesurees' => ['nullable', 'string'],
+            'fichier_resultat' => ['nullable', 'string'],
+            'image_resultat' => ['nullable', 'string'],
+            'observations' => ['nullable', 'string'],
             'id_demande_examen' => [
                 'required',
                 'integer',
@@ -68,12 +67,11 @@ class ResultatController extends Controller
         $validated = $request->validate([
             'date_resultat' => ['sometimes', 'required', 'date'],
             'resultat_detaille' => ['sometimes', 'required', 'string'],
-            'conclusion' => ['sometimes', 'required', 'string'],
-            'valeurs_mesurees' => ['sometimes', 'required', 'string'],
-            'fichier_resultat' => ['sometimes', 'required', 'string'],
-            'image_resultat' => ['sometimes', 'required', 'string'],
-            'observations' => ['sometimes', 'required', 'string'],
-
+            'conclusion' => ['sometimes', 'nullable', 'string'],
+            'valeurs_mesurees' => ['sometimes', 'nullable', 'string'],
+            'fichier_resultat' => ['sometimes', 'nullable', 'string'],
+            'image_resultat' => ['sometimes', 'nullable', 'string'],
+            'observations' => ['sometimes', 'nullable', 'string'],
             'id_demande_examen' => [
                 'sometimes',
                 'required',
