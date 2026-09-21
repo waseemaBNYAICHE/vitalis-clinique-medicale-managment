@@ -19,6 +19,8 @@ use App\Http\Controllers\HospitalisationController;
 use App\Http\Controllers\ChambreController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\DemandeExamenController;
+use App\Http\Controllers\ResultatController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -293,6 +295,20 @@ Route::delete('/consultations/{id}', [ConsultationController::class, 'destroy'])
     Route::get('/chambres/{id}', [ChambreController::class, 'show']);
     Route::put('/chambres/{id}', [ChambreController::class, 'update']);
     Route::delete('/chambres/{id}', [ChambreController::class, 'destroy']);
+
+    // Gestion des demandes d'examen
+    Route::get('/demandes-examen', [DemandeExamenController::class, 'index']);
+    Route::post('/demandes-examen', [DemandeExamenController::class, 'store']);
+    Route::get('/demandes-examen/{id}', [DemandeExamenController::class, 'show']);
+    Route::put('/demandes-examen/{id}', [DemandeExamenController::class, 'update']);
+    Route::delete('/demandes-examen/{id}', [DemandeExamenController::class, 'destroy']);
+
+    // Gestion des résultats d'examen
+    Route::get('/resultats', [ResultatController::class, 'index']);
+    Route::post('/resultats', [ResultatController::class, 'store']);
+    Route::get('/resultats/{id}', [ResultatController::class, 'show']);
+    Route::put('/resultats/{id}', [ResultatController::class, 'update']);
+    Route::delete('/resultats/{id}', [ResultatController::class, 'destroy']);
 
 });
 
