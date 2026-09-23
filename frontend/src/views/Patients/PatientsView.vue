@@ -878,12 +878,15 @@
 
 <script setup>
 
-import {
+ import {
   ref,
   computed,
   watch,
-  nextTick
+  nextTick,
+  onMounted
 } from 'vue'
+
+import api, { messageErreur } from '../../api.js'
 
 
 /*
@@ -895,81 +898,25 @@ import {
 |--------------------------------------------------------------------------
 */
 
-const patients = ref([
+  const patients = ref([])
+  const loading = ref(false)
 
-  {
-    id_patient: 1,
-    nom: 'Bennis',
-    prenom: 'Khadija',
-    date_naissance: '1995-04-15',
-    sexe: 'Femme',
-    cin: 'BE193847',
-    telephone: '0612345678',
-    email: 'khadija.bennis@gmail.com',
-    groupe_sanguin: 'A+'
-  },
+  const chargerPatients = async () => {
+  loading.value = true
 
-  {
-    id_patient: 2,
-    nom: 'Ouazzani',
-    prenom: 'Anas',
-    date_naissance: '1991-08-21',
-    sexe: 'Homme',
-    cin: 'K421785',
-    telephone: '0623456789',
-    email: 'anas.ouazzani@gmail.com',
-    groupe_sanguin: 'O+'
-  },
+  try {
+    const response = await api.get('/patients')
 
-  {
-    id_patient: 3,
-    nom: 'El Amrani',
-    prenom: 'Sara',
-    date_naissance: '1998-11-06',
-    sexe: 'Femme',
-    cin: 'AB287451',
-    telephone: '0634567890',
-    email: 'sara.elamrani@gmail.com',
-    groupe_sanguin: 'B+'
-  },
-
-  {
-    id_patient: 4,
-    nom: 'Alaoui',
-    prenom: 'Yassine',
-    date_naissance: '1987-02-10',
-    sexe: 'Homme',
-    cin: 'CD642190',
-    telephone: '0645678901',
-    email: 'yassine.alaoui@gmail.com',
-    groupe_sanguin: 'AB+'
-  },
-
-  {
-    id_patient: 5,
-    nom: 'Berrada',
-    prenom: 'Imane',
-    date_naissance: '2000-06-19',
-    sexe: 'Femme',
-    cin: 'EF928451',
-    telephone: '0656789012',
-    email: 'imane.berrada@gmail.com',
-    groupe_sanguin: 'O-'
-  },
-
-  {
-    id_patient: 6,
-    nom: 'Chraibi',
-    prenom: 'Omar',
-    date_naissance: '1983-09-25',
-    sexe: 'Homme',
-    cin: 'GH382945',
-    telephone: '0667890123',
-    email: 'omar.chraibi@gmail.com',
-    groupe_sanguin: 'A-'
+    patients.value = response.data?.patients?.data ?? []
+  } catch (error) {
+    showNotification(
+      messageErreur(error, 'Impossible de charger les patients.'),
+      'error'
+    )
+  } finally {
+    loading.value = false
   }
-
-])
+}
 
 
 /* ===================== GROUPES SANGUINS ===================== */
@@ -1293,90 +1240,92 @@ const closeFormModal = () => {
    SAVE TEMPORAIRE
 ========================================================= */
 
-const savePatient = () => {
+  const savePatient = async () => {
 
-  /*
-  |--------------------------------------------------------------------------
-  | MODIFICATION
-  |--------------------------------------------------------------------------
-  */
+  try {
 
-  if (editingPatient.value) {
+    /*
+    |----------------------------------------------------------
+    | MODIFICATION
+    |----------------------------------------------------------
+    */
 
-    const index =
-      patients.value.findIndex(
-        patient =>
-          patient.id_patient ===
-          editingPatient.value.id_patient
+    if (editingPatient.value) {
+
+      await api.put(
+        `/patients/${editingPatient.value.id_patient}`,
+        form.value
       )
 
-
-    if (index !== -1) {
-
-      patients.value[index] = {
-
-        ...patients.value[index],
-
-        ...form.value
-
-      }
+      showNotification(
+        'Patient modifié avec succès.'
+      )
 
     }
 
+    /*
+    |----------------------------------------------------------
+    | AJOUT
+    |----------------------------------------------------------
+    */
+
+    else {
+
+      await api.post(
+        '/patients',
+        form.value
+      )
+
+      showNotification(
+        'Patient ajouté avec succès.'
+      )
+
+    }
+
+    closeFormModal()
+
+    await chargerPatients()
+
+  } catch (error) {
 
     showNotification(
-      'Patient modifié avec succès.'
+      messageErreur(
+        error,
+        'Impossible d’enregistrer le patient.'
+      ),
+      'error'
     )
 
   }
-
-  /*
-  |--------------------------------------------------------------------------
-  | AJOUT
-  |--------------------------------------------------------------------------
-  */
-
-  else {
-
-    const nextId =
-      patients.value.length
-        ? Math.max(
-            ...patients.value.map(
-              patient =>
-                patient.id_patient
-            )
-          ) + 1
-        : 1
-
-
-    patients.value.unshift({
-
-      id_patient: nextId,
-
-      ...form.value
-
-    })
-
-
-    showNotification(
-      'Patient ajouté avec succès.'
-    )
-
-  }
-
-
-  closeFormModal()
 
 }
-
 
 /* =========================================================
    VIEW
 ========================================================= */
 
-const openViewModal = patient => {
+ const openViewModal = async patient => {
 
-  selectedPatient.value = patient
+  try {
+
+    const response = await api.get(
+      `/patients/${patient.id_patient}`
+    )
+
+    selectedPatient.value =
+      response.data?.patient ?? null
+
+  } catch (error) {
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les informations du patient.'
+      ),
+      'error'
+    )
+
+  }
 
 }
 
@@ -1392,22 +1341,37 @@ const openDeleteModal = patient => {
 }
 
 
-const deletePatient = () => {
+  const deletePatient = async () => {
 
-  patients.value =
-    patients.value.filter(
-      patient =>
-        patient.id_patient !==
-        patientToDelete.value.id_patient
+  if (!patientToDelete.value) {
+    return
+  }
+
+  try {
+
+    await api.delete(
+      `/patients/${patientToDelete.value.id_patient}`
     )
 
+    patientToDelete.value = null
 
-  patientToDelete.value = null
+    showNotification(
+      'Patient supprimé avec succès.'
+    )
 
+    await chargerPatients()
 
-  showNotification(
-    'Patient supprimé avec succès.'
-  )
+  } catch (error) {
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de supprimer le patient.'
+      ),
+      'error'
+    )
+
+  }
 
 }
 
@@ -1448,6 +1412,9 @@ const formatDate = date => {
   )
 
 }
+onMounted(() => {
+  chargerPatients()
+})
 
 </script>
 
