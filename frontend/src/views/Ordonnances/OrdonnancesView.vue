@@ -1,8 +1,19 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
 import gsap from 'gsap'
+import api from '../../api.js'
 import '../../styles/ordonnances.css'
-
+const showCreateModal = ref(false)
+const consultationsDisponibles = ref([])
+const createError = ref('')
+const editingId = ref(null)
+const newOrdonnance = ref({
+  id_consultation: '',
+  date_ordonnance: '',
+  type: '',
+  duree_traitement: '',
+  instructions_generales: ''
+})
 const search = ref('')
 const selectedDoctor = ref('')
 const selectedDate = ref('')
@@ -11,73 +22,78 @@ const selectedStatus = ref('')
 const currentPage = ref(1)
 const perPage = 5
 
-const ordonnances = ref([
-  {
-    id: 1,
-    patient: 'Karim Bennani',
-    cin: 'CN456789',
-    initials: 'KB',
-    medecin: 'Dr. Samir Alaoui',
-    specialite: 'Médecine générale',
-    date: '10/09/2026',
-    dateISO: '2026-09-10',
-    diagnostic: 'Infection respiratoire',
-    medicaments: ['Paracétamol', 'Amoxicilline', 'Vitamine C', 'Sirop'],
-    statut: 'Active'
-  },
-  {
-    id: 2,
-    patient: 'Amina Zahraoui',
-    cin: 'CN987654',
-    initials: 'AZ',
-    medecin: 'Dr. Leila Haddad',
-    specialite: 'Pédiatrie',
-    date: '09/09/2026',
-    dateISO: '2026-09-09',
-    diagnostic: 'Fièvre',
-    medicaments: ['Doliprane', 'Vitamine C', 'Sirop'],
-    statut: 'Active'
-  },
-  {
-    id: 3,
-    patient: 'Samir Alaoui',
-    cin: 'CN112233',
-    initials: 'SA',
-    medecin: 'Dr. Yassine Bennis',
-    specialite: 'Cardiologie',
-    date: '08/09/2026',
-    dateISO: '2026-09-08',
-    diagnostic: 'Hypertension',
-    medicaments: ['Amlodipine', 'Aspégic', 'Ramipril'],
-    statut: 'Active'
-  },
-  {
-    id: 4,
-    patient: 'Leila Haddad',
-    cin: 'CN445566',
-    initials: 'LH',
-    medecin: 'Dr. Samir Alaoui',
-    specialite: 'Médecine générale',
-    date: '07/09/2026',
-    dateISO: '2026-09-07',
-    diagnostic: 'Diabète',
-    medicaments: ['Metformine', 'Glimépiride'],
-    statut: 'Active'
-  },
-  {
-    id: 5,
-    patient: 'Youssef El Amrani',
-    cin: 'CN778899',
-    initials: 'YE',
-    medecin: 'Dr. Leila Haddad',
-    specialite: 'Pédiatrie',
-    date: '06/09/2026',
-    dateISO: '2026-09-06',
-    diagnostic: 'Allergie',
-    medicaments: ['Cétirizine', 'Corticoïde'],
-    statut: 'À renouveler'
+const ordonnances = ref([])
+const loading = ref(false)
+const error = ref('')
+
+function formatDate(date) {
+  if (!date) return ''
+
+  return new Intl.DateTimeFormat('fr-FR').format(
+    new Date(`${date}T00:00:00`)
+  )
+}
+
+function initials(prenom = '', nom = '') {
+  return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase()
+}
+
+function mapOrdonnance(item) {
+  const consultation = item.consultation
+  const rendezVous = consultation?.rendez_vous
+  const patient = rendezVous?.patient
+  const medecin = rendezVous?.medecin
+
+  return {
+    id: item.id_ordonnance,
+
+    patient: patient
+      ? `${patient.prenom} ${patient.nom}`
+      : 'Patient inconnu',
+
+    cin: patient?.cin ?? '-',
+
+    initials: patient
+      ? initials(patient.prenom, patient.nom)
+      : '--',
+
+    medecin: medecin
+      ? `Dr. ${medecin.prenom} ${medecin.nom}`
+      : 'Médecin inconnu',
+
+    specialite: `Spécialité #${medecin?.id_specialite ?? '-'}`,
+
+    date: formatDate(item.date_ordonnance),
+    dateISO: item.date_ordonnance,
+
+    diagnostic: consultation?.diagnostic ?? '-',
+
+    medicaments: (item.lignes ?? [])
+      .map(ligne => ligne.medicament?.nom_medicament)
+      .filter(Boolean),
+
+    statut: 'Active',
+
+    raw: item
   }
-])
+}
+
+async function loadOrdonnances() {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await api.get('/ordonnances')
+
+    ordonnances.value = (response.data.ordonnances ?? [])
+      .map(mapOrdonnance)
+  } catch (err) {
+    console.error(err)
+    error.value = 'Impossible de charger les ordonnances.'
+  } finally {
+    loading.value = false
+  }
+}
 
 const doctors = computed(() => [
   ...new Set(ordonnances.value.map(item => item.medecin))
@@ -163,8 +179,59 @@ function statusClass(status) {
    ACTIONS
 ========================================================= */
 
-function createOrdonnance() {
-  console.log('Nouvelle ordonnance')
+async function createOrdonnance() {
+  createError.value = ''
+
+  try {
+    const response = await api.get(
+      '/ordonnances/consultations-disponibles'
+    )
+
+    consultationsDisponibles.value =
+      response.data.consultations ?? []
+
+    showCreateModal.value = true
+  } catch (err) {
+    console.error(err)
+    alert('Impossible de charger les consultations.')
+  }
+}
+async function saveOrdonnance() {
+  createError.value = ''
+
+  try {
+    if (editingId.value) {
+      await api.put(
+        `/ordonnances/${editingId.value}`,
+        newOrdonnance.value
+      )
+    } else {
+      await api.post(
+        '/ordonnances',
+        newOrdonnance.value
+      )
+    }
+
+    showCreateModal.value = false
+    editingId.value = null
+
+    newOrdonnance.value = {
+      id_consultation: '',
+      date_ordonnance: '',
+      type: '',
+      duree_traitement: '',
+      instructions_generales: ''
+    }
+
+    await loadOrdonnances()
+
+  } catch (err) {
+    console.error(err)
+
+    createError.value =
+      err.response?.data?.message ||
+      'Impossible d’enregistrer l’ordonnance.'
+  }
 }
 
 function viewOrdonnance(item) {
@@ -172,11 +239,46 @@ function viewOrdonnance(item) {
 }
 
 function editOrdonnance(item) {
-  console.log('Modifier ordonnance', item)
+  editingId.value = item.id
+
+  newOrdonnance.value = {
+    id_consultation: item.raw.id_consultation,
+    date_ordonnance: item.raw.date_ordonnance,
+    type: item.raw.type,
+    duree_traitement: item.raw.duree_traitement,
+    instructions_generales: item.raw.instructions_generales
+  }
+
+  consultationsDisponibles.value = [
+    {
+      id_consultation: item.raw.id_consultation,
+      patient_prenom: item.patient.split(' ')[0],
+      patient_nom: item.patient.split(' ').slice(1).join(' '),
+      diagnostic: item.diagnostic
+    }
+  ]
+
+  showCreateModal.value = true
 }
 
-function deleteOrdonnance(item) {
-  console.log('Supprimer ordonnance', item)
+async function deleteOrdonnance(item) {
+  const confirmed = confirm(
+    `Voulez-vous vraiment supprimer l'ordonnance #${item.id} ?`
+  )
+
+  if (!confirmed) return
+
+  try {
+    await api.delete(`/ordonnances/${item.id}`)
+    await loadOrdonnances()
+  } catch (err) {
+    console.error(err)
+
+    alert(
+      err.response?.data?.message ||
+      "Impossible de supprimer l'ordonnance."
+    )
+  }
 }
 
 function downloadOrdonnance(item) {
@@ -188,6 +290,7 @@ function downloadOrdonnance(item) {
 ========================================================= */
 
 onMounted(async () => {
+  await loadOrdonnances()
   await nextTick()
 
   const tl = gsap.timeline({
@@ -637,8 +740,85 @@ onMounted(async () => {
 
         </div>
 
-      </div>
+            </div>
 
+    </div>
+
+    <!-- MODAL NOUVELLE ORDONNANCE -->
+    <div
+      v-if="showCreateModal"
+      class="modal-overlay"
+    >
+      <div class="modal-card">
+
+        <h2>Nouvelle ordonnance</h2>
+
+        <label>Consultation</label>
+        <select v-model="newOrdonnance.id_consultation">
+          <option value="">
+            Sélectionner une consultation
+          </option>
+
+          <option
+            v-for="c in consultationsDisponibles"
+            :key="c.id_consultation"
+            :value="c.id_consultation"
+          >
+            {{ c.patient_prenom }} {{ c.patient_nom }}
+            - {{ c.diagnostic }}
+          </option>
+        </select>
+
+        <label>Date</label>
+        <input
+          v-model="newOrdonnance.date_ordonnance"
+          type="date"
+        />
+
+        <label>Type</label>
+        <input
+          v-model="newOrdonnance.type"
+          type="text"
+          placeholder="Ex: Traitement"
+        />
+
+        <label>Durée du traitement</label>
+        <input
+          v-model="newOrdonnance.duree_traitement"
+          type="text"
+          placeholder="Ex: 7 jours"
+        />
+
+        <label>Instructions générales</label>
+        <textarea
+          v-model="newOrdonnance.instructions_generales"
+          placeholder="Instructions..."
+        ></textarea>
+
+        <p v-if="createError">
+          {{ createError }}
+        </p>
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            @click="showCreateModal = false; editingId = null"
+          >
+            Annuler
+          </button>
+
+          <button
+            type="button"
+            class="new-ordonnance-btn"
+            @click="saveOrdonnance"
+          >
+            Enregistrer
+          </button>
+
+        </div>
+
+      </div>
     </div>
 
   </section>

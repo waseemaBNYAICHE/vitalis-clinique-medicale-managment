@@ -508,38 +508,68 @@
         <form @submit.prevent="saveExamen">
 
           <div class="form-grid">
+            <!-- CONSULTATION -->
+
+<div class="form-group full">
+
+  <label>Consultation *</label>
+
+  <select
+    v-model="form.id_consultation"
+    @change="onConsultationChange"
+    required
+  >
+
+    <option value="">
+      Sélectionner une consultation
+    </option>
+
+    <option
+      v-for="consultation in consultations"
+      :key="consultation.id_consultation"
+      :value="consultation.id_consultation"
+    >
+      Consultation #{{ consultation.id_consultation }}
+      -
+      {{ consultation.rendez_vous?.patient?.nom }}
+      {{ consultation.rendez_vous?.patient?.prenom }}
+    </option>
+
+  </select>
+
+</div>
 
 
-            <!-- PATIENT -->
+              <!-- PATIENT -->
 
-            <div class="form-group">
+<div class="form-group">
 
-              <label>Patient *</label>
+  <label>Patient *</label>
 
-              <input
-                v-model="form.patient"
-                type="text"
-                placeholder="Nom et prénom du patient"
-                required
-              />
+  <input
+    v-model="form.patient"
+    type="text"
+    placeholder="Sélectionnez une consultation"
+    readonly
+  />
 
-            </div>
+</div>
 
 
-            <!-- REFERENCE -->
+             <!-- REFERENCE -->
 
-            <div class="form-group">
+<div class="form-group">
 
-              <label>Référence patient</label>
+  <label>Référence patient</label>
 
-              <input
-                v-model="form.patientReference"
-                type="text"
-                placeholder="Ex : PAT-001"
-              />
+  <input
+    v-model="form.patientReference"
+    type="text"
+    placeholder="Référence patient"
+    readonly
+  />
 
-            </div>
-
+</div>
 
             <!-- TYPE -->
 
@@ -569,20 +599,20 @@
             </div>
 
 
-            <!-- DOCTOR -->
+              <!-- DOCTOR -->
 
-            <div class="form-group">
+<div class="form-group">
 
-              <label>Médecin *</label>
+  <label>Médecin *</label>
 
-              <input
-                v-model="form.medecin"
-                type="text"
-                placeholder="Dr. ..."
-                required
-              />
+  <input
+    v-model="form.medecin"
+    type="text"
+    placeholder="Sélectionnez une consultation"
+    readonly
+  />
 
-            </div>
+</div>
 
 
             <!-- DATE -->
@@ -644,6 +674,21 @@
               </select>
 
             </div>
+
+            <!-- INDICATIONS CLINIQUES -->
+
+<div class="form-group full">
+
+  <label>Indications cliniques *</label>
+
+  <textarea
+    v-model="form.indications_cliniques"
+    rows="3"
+    placeholder="Ex : douleur persistante au genou droit..."
+    required
+  ></textarea>
+
+</div>
 
 
             <!-- RESULT -->
@@ -935,11 +980,14 @@
 
 
 <script setup>
-import {
+ import {
   ref,
   computed,
-  watch
+  watch,
+  onMounted
 } from 'vue'
+
+import api, { messageErreur } from '../../api.js'
 
 
 /*
@@ -983,51 +1031,156 @@ const examTypes = [
 ]
 
 
-/* =========================================================
-   DATA DEMO FRONTEND
+ /* =========================================================
+   DONNÉES EXAMENS - API
 ========================================================= */
 
-const examens = ref([
-  {
-    id: 1,
-    patient: 'Sara Benali',
-    patientReference: 'PAT-001',
-    type: 'Analyse sanguine',
-    medecin: 'Dr. Ahmed',
-    date: '2026-09-18',
-    priorite: 'Normale',
-    statut: 'Terminé',
-    resultat: 'Résultats disponibles.',
-    notes: ''
-  },
+const examens = ref([])
+const loading = ref(false)
+const consultations = ref([])
 
-  {
-    id: 2,
-    patient: 'Yassine Amrani',
-    patientReference: 'PAT-002',
-    type: 'Radiographie',
-    medecin: 'Dr. Karim',
-    date: '2026-09-19',
-    priorite: 'Urgente',
-    statut: 'En attente',
-    resultat: '',
-    notes: ''
-  },
+const mapperExamen = (demande) => {
+  const patient = demande.consultation?.rendez_vous?.patient
+  const medecin = demande.consultation?.rendez_vous?.medecin
 
-  {
-    id: 3,
-    patient: 'Nadia El Mansouri',
-    patientReference: 'PAT-003',
-    type: 'Échographie',
-    medecin: 'Dr. Salma',
-    date: '2026-09-19',
-    priorite: 'Normale',
-    statut: 'En cours',
-    resultat: '',
-    notes: ''
+  return {
+    id: demande.id_demande_examen,
+
+    patient: patient
+      ? `${patient.nom ?? ''} ${patient.prenom ?? ''}`.trim()
+      : 'Patient non disponible',
+
+    patientReference: patient?.cin ?? '',
+
+    type: demande.type_examen ?? 'Non renseigné',
+
+    medecin: medecin
+      ? `Dr. ${medecin.nom ?? ''} ${medecin.prenom ?? ''}`.trim()
+      : 'Médecin non disponible',
+
+    date: demande.date_prevue,
+
+    priorite:
+      demande.niveau_urgence === 'urgent'
+        ? 'Urgente'
+        : 'Normale',
+
+    statut:
+      demande.statut === 'realise'
+        ? 'Terminé'
+        : demande.statut === 'en_cours'
+          ? 'En cours'
+          : 'En attente',
+
+    resultat:
+      demande.resultat?.resultat_detaille ?? '',
+
+    notes: demande.observation ?? '',
+    indications_cliniques:
+      demande.indications_cliniques ?? '',
+
+    id_consultation: demande.id_consultation,
+
+    demandeOriginale: demande
   }
-])
+}
 
+   const chargerExamens = async () => {
+  loading.value = true
+
+  try {
+    const reponse = await api.get('/demandes-examen')
+
+    examens.value = (
+      reponse.data?.demandes_examens ?? []
+    ).map(mapperExamen)
+
+  } catch (error) {
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les examens.'
+      ),
+      'error'
+    )
+
+  } finally {
+    loading.value = false
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DES CONSULTATIONS
+========================================================= */
+
+const chargerConsultations = async () => {
+  try {
+    const reponse = await api.get('/consultations')
+
+    consultations.value =
+      reponse.data?.consultations?.data ?? []
+
+  } catch (error) {
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les consultations.'
+      ),
+      'error'
+    )
+  }
+}
+
+
+/* =========================================================
+   SÉLECTION D'UNE CONSULTATION
+========================================================= */
+
+const onConsultationChange = () => {
+  const consultation =
+    consultations.value.find(
+      item =>
+        Number(item.id_consultation) ===
+        Number(form.value.id_consultation)
+    )
+
+  if (!consultation) {
+    form.value.patient = ''
+    form.value.patientReference = ''
+    form.value.medecin = ''
+    return
+  }
+
+  const patient =
+    consultation.rendez_vous?.patient
+
+  const medecin =
+    consultation.rendez_vous?.medecin
+
+  form.value.patient = patient
+    ? `${patient.nom ?? ''} ${patient.prenom ?? ''}`.trim()
+    : ''
+
+  form.value.patientReference =
+    patient?.cin ?? ''
+
+  form.value.medecin = medecin
+    ? `Dr. ${medecin.nom ?? ''} ${medecin.prenom ?? ''}`.trim()
+    : ''
+}
+
+
+/* =========================================================
+   CHARGEMENT INITIAL
+========================================================= */
+
+onMounted(() => {
+  chargerExamens()
+  chargerConsultations()
+})
 
 /* =========================================================
    FILTERS
@@ -1065,6 +1218,7 @@ const examenToDelete = ref(null)
 ========================================================= */
 
 const emptyForm = () => ({
+  id_consultation: '',
   patient: '',
   patientReference: '',
   type: '',
@@ -1073,7 +1227,8 @@ const emptyForm = () => ({
   priorite: 'Normale',
   statut: 'En attente',
   resultat: '',
-  notes: ''
+  notes: '',
+  indications_cliniques: ''
 })
 
 
@@ -1303,72 +1458,159 @@ const closeFormModal = () => {
    SAVE
 ========================================================= */
 
-const saveExamen = () => {
+  const saveExamen = async () => {
+  const aujourdHui =
+    new Date().toISOString().split('T')[0]
 
-  /*
-   * SCRUM-749 :
-   * fonctionnement local uniquement.
-   *
-   * SCRUM-750 :
-   * cette fonction sera remplacée
-   * par api.post() / api.put().
-   */
+  const statutBackend =
+    form.value.statut === 'Terminé'
+      ? 'realise'
+      : form.value.statut === 'En cours'
+        ? 'en_cours'
+        : 'en_attente'
 
+  const prioriteBackend =
+    form.value.priorite === 'Urgente'
+      ? 'urgent'
+      : 'normal'
 
-  if (editingExamen.value) {
+  const donnees = {
+    date_demande:
+      editingExamen.value?.demandeOriginale?.date_demande
+      ?? aujourdHui,
 
-    const index =
-      examens.value.findIndex(
-        examen =>
-          examen.id ===
-          editingExamen.value.id
-      )
+    type_examen: form.value.type,
 
+    niveau_urgence: prioriteBackend,
 
-    if (index !== -1) {
+    indications_cliniques:
+      form.value.indications_cliniques,
 
-      examens.value[index] = {
-        ...examens.value[index],
-        ...form.value
-      }
+    statut: statutBackend,
 
-    }
+    date_prevue: form.value.date,
 
+    date_realisation:
+      statutBackend === 'realise'
+        ? (
+            editingExamen.value?.demandeOriginale?.date_realisation
+            ?? aujourdHui
+          )
+        : null,
 
-    showNotification(
-      'Examen modifié avec succès.'
-    )
+    observation:
+      form.value.notes || null,
 
-  } else {
-
-    const newId =
-      examens.value.length
-        ? Math.max(
-            ...examens.value.map(
-              examen => examen.id
-            )
-          ) + 1
-        : 1
-
-
-    examens.value.unshift({
-      id: newId,
-      ...form.value
-    })
-
-
-    showNotification(
-      'Examen ajouté avec succès.'
-    )
-
+    id_consultation:
+      Number(form.value.id_consultation)
   }
 
+  try {
+    let idDemandeExamen = null
 
-  closeFormModal()
+    // ==========================================
+    // 1. AJOUTER OU MODIFIER LA DEMANDE D'EXAMEN
+    // ==========================================
+    if (editingExamen.value) {
+      const reponse = await api.put(
+        `/demandes-examen/${editingExamen.value.id}`,
+        donnees
+      )
 
-  currentPage.value = 1
+      idDemandeExamen =
+        reponse.data.demande_examen.id_demande_examen
+    } else {
+      const reponse = await api.post(
+        '/demandes-examen',
+        donnees
+      )
+
+      idDemandeExamen =
+        reponse.data.demande_examen.id_demande_examen
+    }
+
+    // ==========================================
+    // 2. RÉCUPÉRER LE RÉSULTAT SAISI
+    // ==========================================
+    const resultatTexte =
+      form.value.resultat?.trim()
+
+    const resultatExistant =
+      editingExamen.value
+        ?.demandeOriginale
+        ?.resultat
+
+    // ==========================================
+    // 3. AJOUTER OU MODIFIER LE RÉSULTAT
+    // ==========================================
+    if (resultatTexte) {
+      const donneesResultat = {
+        date_resultat: aujourdHui,
+        resultat_detaille: resultatTexte,
+        conclusion: null,
+        valeurs_mesurees: null,
+        fichier_resultat: null,
+        image_resultat: null,
+        observations: null,
+        id_demande_examen: idDemandeExamen
+      }
+
+      // Le résultat existe déjà → modification
+      if (resultatExistant?.id_resultat) {
+        await api.put(
+          `/resultats/${resultatExistant.id_resultat}`,
+          donneesResultat
+        )
+      }
+
+      // Aucun résultat → création
+      else {
+        await api.post(
+          '/resultats',
+          donneesResultat
+        )
+      }
+    }
+
+    // ==========================================
+    // 4. SI LE RÉSULTAT A ÉTÉ VIDÉ
+    // ==========================================
+    else if (resultatExistant?.id_resultat) {
+      await api.delete(
+        `/resultats/${resultatExistant.id_resultat}`
+      )
+    }
+
+    // ==========================================
+    // 5. NOTIFICATION
+    // ==========================================
+    showNotification(
+      editingExamen.value
+        ? 'Examen modifié avec succès.'
+        : 'Examen ajouté avec succès.'
+    )
+
+    // Fermer le formulaire
+    closeFormModal()
+
+    // Retour à la première page
+    currentPage.value = 1
+
+    // Recharger les examens depuis le backend
+    await chargerExamens()
+
+  } catch (error) {
+    showNotification(
+      messageErreur(
+        error,
+        editingExamen.value
+          ? 'Impossible de modifier l’examen.'
+          : 'Impossible d’ajouter l’examen.'
+      ),
+      'error'
+    )
+  }
 }
-
 
 /* =========================================================
    VIEW
@@ -1390,43 +1632,51 @@ const openDeleteModal = examen => {
 }
 
 
-const deleteExamen = () => {
-
-  /*
-   * SCRUM-750 :
-   * sera remplacé par :
-   *
-   * await api.delete(`/examens/${id}`)
-   */
-
-
-  examens.value =
-    examens.value.filter(
-      examen =>
-        examen.id !==
-        examenToDelete.value.id
-    )
-
-
-  examenToDelete.value = null
-
-
-  if (
-    currentPage.value >
-    totalPages.value
-  ) {
-
-    currentPage.value =
-      totalPages.value
-
+    const deleteExamen = async () => {
+  if (!examenToDelete.value) {
+    return
   }
 
+  try {
+    const resultat =
+      examenToDelete.value
+        ?.demandeOriginale
+        ?.resultat
 
-  showNotification(
-    'Examen supprimé avec succès.'
-  )
+    // Supprimer d'abord le résultat associé
+    if (resultat?.id_resultat) {
+      await api.delete(
+        `/resultats/${resultat.id_resultat}`
+      )
+    }
+
+    // Puis supprimer la demande d'examen
+    await api.delete(
+      `/demandes-examen/${examenToDelete.value.id}`
+    )
+
+    examenToDelete.value = null
+
+    await chargerExamens()
+
+    if (currentPage.value > totalPages.value) {
+      currentPage.value =
+        Math.max(totalPages.value, 1)
+    }
+
+    showNotification(
+      'Examen supprimé avec succès.'
+    )
+  } catch (error) {
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de supprimer l’examen.'
+      ),
+      'error'
+    )
+  }
 }
-
 
 /* =========================================================
    HELPERS

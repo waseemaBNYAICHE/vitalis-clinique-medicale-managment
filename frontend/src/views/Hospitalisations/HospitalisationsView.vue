@@ -73,7 +73,6 @@
     <!-- ===================== MAIN CARD ===================== -->
     <div class="hospitalisations-card">
 
-      <!-- SEARCH -->
       <div class="search-section">
 
         <div class="search-box">
@@ -87,7 +86,6 @@
         </div>
 
 
-        <!-- FILTERS -->
         <div class="filters">
 
           <select v-model="statusFilter">
@@ -158,7 +156,6 @@
               </td>
 
 
-              <!-- PATIENT -->
               <td>
                 <div class="patient-info">
 
@@ -175,28 +172,26 @@
               </td>
 
 
-              <!-- CHAMBRE -->
               <td>
                 <div class="room-info">
                   <i class="fi fi-rr-bed"></i>
 
                   <div>
                     <strong>Chambre {{ hospitalisation.chambre }}</strong>
-                    <small>Lit {{ hospitalisation.lit }}</small>
+                    <small v-if="hospitalisation.lit">
+                      Lit {{ hospitalisation.lit }}
+                    </small>
                   </div>
                 </div>
               </td>
 
 
-              <!-- MEDECIN -->
               <td>{{ hospitalisation.medecin }}</td>
 
 
-              <!-- DATE ENTREE -->
               <td>{{ formatDate(hospitalisation.dateEntree) }}</td>
 
 
-              <!-- SORTIE -->
               <td>
                 {{
                   hospitalisation.dateSortiePrevue
@@ -206,7 +201,6 @@
               </td>
 
 
-              <!-- MOTIF -->
               <td>
                 <span class="reason">
                   {{ hospitalisation.motif }}
@@ -214,7 +208,6 @@
               </td>
 
 
-              <!-- STATUS -->
               <td>
                 <span
                   class="status-badge"
@@ -226,7 +219,6 @@
               </td>
 
 
-              <!-- ACTIONS -->
               <td>
                 <div class="actions">
 
@@ -272,7 +264,6 @@
             </tr>
 
 
-            <!-- EMPTY STATE -->
             <tr v-if="filteredHospitalisations.length === 0">
               <td colspan="9">
 
@@ -349,21 +340,6 @@
 
 
     <!-- ===================== BACKEND INFO ===================== -->
-    <div class="backend-info">
-      <div class="backend-icon">
-        <i class="fi fi-rr-info"></i>
-      </div>
-
-      <div>
-        <strong>Interface Frontend prête</strong>
-
-        <p>
-          La liaison avec les données réelles du Backend Laravel sera
-          finalisée dans SCRUM-750 lorsque les API Hospitalisations seront disponibles.
-        </p>
-      </div>
-    </div>
-
 
     <!-- ======================================================
          CREATE / EDIT MODAL
@@ -408,106 +384,91 @@
 
           <div class="form-grid">
 
+            <!-- PATIENT -->
             <div class="form-group">
               <label>Patient *</label>
 
-              <input
-                v-model="form.patient"
-                type="text"
-                placeholder="Nom et prénom"
-                required
-              />
-            </div>
-
-
-            <div class="form-group">
-              <label>Référence patient</label>
-
-              <input
-                v-model="form.patientReference"
-                type="text"
-                placeholder="Ex : PAT-001"
-              />
-            </div>
-
-
-            <div class="form-group">
-              <label>Chambre *</label>
-
-              <select v-model="form.chambre" required>
-                <option value="">Sélectionner une chambre</option>
+              <select v-model="form.id_patient" required>
+                <option value="">Sélectionner un patient</option>
 
                 <option
-                  v-for="room in rooms"
-                  :key="room"
-                  :value="room"
+                  v-for="patient in patients"
+                  :key="patient.id_patient"
+                  :value="patient.id_patient"
                 >
-                  Chambre {{ room }}
+                  {{ patient.nom }} {{ patient.prenom }}
                 </option>
               </select>
             </div>
 
 
+            <!-- CHAMBRE -->
             <div class="form-group">
-              <label>Lit *</label>
+              <label>Chambre *</label>
 
-              <select v-model="form.lit" required>
-                <option value="">Sélectionner</option>
-                <option value="A">Lit A</option>
-                <option value="B">Lit B</option>
+              <select v-model="form.id_chambre" required>
+                <option value="">Sélectionner une chambre</option>
+
+                <option
+                  v-for="chambre in chambres"
+                  :key="chambre.id_chambre"
+                  :value="chambre.id_chambre"
+                >
+                  Chambre {{ chambre.numero_chambre }}
+                  - {{ chambre.type_chambre }}
+                </option>
               </select>
             </div>
 
 
+            <!-- MEDECIN -->
             <div class="form-group">
               <label>Médecin responsable *</label>
 
-              <input
-                v-model="form.medecin"
-                type="text"
-                placeholder="Dr. ..."
-                required
-              />
+              <select v-model="form.id_medecin" required>
+                <option value="">Sélectionner un médecin</option>
+
+                <option
+                  v-for="medecin in medecins"
+                  :key="medecin.id_medecin"
+                  :value="medecin.id_medecin"
+                >
+                  Dr. {{ medecin.nom }} {{ medecin.prenom }}
+                </option>
+              </select>
             </div>
 
 
+            <!-- DATE ENTREE -->
             <div class="form-group">
               <label>Date d'entrée *</label>
 
               <input
-                v-model="form.dateEntree"
+                v-model="form.date_entree"
                 type="date"
                 required
               />
             </div>
 
 
+            <!-- HEURE ENTREE -->
             <div class="form-group">
-              <label>Sortie prévue</label>
+              <label>Heure d'entrée *</label>
 
               <input
-                v-model="form.dateSortiePrevue"
-                type="date"
+                v-model="form.heure_entree"
+                type="time"
+                required
               />
             </div>
 
 
-            <div class="form-group">
-              <label>Statut</label>
-
-              <select v-model="form.statut">
-                <option value="En cours">En cours</option>
-                <option value="Sortie prévue">Sortie prévue</option>
-                <option value="Sortie">Sortie</option>
-              </select>
-            </div>
-
-
+            <!-- MOTIF -->
             <div class="form-group full">
               <label>Motif d'hospitalisation *</label>
 
               <input
-                v-model="form.motif"
+                v-model="form.motif_hospitalisation"
                 type="text"
                 placeholder="Motif de l'hospitalisation"
                 required
@@ -515,6 +476,20 @@
             </div>
 
 
+            <!-- DIAGNOSTIC -->
+            <div class="form-group full">
+              <label>Diagnostic d'entrée *</label>
+
+              <textarea
+                v-model="form.diagnostic_entree"
+                rows="3"
+                placeholder="Diagnostic établi lors de l'admission..."
+                required
+              ></textarea>
+            </div>
+
+
+            <!-- OBSERVATIONS -->
             <div class="form-group full">
               <label>Observations médicales</label>
 
@@ -605,7 +580,9 @@
             <span>Chambre</span>
             <strong>
               Chambre {{ selectedHospitalisation.chambre }}
-              — Lit {{ selectedHospitalisation.lit }}
+              <template v-if="selectedHospitalisation.lit">
+                — Lit {{ selectedHospitalisation.lit }}
+              </template>
             </strong>
           </div>
 
@@ -805,95 +782,59 @@
 import {
   ref,
   computed,
-  watch
+  watch,
+  onMounted
 } from 'vue'
+
+import api, { messageErreur } from '../../api.js'
 
 
 /*
 |--------------------------------------------------------------------------
-| SCRUM-749
+| SCRUM-760 - Connexion Frontend / Backend
 |--------------------------------------------------------------------------
-| Interface Hospitalisations Frontend.
+| Cette page utilise maintenant les vraies API Laravel pour :
 |
-| SCRUM-750 :
-| Les données locales seront remplacées par les API Laravel
-| via frontend/src/api.js.
+| - récupérer les patients
+| - récupérer les médecins
+| - récupérer les chambres disponibles
+| - récupérer les hospitalisations
+| - admettre un patient
+| - modifier une hospitalisation
+| - enregistrer la sortie d'un patient
+| - supprimer une hospitalisation
 |--------------------------------------------------------------------------
 */
 
 
-/* ===================== ROOMS ===================== */
+/* ===================== DONNEES API ===================== */
 
-const rooms = [
-  '101',
-  '102',
-  '103',
-  '104',
-  '201',
-  '202',
-  '203',
-  '204'
-]
+const patients = ref([])
 
+const chambres = ref([])
 
-/* ===================== DEMO DATA ===================== */
+const medecins = ref([])
 
-const hospitalisations = ref([
-  {
-    id: 1,
-    patient: 'Sara Benali',
-    patientReference: 'PAT-001',
-    chambre: '101',
-    lit: 'A',
-    medecin: 'Dr. Ahmed',
-    dateEntree: '2026-09-16',
-    dateSortiePrevue: '2026-09-22',
-    dateSortie: '',
-    motif: 'Surveillance médicale',
-    statut: 'En cours',
-    observations: 'Patient sous surveillance médicale.'
-  },
-  {
-    id: 2,
-    patient: 'Yassine Amrani',
-    patientReference: 'PAT-002',
-    chambre: '103',
-    lit: 'B',
-    medecin: 'Dr. Karim',
-    dateEntree: '2026-09-17',
-    dateSortiePrevue: '2026-09-20',
-    dateSortie: '',
-    motif: 'Post-opératoire',
-    statut: 'Sortie prévue',
-    observations: 'Évolution favorable.'
-  },
-  {
-    id: 3,
-    patient: 'Nadia El Mansouri',
-    patientReference: 'PAT-003',
-    chambre: '201',
-    lit: 'A',
-    medecin: 'Dr. Salma',
-    dateEntree: '2026-09-12',
-    dateSortiePrevue: '2026-09-18',
-    dateSortie: '2026-09-18',
-    motif: 'Observation',
-    statut: 'Sortie',
-    observations: 'Sortie autorisée par le médecin.'
-  }
-])
+const hospitalisations = ref([])
+
+const toutesLesChambres = ref([])
+
+const loading = ref(false)
 
 
 /* ===================== FILTERS ===================== */
 
 const search = ref('')
+
 const statusFilter = ref('')
+
 const roomFilter = ref('')
 
 
 /* ===================== PAGINATION ===================== */
 
 const currentPage = ref(1)
+
 const perPage = 6
 
 
@@ -912,19 +853,16 @@ const hospitalisationToExit = ref(null)
 const exitDate = ref('')
 
 
-/* ===================== FORM ===================== */
+/* ===================== ADMISSION FORM ===================== */
 
 const emptyForm = () => ({
-  patient: '',
-  patientReference: '',
-  chambre: '',
-  lit: '',
-  medecin: '',
-  dateEntree: '',
-  dateSortiePrevue: '',
-  dateSortie: '',
-  motif: '',
-  statut: 'En cours',
+  id_patient: '',
+  id_chambre: '',
+  id_medecin: '',
+  date_entree: '',
+  heure_entree: '',
+  motif_hospitalisation: '',
+  diagnostic_entree: '',
   observations: ''
 })
 
@@ -945,6 +883,7 @@ const showNotification = (
   message,
   type = 'success'
 ) => {
+
   clearTimeout(notificationTimer)
 
   notification.value = {
@@ -957,6 +896,376 @@ const showNotification = (
     notification.value.show = false
   }, 3000)
 }
+
+
+/* =========================================================
+   NORMALISATION DES DONNEES BACKEND
+========================================================= */
+
+const normaliserHospitalisation = item => {
+
+  const patientNom = item.patient
+    ? `${item.patient.prenom ?? ''} ${item.patient.nom ?? ''}`.trim()
+    : `Patient #${item.id_patient}`
+
+  const patientReference =
+    item.patient?.cin ||
+    `PAT-${String(item.id_patient).padStart(3, '0')}`
+
+  const chambreNumero =
+    item.chambre?.numero_chambre ||
+    String(item.id_chambre ?? '')
+
+  const medecinNom = item.medecin
+    ? `Dr. ${item.medecin.prenom ?? ''} ${item.medecin.nom ?? ''}`.trim()
+    : `Médecin #${item.id_medecin}`
+
+  let statut = 'En cours'
+
+  if (item.statut === 'terminee') {
+    statut = 'Sortie'
+  }
+
+  return {
+
+    /*
+     * Champs utilisés actuellement par le template Vue.
+     */
+
+    id: item.id_hospitalisation,
+
+    patient: patientNom,
+
+    patientReference,
+
+    chambre: chambreNumero,
+
+    lit: '',
+
+    medecin: medecinNom,
+
+    dateEntree: item.date_entree,
+
+    /*
+     * Le backend actuel ne possède pas
+     * de champ date_sortie_prevue.
+     */
+
+    dateSortiePrevue: '',
+
+    dateSortie: item.date_sortie || '',
+
+    motif: item.motif_hospitalisation,
+
+    statut,
+
+    observations: item.observations || '',
+
+
+    /*
+     * Champs backend conservés pour
+     * la modification et les appels API.
+     */
+
+    id_hospitalisation: item.id_hospitalisation,
+
+    id_patient: item.id_patient,
+
+    id_chambre: item.id_chambre,
+
+    id_medecin: item.id_medecin,
+
+    date_entree: item.date_entree,
+
+    heure_entree: item.heure_entree,
+
+    date_sortie: item.date_sortie,
+
+    motif_hospitalisation:
+      item.motif_hospitalisation,
+
+    diagnostic_entree:
+      item.diagnostic_entree,
+
+    statut_backend: item.statut
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DES PATIENTS
+========================================================= */
+
+const chargerPatients = async () => {
+
+  try {
+
+    const response =
+      await api.get('/patients')
+
+    /*
+     * PatientController retourne :
+     *
+     * {
+     *   patients: {
+     *     data: [...]
+     *   }
+     * }
+     */
+
+    patients.value =
+      response.data?.patients?.data ?? []
+
+  } catch (error) {
+
+    console.error(
+      'Erreur chargement patients :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les patients.'
+      ),
+      'error'
+    )
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DES MEDECINS
+========================================================= */
+
+const chargerMedecins = async () => {
+
+  try {
+
+    const response =
+      await api.get('/medecins')
+
+    /*
+     * MedecinController retourne :
+     *
+     * {
+     *   medecins: [...]
+     * }
+     */
+
+    medecins.value =
+      response.data?.medecins ?? []
+
+  } catch (error) {
+
+    console.error(
+      'Erreur chargement médecins :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les médecins.'
+      ),
+      'error'
+    )
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DES CHAMBRES DISPONIBLES
+========================================================= */
+
+const chargerChambresDisponibles = async () => {
+
+  try {
+
+    const response =
+      await api.get('/chambres/disponibles')
+
+    /*
+     * ChambreController retourne directement :
+     *
+     * [...]
+     */
+
+    chambres.value =
+      Array.isArray(response.data)
+        ? response.data
+        : []
+
+  } catch (error) {
+
+    console.error(
+      'Erreur chargement chambres :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les chambres disponibles.'
+      ),
+      'error'
+    )
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DE TOUTES LES CHAMBRES
+========================================================= */
+
+const chargerToutesLesChambres = async () => {
+
+  try {
+
+    const response =
+      await api.get('/chambres')
+
+    /*
+     * Cette liste est utilisée pour le filtre
+     * des chambres dans le tableau.
+     */
+
+    if (Array.isArray(response.data)) {
+
+      toutesLesChambres.value =
+        response.data
+
+    } else if (
+      Array.isArray(response.data?.chambres)
+    ) {
+
+      toutesLesChambres.value =
+        response.data.chambres
+
+    } else {
+
+      toutesLesChambres.value = []
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Erreur chargement de toutes les chambres :',
+      error
+    )
+
+    toutesLesChambres.value = []
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT DES HOSPITALISATIONS
+========================================================= */
+
+const chargerHospitalisations = async () => {
+
+  try {
+
+    const response =
+      await api.get('/hospitalisations')
+
+    /*
+     * HospitalisationController retourne :
+     *
+     * {
+     *   hospitalisations: [...]
+     * }
+     *
+     * Chaque hospitalisation contient déjà :
+     * patient
+     * chambre
+     * medecin
+     */
+
+    const donnees =
+      response.data?.hospitalisations ?? []
+
+    hospitalisations.value =
+      donnees.map(normaliserHospitalisation)
+
+  } catch (error) {
+
+    console.error(
+      'Erreur chargement hospitalisations :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de charger les hospitalisations.'
+      ),
+      'error'
+    )
+  }
+}
+
+
+/* =========================================================
+   CHARGEMENT GENERAL
+========================================================= */
+
+const chargerDonnees = async () => {
+
+  loading.value = true
+
+  try {
+
+    /*
+     * Les données nécessaires au formulaire
+     * sont chargées depuis Laravel.
+     */
+
+    await Promise.all([
+      chargerPatients(),
+      chargerMedecins(),
+      chargerChambresDisponibles(),
+      chargerToutesLesChambres()
+    ])
+
+    /*
+     * Ensuite on charge les hospitalisations.
+     */
+
+    await chargerHospitalisations()
+
+  } finally {
+
+    loading.value = false
+  }
+}
+
+
+/* ===================== ROOMS ===================== */
+
+const rooms = computed(() => {
+
+  /*
+   * On récupère les numéros des chambres
+   * réellement présentes dans la base.
+   */
+
+  const source =
+    toutesLesChambres.value.length
+      ? toutesLesChambres.value
+      : chambres.value
+
+  return [
+    ...new Set(
+      source
+        .map(item =>
+          String(item.numero_chambre ?? '')
+        )
+        .filter(Boolean)
+    )
+  ]
+})
 
 
 /* ===================== FILTERING ===================== */
@@ -1056,18 +1365,33 @@ watch(
 /* ===================== FILTER RESET ===================== */
 
 const resetFilters = () => {
+
   search.value = ''
+
   statusFilter.value = ''
+
   roomFilter.value = ''
+
   currentPage.value = 1
 }
 
 
 /* ===================== CREATE ===================== */
 
-const openCreateModal = () => {
+const openCreateModal = async () => {
+
   editingHospitalisation.value = null
+
   form.value = emptyForm()
+
+  /*
+   * On recharge les chambres avant une admission.
+   * Une chambre peut être devenue complète depuis
+   * le dernier chargement.
+   */
+
+  await chargerChambresDisponibles()
+
   formModalOpen.value = true
 }
 
@@ -1075,10 +1399,76 @@ const openCreateModal = () => {
 /* ===================== EDIT ===================== */
 
 const openEditModal = item => {
+
   editingHospitalisation.value = item
 
+  /*
+   * Lors d'une modification, la chambre actuelle
+   * doit pouvoir apparaître dans le select même
+   * si elle est maintenant occupée.
+   */
+
+  const chambreExiste =
+    chambres.value.some(
+      chambre =>
+        Number(chambre.id_chambre) ===
+        Number(item.id_chambre)
+    )
+
+  if (
+    !chambreExiste &&
+    item.id_chambre
+  ) {
+
+    const chambreActuelle =
+      toutesLesChambres.value.find(
+        chambre =>
+          Number(chambre.id_chambre) ===
+          Number(item.id_chambre)
+      )
+
+    if (chambreActuelle) {
+
+      chambres.value = [
+        ...chambres.value,
+        chambreActuelle
+      ]
+    }
+  }
+
   form.value = {
-    ...item
+
+    id_patient:
+      item.id_patient || '',
+
+    id_chambre:
+      item.id_chambre || '',
+
+    id_medecin:
+      item.id_medecin || '',
+
+    date_entree:
+      item.date_entree ||
+      item.dateEntree ||
+      '',
+
+    heure_entree:
+      item.heure_entree
+        ? String(item.heure_entree).slice(0, 5)
+        : '',
+
+    motif_hospitalisation:
+      item.motif_hospitalisation ||
+      item.motif ||
+      '',
+
+    diagnostic_entree:
+      item.diagnostic_entree ||
+      '',
+
+    observations:
+      item.observations ||
+      ''
   }
 
   formModalOpen.value = true
@@ -1088,72 +1478,144 @@ const openEditModal = item => {
 /* ===================== CLOSE ===================== */
 
 const closeFormModal = () => {
+
   formModalOpen.value = false
+
   editingHospitalisation.value = null
+
   form.value = emptyForm()
 }
 
 
-/* ===================== SAVE ===================== */
+/* =========================================================
+   SAVE : ADMISSION / MODIFICATION
+========================================================= */
 
-const saveHospitalisation = () => {
+const saveHospitalisation = async () => {
 
-  /*
-   * SCRUM-750 :
-   * POST /hospitalisations
-   * PUT/PATCH /hospitalisations/{id}
-   */
+  try {
 
-  if (editingHospitalisation.value) {
+    /*
+     * Payload correspondant exactement
+     * aux champs Laravel.
+     */
 
-    const index =
-      hospitalisations.value.findIndex(
-        item =>
-          item.id ===
-          editingHospitalisation.value.id
-      )
+    const payload = {
 
-    if (index !== -1) {
-      hospitalisations.value[index] = {
-        ...hospitalisations.value[index],
-        ...form.value
-      }
+      id_patient:
+        Number(form.value.id_patient),
+
+      id_chambre:
+        Number(form.value.id_chambre),
+
+      id_medecin:
+        Number(form.value.id_medecin),
+
+      date_entree:
+        form.value.date_entree,
+
+      heure_entree:
+        form.value.heure_entree,
+
+      motif_hospitalisation:
+        form.value.motif_hospitalisation,
+
+      diagnostic_entree:
+        form.value.diagnostic_entree,
+
+      observations:
+        form.value.observations || null
     }
 
-    showNotification(
-      'Hospitalisation modifiée avec succès.'
+
+    /*
+     * ================================
+     * MODIFICATION
+     * ================================
+     */
+
+    if (editingHospitalisation.value) {
+
+      const id =
+        editingHospitalisation.value.id
+
+      await api.put(
+        `/hospitalisations/${id}`,
+        payload
+      )
+
+      showNotification(
+        'Hospitalisation modifiée avec succès.'
+      )
+
+    } else {
+
+      /*
+       * ================================
+       * NOUVELLE ADMISSION
+       * ================================
+       *
+       * On utilise /admettre et NON
+       * POST /hospitalisations.
+       *
+       * Ainsi Laravel applique la logique :
+       * - contrôle de capacité
+       * - statut de la chambre
+       * - statut en_cours
+       */
+
+      await api.post(
+        '/hospitalisations/admettre',
+        payload
+      )
+
+      showNotification(
+        'Patient hospitalisé avec succès.'
+      )
+    }
+
+
+    /*
+     * Fermer le formulaire.
+     */
+
+    closeFormModal()
+
+
+    /*
+     * Recharger les données depuis PostgreSQL.
+     */
+
+    await chargerChambresDisponibles()
+
+    await chargerToutesLesChambres()
+
+    await chargerHospitalisations()
+
+    currentPage.value = 1
+
+  } catch (error) {
+
+    console.error(
+      'Erreur enregistrement hospitalisation :',
+      error
     )
 
-  } else {
-
-    const newId =
-      hospitalisations.value.length
-        ? Math.max(
-            ...hospitalisations.value.map(
-              item => item.id
-            )
-          ) + 1
-        : 1
-
-    hospitalisations.value.unshift({
-      id: newId,
-      ...form.value
-    })
-
     showNotification(
-      'Patient hospitalisé avec succès.'
+      messageErreur(
+        error,
+        'Impossible d’enregistrer l’hospitalisation.'
+      ),
+      'error'
     )
   }
-
-  closeFormModal()
-
-  currentPage.value = 1
 }
 
 
 /* ===================== VIEW ===================== */
 
 const openViewModal = item => {
+
   selectedHospitalisation.value = item
 }
 
@@ -1170,13 +1632,19 @@ const openExitModal = item => {
       .slice(0, 10)
 }
 
-const confirmExit = () => {
+
+/* =========================================================
+   CONFIRMER SORTIE
+========================================================= */
+
+const confirmExit = async () => {
 
   if (!hospitalisationToExit.value) {
     return
   }
 
   if (!exitDate.value) {
+
     showNotification(
       'Veuillez sélectionner la date de sortie.',
       'error'
@@ -1185,54 +1653,127 @@ const confirmExit = () => {
     return
   }
 
-  const item =
-    hospitalisations.value.find(
-      hospitalisation =>
-        hospitalisation.id ===
-        hospitalisationToExit.value.id
+  try {
+
+    const id =
+      hospitalisationToExit.value.id
+
+    /*
+     * Appel de la route Laravel SCRUM-755 :
+     *
+     * PATCH
+     * /hospitalisations/{id}/sortir
+     */
+
+    await api.patch(
+      `/hospitalisations/${id}/sortir`,
+      {
+        date_sortie: exitDate.value
+      }
     )
 
-  if (item) {
-    item.statut = 'Sortie'
-    item.dateSortie = exitDate.value
+    hospitalisationToExit.value = null
+
+    showNotification(
+      'Sortie du patient enregistrée avec succès.'
+    )
+
+
+    /*
+     * La sortie libère une place.
+     * On recharge donc :
+     *
+     * - les chambres
+     * - les hospitalisations
+     */
+
+    await chargerChambresDisponibles()
+
+    await chargerToutesLesChambres()
+
+    await chargerHospitalisations()
+
+  } catch (error) {
+
+    console.error(
+      'Erreur sortie patient :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible d’enregistrer la sortie du patient.'
+      ),
+      'error'
+    )
   }
-
-  hospitalisationToExit.value = null
-
-  showNotification(
-    'Sortie du patient enregistrée avec succès.'
-  )
 }
 
 
 /* ===================== DELETE ===================== */
 
 const openDeleteModal = item => {
+
   hospitalisationToDelete.value = item
 }
 
-const deleteHospitalisation = () => {
+
+/* =========================================================
+   DELETE HOSPITALISATION
+========================================================= */
+
+const deleteHospitalisation = async () => {
 
   if (!hospitalisationToDelete.value) {
     return
   }
 
-  hospitalisations.value =
-    hospitalisations.value.filter(
-      item =>
-        item.id !==
-        hospitalisationToDelete.value.id
+  try {
+
+    const id =
+      hospitalisationToDelete.value.id
+
+    await api.delete(
+      `/hospitalisations/${id}`
     )
 
-  hospitalisationToDelete.value = null
+    hospitalisationToDelete.value = null
 
-  if (currentPage.value > totalPages.value) {
-    currentPage.value = totalPages.value
+    showNotification(
+      'Hospitalisation supprimée avec succès.'
+    )
+
+    await chargerChambresDisponibles()
+
+    await chargerToutesLesChambres()
+
+    await chargerHospitalisations()
+
+    if (
+      currentPage.value >
+      totalPages.value
+    ) {
+
+      currentPage.value =
+        totalPages.value
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Erreur suppression hospitalisation :',
+      error
+    )
+
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible de supprimer l’hospitalisation.'
+      ),
+      'error'
+    )
   }
-
-  showNotification(
-    'Hospitalisation supprimée avec succès.'
-  )
 }
 
 
@@ -1263,11 +1804,16 @@ const formatDate = date => {
   const parsedDate =
     new Date(`${date}T00:00:00`)
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
     return date
   }
 
-  return parsedDate.toLocaleDateString('fr-FR')
+  return parsedDate
+    .toLocaleDateString('fr-FR')
 }
 
 
@@ -1285,6 +1831,17 @@ const statusClass = status => {
       return 'progress'
   }
 }
+
+
+/* =========================================================
+   INITIALISATION DE LA PAGE
+========================================================= */
+
+onMounted(async () => {
+
+  await chargerDonnees()
+})
+
 </script>
 
 

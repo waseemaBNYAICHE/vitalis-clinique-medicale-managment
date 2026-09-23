@@ -14,6 +14,7 @@ class DemandeExamen extends Model
 
     protected $fillable = [
         'date_demande',
+        'type_examen',
         'niveau_urgence',
         'indications_cliniques',
         'statut',

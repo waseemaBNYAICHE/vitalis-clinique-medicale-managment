@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\Ordonnance;
+use App\Models\Consultation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,48 @@ use Barryvdh\DomPDF\Facade\Pdf;
  */
 class OrdonnanceController extends Controller
 {
+    public function consultationsDisponibles(Request $request)
+{
+    $user = $request->user();
+
+    $query = DB::table('consultations')
+        ->join(
+            'rendez_vous',
+            'consultations.id_rendez_vous',
+            '=',
+            'rendez_vous.id_rendez_vous'
+        )
+        ->join(
+            'patients',
+            'rendez_vous.id_patient',
+            '=',
+            'patients.id_patient'
+        )
+        ->join(
+            'medecins',
+            'rendez_vous.id_medecin',
+            '=',
+            'medecins.id_medecin'
+        )
+         
+        ->select(
+    'consultations.id_consultation',
+    'consultations.diagnostic',
+    'patients.nom as patient_nom',
+    'patients.prenom as patient_prenom',
+    'patients.cin',
+    'medecins.nom as medecin_nom',
+    'medecins.prenom as medecin_prenom'
+);
+
+    if ($user->role === Role::MEDECIN->value) {
+        $query->where('rendez_vous.id_medecin', $user->id_medecin);
+    }
+
+    return response()->json([
+        'consultations' => $query->get(),
+    ]);
+}
     /**
      * Regles communes a la creation et a la modification.
      *
@@ -86,13 +129,21 @@ class OrdonnanceController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $ordonnances = $this->limiterAuPerimetre(Ordonnance::query(), $request)->get();
+{
+    $requete = Ordonnance::with([
+        'consultation.rendezVous.patient',
+        'consultation.rendezVous.medecin',
+        'lignes.medicament',
+    ]);
 
-        return response()->json([
-            'ordonnances' => $ordonnances,
-        ], 200);
-    }
+    $ordonnances = $this->limiterAuPerimetre($requete, $request)
+        ->orderBy('date_ordonnance', 'desc')
+        ->get();
+
+    return response()->json([
+        'ordonnances' => $ordonnances,
+    ], 200);
+}
 
     public function show(Request $request, $id)
     {
@@ -160,7 +211,9 @@ class OrdonnanceController extends Controller
         'type' => 'required|string|max:255',
         'id_consultation' => 'required|integer|exists:consultations,id_consultation',
         ]);
+    $consultation = Consultation::find($request->id_consultation);
 
+Gate::authorize('ordonnances.create', $consultation);
     $ordonnance = Ordonnance::create(
         $request->only([
             'date_ordonnance',
@@ -179,7 +232,12 @@ class OrdonnanceController extends Controller
 
    public function update(Request $request, $id)
    {
-    $ordonnance = Ordonnance::findOrFail($id);
+    $ordonnance = $this->trouverOuRefuser(
+    Ordonnance::find($id),
+    $request
+);
+
+Gate::authorize('ordonnances.update', $ordonnance);
 
         $request->validate([
         'date_ordonnance' => 'sometimes|required|date',
@@ -188,7 +246,11 @@ class OrdonnanceController extends Controller
         'type' => 'sometimes|required|string|max:255',
         'id_consultation' => 'sometimes|required|integer|exists:consultations,id_consultation',
        ]);
+    if ($request->has('id_consultation')) {
+    $consultation = Consultation::find($request->id_consultation);
 
+    Gate::authorize('ordonnances.update', $consultation);
+}
         $ordonnance->update(
         $request->only([
             'date_ordonnance',
