@@ -1,770 +1,423 @@
 <template>
   <div class="facturation-page">
-
-    <!-- =====================================================
+    <!-- =========================================================
          HEADER
-    ====================================================== -->
+    ========================================================== -->
     <div class="page-header">
-
-      <div class="header-left">
-
-        <div class="page-title">
-
-          <div class="page-title-icon">
-            <i class="fi fi-rr-receipt"></i>
-          </div>
-
-          <div>
-            <h1>Facturation</h1>
-
-            <p>
-              Gérez les factures et les paiements des patients
-              en toute simplicité.
-            </p>
-          </div>
-
-        </div>
-
+      <div>
+        <h1>Facturation</h1>
+        <p>Gestion des factures et des paiements</p>
       </div>
 
-
-      <!-- BOUTON EN HAUT COMME HOSPITALISATIONS -->
       <button
         class="primary-btn header-create-btn"
+        type="button"
         @click="openCreateModal"
       >
-        <i class="fi fi-rr-plus"></i>
+        <span>+</span>
         Nouvelle facture
       </button>
-
     </div>
 
+    <!-- =========================================================
+         NOTIFICATION
+    ========================================================== -->
+    <div
+      v-if="notification.message"
+      class="notification"
+      :class="`notification-${notification.type}`"
+    >
+      {{ notification.message }}
+    </div>
 
-    <!-- =====================================================
+    <!-- =========================================================
          STATISTIQUES
-    ====================================================== -->
+    ========================================================== -->
     <div class="stats-grid">
-
       <div class="stat-card">
-
-        <div class="stat-icon blue">
-          <i class="fi fi-rr-receipt"></i>
-        </div>
-
         <div class="stat-content">
-          <strong>{{ factures.length }}</strong>
-          <span>Factures totales</span>
+          <span class="stat-label">Total factures</span>
+          <strong class="stat-value">{{ factures.length }}</strong>
         </div>
-
       </div>
 
-
       <div class="stat-card">
-
-        <div class="stat-icon green">
-          <i class="fi fi-rr-check-circle"></i>
-        </div>
-
         <div class="stat-content">
-          <strong>{{ paidCount }}</strong>
-          <span>Factures payées</span>
+          <span class="stat-label">Factures payées</span>
+          <strong class="stat-value">{{ nombreFacturesPayees }}</strong>
         </div>
-
       </div>
 
-
       <div class="stat-card">
-
-        <div class="stat-icon orange">
-          <i class="fi fi-rr-clock"></i>
-        </div>
-
         <div class="stat-content">
-          <strong>{{ pendingCount }}</strong>
-          <span>En attente</span>
+          <span class="stat-label">En attente</span>
+          <strong class="stat-value">{{ nombreFacturesImpayees }}</strong>
         </div>
-
       </div>
 
-
       <div class="stat-card">
-
-        <div class="stat-icon red">
-          <i class="fi fi-rr-money-bill-wave"></i>
-        </div>
-
         <div class="stat-content">
-          <strong>{{ formatMoney(totalRemaining) }}</strong>
-          <span>Reste à payer</span>
+          <span class="stat-label">Montant encaissé</span>
+          <strong class="stat-value">
+            {{ formatMontant(totalPaye) }}
+          </strong>
         </div>
-
       </div>
-
     </div>
 
-
-    <!-- =====================================================
-         TABLE CARD
-    ====================================================== -->
+    <!-- =========================================================
+         FILTRES
+    ========================================================== -->
     <div class="facturation-card">
-
-
-      <!-- ===================================================
-           RECHERCHE
-           Même disposition que Hospitalisations
-      ==================================================== -->
-      <div class="search-section">
-
+      <div class="filters-section">
         <div class="search-box">
-
-          <i class="fi fi-rr-search"></i>
-
           <input
             v-model="search"
             type="text"
-            placeholder="Rechercher une facture, un patient..."
+            placeholder="Rechercher une facture..."
           />
-
         </div>
 
-
-        <!-- FILTRES -->
-        <div class="filters">
-
-          <select v-model="statusFilter">
-            <option value="">
-              Tous les statuts
-            </option>
-
-            <option value="Payée">
-              Payée
-            </option>
-
-            <option value="Partiellement payée">
-              Partiellement payée
-            </option>
-
-            <option value="En attente">
-              En attente
-            </option>
+        <div class="filter-group">
+          <select v-model="filterStatut">
+            <option value="">Tous les statuts</option>
+            <option value="impayee">Impayée</option>
+            <option value="partielle">Partiellement payée</option>
+            <option value="payee">Payée</option>
+            <option value="annulee">Annulée</option>
           </select>
-
-
-          <select v-model="paymentFilter">
-            <option value="">
-              Tous les paiements
-            </option>
-
-            <option value="Espèces">
-              Espèces
-            </option>
-
-            <option value="Carte bancaire">
-              Carte bancaire
-            </option>
-
-            <option value="Virement">
-              Virement
-            </option>
-
-            <option value="Chèque">
-              Chèque
-            </option>
-          </select>
-
-
-          <button
-            class="search-btn"
-            @click="currentPage = 1"
-          >
-            <i class="fi fi-rr-search"></i>
-            Rechercher
-          </button>
-
-
-          <button
-            class="reset-btn"
-            @click="resetFilters"
-          >
-            <i class="fi fi-rr-refresh"></i>
-            Réinitialiser
-          </button>
-
         </div>
 
+        <button
+          v-if="search || filterStatut"
+          type="button"
+          class="secondary-btn"
+          @click="resetFilters"
+        >
+          Réinitialiser
+        </button>
       </div>
+    </div>
 
+    <!-- =========================================================
+         LOADING
+    ========================================================== -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Chargement des factures...</p>
+    </div>
 
-      <!-- ===================================================
-           TABLE
-      ==================================================== -->
+    <!-- =========================================================
+         ERREUR
+    ========================================================== -->
+    <div v-else-if="errorMessage" class="error-container">
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        class="secondary-btn"
+        @click="loadData"
+      >
+        Réessayer
+      </button>
+    </div>
+
+    <!-- =========================================================
+         TABLEAU
+    ========================================================== -->
+    <div v-else class="facturation-card table-card">
       <div class="table-wrapper">
-
-        <table>
-
+        <table class="facturation-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>N° FACTURE</th>
-              <th>PATIENT</th>
-              <th>DATE</th>
-              <th>MONTANT</th>
-              <th>PAYÉ</th>
-              <th>RESTE</th>
-              <th>STATUT</th>
-              <th>ACTIONS</th>
+              <th>Facture</th>
+              <th>Date</th>
+              <th>Référence</th>
+              <th>Montant net</th>
+              <th>Payé</th>
+              <th>Mode</th>
+              <th>Statut</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
-
           <tbody>
+            <tr v-if="filteredFactures.length === 0">
+              <td colspan="8" class="empty-state">
+                Aucune facture trouvée.
+              </td>
+            </tr>
 
             <tr
-              v-for="(facture, index) in paginatedFactures"
+              v-for="facture in filteredFactures"
               :key="facture.id"
             >
-
-              <!-- NUMERO -->
-              <td class="row-number">
-                {{ (currentPage - 1) * perPage + index + 1 }}
-              </td>
-
-
-              <!-- FACTURE -->
               <td>
-
-                <div class="facture-cell">
-
-                  <div class="small-facture-icon">
-                    <i class="fi fi-rr-receipt"></i>
-                  </div>
-
-                  <div class="facture-info">
-
-                    <strong>
-                      {{ facture.numero }}
-                    </strong>
-
-                    <span>
-                      {{ facture.description }}
-                    </span>
-
-                  </div>
-
+                <div class="invoice-main">
+                  <strong>{{ facture.numero }}</strong>
+                  <span>#{{ facture.id }}</span>
                 </div>
-
               </td>
 
-
-              <!-- PATIENT -->
-              <td>
-
-                <div class="patient-cell">
-
-                  <div class="avatar">
-                    {{ initials(facture.patient) }}
-                  </div>
-
-                  <div>
-
-                    <strong>
-                      {{ facture.patient }}
-                    </strong>
-
-                    <span>
-                      {{ facture.reference }}
-                    </span>
-
-                  </div>
-
-                </div>
-
-              </td>
-
-
-              <!-- DATE -->
               <td>
                 {{ formatDate(facture.date) }}
               </td>
 
-
-              <!-- MONTANT -->
               <td>
+                <div class="reference-cell">
+                  <span v-if="facture.referenceType">
+                    {{ facture.referenceType }}
+                  </span>
 
-                <strong class="money">
-                  {{ formatMoney(facture.montant) }}
+                  <span v-if="facture.reference">
+                    #{{ facture.reference }}
+                  </span>
+
+                  <span v-if="!facture.reference">
+                    —
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <strong>
+                  {{ formatMontant(facture.montant) }}
                 </strong>
-
               </td>
 
-
-              <!-- PAYE -->
               <td>
-
-                <span class="paid-money">
-                  {{ formatMoney(facture.paye) }}
-                </span>
-
+                {{ formatMontant(facture.paye) }}
               </td>
 
-
-              <!-- RESTE -->
               <td>
+                {{ facture.modePaiement || '—' }}
+              </td>
 
+              <td>
                 <span
-                  class="remaining-money"
-                  :class="{ zero: remaining(facture) === 0 }"
+                  class="status-badge"
+                  :class="getStatusClass(facture.statut)"
                 >
-                  {{ formatMoney(remaining(facture)) }}
+                  {{ getStatusLabel(facture.statut) }}
                 </span>
-
               </td>
 
-
-              <!-- STATUT -->
               <td>
-
-                <span
-                  class="status"
-                  :class="statusClass(facture.statut)"
-                >
-
-                  <span class="status-dot"></span>
-
-                  {{ facture.statut }}
-
-                </span>
-
-              </td>
-
-
-              <!-- ACTIONS -->
-              <td>
-
-                <div class="actions">
-
+                <div class="actions-cell">
                   <button
-                    class="action-btn view"
+                    type="button"
+                    class="action-btn"
                     title="Voir"
                     @click="openViewModal(facture)"
                   >
-                    <i class="fi fi-rr-eye"></i>
+                    Voir
                   </button>
 
-
                   <button
-                    class="action-btn edit"
+                    type="button"
+                    class="action-btn"
                     title="Modifier"
                     @click="openEditModal(facture)"
                   >
-                    <i class="fi fi-rr-pencil"></i>
+                    Modifier
                   </button>
 
-
                   <button
-                    v-if="facture.statut !== 'Payée'"
-                    class="action-btn payment"
-                    title="Enregistrer un paiement"
+                    v-if="facture.statut !== 'annulee'"
+                    type="button"
+                    class="action-btn"
+                    title="Ajouter un paiement"
                     @click="openPaymentModal(facture)"
                   >
-                    <i class="fi fi-rr-credit-card"></i>
+                    Paiement
                   </button>
 
+                  <button
+                    v-if="facture.statut !== 'annulee'"
+                    type="button"
+                    class="action-btn danger-action"
+                    title="Annuler"
+                    @click="cancelFacture(facture)"
+                  >
+                    Annuler
+                  </button>
 
                   <button
-                    class="action-btn delete"
+                    type="button"
+                    class="action-btn danger-action"
                     title="Supprimer"
                     @click="openDeleteModal(facture)"
                   >
-                    <i class="fi fi-rr-trash"></i>
+                    Supprimer
                   </button>
-
                 </div>
-
               </td>
-
             </tr>
-
-
-            <!-- EMPTY STATE -->
-            <tr v-if="filteredFactures.length === 0">
-
-              <td colspan="9">
-
-                <div class="empty-state">
-
-                  <div class="empty-state-icon">
-                    <i class="fi fi-rr-receipt"></i>
-                  </div>
-
-                  <h3>Aucune facture trouvée</h3>
-
-                  <p>
-                    Aucune facture ne correspond à votre recherche.
-                  </p>
-
-                  <button
-                    class="primary-btn"
-                    @click="resetFilters"
-                  >
-                    Réinitialiser les filtres
-                  </button>
-
-                </div>
-
-              </td>
-
-            </tr>
-
           </tbody>
-
         </table>
-
       </div>
-
-
-      <!-- ===================================================
-           FOOTER / PAGINATION
-      ==================================================== -->
-      <div
-        v-if="filteredFactures.length"
-        class="table-footer"
-      >
-
-        <div class="table-info">
-
-          Affichage de
-
-          <strong>{{ firstItem }}</strong>
-
-          à
-
-          <strong>{{ lastItem }}</strong>
-
-          sur
-
-          <strong>{{ filteredFactures.length }}</strong>
-
-          factures
-
-        </div>
-
-
-        <div class="pagination">
-
-          <button
-            :disabled="currentPage === 1"
-            @click="previousPage"
-          >
-            <i class="fi fi-rr-angle-small-left"></i>
-          </button>
-
-
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            :class="{ active: currentPage === page }"
-            @click="currentPage = page"
-          >
-            {{ page }}
-          </button>
-
-
-          <button
-            :disabled="currentPage === totalPages"
-            @click="nextPage"
-          >
-            <i class="fi fi-rr-angle-small-right"></i>
-          </button>
-
-        </div>
-
-      </div>
-
     </div>
 
-
-    <!-- =====================================================
-         INFO BACKEND
-    ====================================================== -->
-    <div class="backend-info">
-
-      <i class="fi fi-rr-info"></i>
-
-      <div>
-
-        <strong>Interface Frontend prête</strong>
-
-        <span>
-          La liaison avec les données réelles du Backend Laravel
-          sera finalisée dans SCRUM-750 lorsque les API
-          Facturation seront disponibles.
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         MODAL CREATE / EDIT
-    ====================================================== -->
+    <!-- =========================================================
+         MODAL CREATION / MODIFICATION
+    ========================================================== -->
     <div
       v-if="showFormModal"
       class="modal-overlay"
       @click.self="closeFormModal"
     >
-
-      <div class="modal">
-
+      <div class="modal-container">
         <div class="modal-header">
-
-          <div class="modal-title">
-
-            <div class="modal-title-icon">
-              <i class="fi fi-rr-receipt"></i>
-            </div>
-
-            <div>
-
-              <span>FACTURATION</span>
-
-              <h2>
-                {{
-                  editingFacture
-                    ? 'Modifier la facture'
-                    : 'Nouvelle facture'
-                }}
-              </h2>
-
-              <p>
-                Renseignez les informations de facturation.
-              </p>
-
-            </div>
-
+          <div>
+            <h2>
+              {{ isEditing ? 'Modifier la facture' : 'Nouvelle facture' }}
+            </h2>
+            <p>
+              {{ isEditing
+                ? 'Modifier les informations de la facture'
+                : 'Créer une nouvelle facture'
+              }}
+            </p>
           </div>
 
-
           <button
+            type="button"
             class="modal-close"
             @click="closeFormModal"
           >
-            <i class="fi fi-rr-cross-small"></i>
+            ×
           </button>
-
         </div>
-
 
         <form
           class="modal-body"
           @submit.prevent="saveFacture"
         >
-
           <div class="form-grid">
-
-
-            <!-- PATIENT -->
+            <!-- NUMERO -->
             <div class="form-group">
-
-              <label>
-                Patient
-                <span>*</span>
+              <label for="numero_facture">
+                Numéro de facture *
               </label>
 
               <input
-                v-model="form.patient"
+                id="numero_facture"
+                v-model.trim="form.numero_facture"
                 type="text"
                 required
-                placeholder="Nom du patient"
+                placeholder="Ex: FAC-2026-001"
               />
-
             </div>
-
-
-            <!-- REFERENCE -->
-            <div class="form-group">
-
-              <label>Référence patient</label>
-
-              <input
-                v-model="form.reference"
-                type="text"
-                placeholder="PAT-001"
-              />
-
-            </div>
-
 
             <!-- DATE -->
             <div class="form-group">
-
-              <label>
-                Date
-                <span>*</span>
+              <label for="date_facture">
+                Date de facture *
               </label>
 
               <input
-                v-model="form.date"
+                id="date_facture"
+                v-model="form.date_facture"
                 type="date"
                 required
               />
-
             </div>
 
-
-            <!-- MONTANT -->
+            <!-- REMISE -->
             <div class="form-group">
-
-              <label>
-                Montant total
-                <span>*</span>
-              </label>
-
-              <div class="input-money">
-
-                <input
-                  v-model.number="form.montant"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                />
-
-                <span>DH</span>
-
-              </div>
-
-            </div>
-
-
-            <!-- PAYE -->
-            <div class="form-group">
-
-              <label>Montant payé</label>
-
-              <div class="input-money">
-
-                <input
-                  v-model.number="form.paye"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                />
-
-                <span>DH</span>
-
-              </div>
-
-            </div>
-
-
-            <!-- PAIEMENT -->
-            <div class="form-group">
-
-              <label>Mode de paiement</label>
-
-              <select v-model="form.modePaiement">
-
-                <option value="">
-                  Non défini
-                </option>
-
-                <option value="Espèces">
-                  Espèces
-                </option>
-
-                <option value="Carte bancaire">
-                  Carte bancaire
-                </option>
-
-                <option value="Virement">
-                  Virement
-                </option>
-
-                <option value="Chèque">
-                  Chèque
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <!-- DESCRIPTION -->
-            <div class="form-group full">
-
-              <label>
-                Description
-                <span>*</span>
+              <label for="remise">
+                Remise
               </label>
 
               <input
-                v-model="form.description"
-                type="text"
+                id="remise"
+                v-model.number="form.remise"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+              />
+            </div>
+
+            <!-- STATUT -->
+            <div class="form-group">
+              <label for="statut_paiement">
+                Statut *
+              </label>
+
+              <select
+                id="statut_paiement"
+                v-model="form.statut_paiement"
                 required
-                placeholder="Consultation, hospitalisation, examens..."
+              >
+                <option value="impayee">Impayée</option>
+                <option value="partielle">Partiellement payée</option>
+                <option value="payee">Payée</option>
+                <option value="annulee">Annulée</option>
+              </select>
+            </div>
+
+            <!-- CONSULTATION -->
+            <div class="form-group">
+              <label for="id_consultation">
+                ID Consultation
+              </label>
+
+              <input
+                id="id_consultation"
+                v-model="form.id_consultation"
+                type="number"
+                min="1"
+                placeholder="ID de la consultation"
               />
 
+              <small>
+                Laisser vide si la facture concerne une hospitalisation.
+              </small>
             </div>
 
+            <!-- HOSPITALISATION -->
+            <div class="form-group">
+              <label for="id_hospitalisation">
+                ID Hospitalisation
+              </label>
 
-            <!-- NOTES -->
-            <div class="form-group full">
+              <input
+                id="id_hospitalisation"
+                v-model="form.id_hospitalisation"
+                type="number"
+                min="1"
+                placeholder="ID de l'hospitalisation"
+              />
 
-              <label>Notes</label>
+              <small>
+                Laisser vide si la facture concerne une consultation.
+              </small>
+            </div>
+
+            <!-- OBSERVATIONS -->
+            <div class="form-group full-width">
+              <label for="observations">
+                Observations
+              </label>
 
               <textarea
-                v-model="form.notes"
-                placeholder="Informations complémentaires..."
+                id="observations"
+                v-model="form.observations"
+                rows="4"
+                placeholder="Observations..."
               ></textarea>
-
             </div>
-
           </div>
 
-
-          <!-- SUMMARY -->
-          <div class="form-summary">
-
-            <div>
-
-              <span>Total</span>
-
-              <strong>
-                {{ formatMoney(form.montant) }}
-              </strong>
-
-            </div>
-
-
-            <div>
-
-              <span>Payé</span>
-
-              <strong class="green-text">
-                {{ formatMoney(form.paye) }}
-              </strong>
-
-            </div>
-
-
-            <div>
-
-              <span>Reste</span>
-
-              <strong class="red-text">
-                {{ formatMoney(formRemaining) }}
-              </strong>
-
-            </div>
-
+          <div
+            v-if="formError"
+            class="form-error"
+          >
+            {{ formError }}
           </div>
 
-
-          <!-- FOOTER -->
           <div class="modal-footer">
-
             <button
               type="button"
               class="secondary-btn"
@@ -773,1245 +426,1103 @@
               Annuler
             </button>
 
+            <button
+              type="submit"
+              class="primary-btn"
+              :disabled="saving"
+            >
+              {{ saving
+                ? 'Enregistrement...'
+                : (isEditing ? 'Enregistrer' : 'Créer la facture')
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL PAIEMENT
+    ========================================================== -->
+    <div
+      v-if="showPaymentModal"
+      class="modal-overlay"
+      @click.self="closePaymentModal"
+    >
+      <div class="modal-container modal-small">
+        <div class="modal-header">
+          <div>
+            <h2>Ajouter un paiement</h2>
+
+            <p v-if="paymentFacture">
+              Facture :
+              <strong>{{ paymentFacture.numero }}</strong>
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="modal-close"
+            @click="closePaymentModal"
+          >
+            ×
+          </button>
+        </div>
+
+        <form
+          class="modal-body"
+          @submit.prevent="savePayment"
+        >
+          <div
+            v-if="paymentFacture"
+            class="payment-summary"
+          >
+            <div>
+              <span>Montant net</span>
+              <strong>
+                {{ formatMontant(paymentFacture.montant) }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Déjà payé</span>
+              <strong>
+                {{ formatMontant(paymentFacture.paye) }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Reste</span>
+              <strong>
+                {{ formatMontant(paymentFacture.reste) }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="montant_paye">
+              Montant du paiement *
+            </label>
+
+            <input
+              id="montant_paye"
+              v-model.number="paymentForm.montant_paye"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              :max="paymentFacture?.reste || undefined"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="mode_paiement">
+              Mode de paiement *
+            </label>
+
+            <select
+              id="mode_paiement"
+              v-model="paymentForm.mode_paiement"
+              required
+            >
+              <option value="especes">Espèces</option>
+              <option value="carte_bancaire">
+                Carte bancaire
+              </option>
+              <option value="virement">
+                Virement
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="payment_observations">
+              Observations
+            </label>
+
+            <textarea
+              id="payment_observations"
+              v-model="paymentForm.observations"
+              rows="3"
+              placeholder="Observations du paiement..."
+            ></textarea>
+          </div>
+
+          <div
+            v-if="paymentError"
+            class="form-error"
+          >
+            {{ paymentError }}
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="secondary-btn"
+              @click="closePaymentModal"
+            >
+              Annuler
+            </button>
 
             <button
               type="submit"
               class="primary-btn"
+              :disabled="savingPayment"
             >
-
-              <i class="fi fi-rr-check"></i>
-
-              {{
-                editingFacture
-                  ? 'Enregistrer'
-                  : 'Créer la facture'
+              {{ savingPayment
+                ? 'Enregistrement...'
+                : 'Enregistrer le paiement'
               }}
-
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
 
-
-    <!-- =====================================================
+    <!-- =========================================================
          MODAL DETAILS
-    ====================================================== -->
+    ========================================================== -->
     <div
-      v-if="viewFacture"
+      v-if="showViewModal"
       class="modal-overlay"
-      @click.self="viewFacture = null"
+      @click.self="closeViewModal"
     >
-
-      <div class="modal detail-modal">
-
+      <div class="modal-container">
         <div class="modal-header">
+          <div>
+            <h2>Détails de la facture</h2>
 
-          <div class="modal-title">
-
-            <div class="modal-title-icon">
-              <i class="fi fi-rr-receipt"></i>
-            </div>
-
-            <div>
-
-              <span>DÉTAILS DE LA FACTURE</span>
-
-              <h2>
-                {{ viewFacture.numero }}
-              </h2>
-
-              <p>
-                Informations complètes de la facture.
-              </p>
-
-            </div>
-
+            <p v-if="selectedFacture">
+              {{ selectedFacture.numero }}
+            </p>
           </div>
-
 
           <button
+            type="button"
             class="modal-close"
-            @click="viewFacture = null"
+            @click="closeViewModal"
           >
-            <i class="fi fi-rr-cross-small"></i>
+            ×
           </button>
-
         </div>
 
-
-        <div class="detail-body">
-
-          <div class="patient-detail-card">
-
-            <div class="detail-avatar">
-              {{ initials(viewFacture.patient) }}
-            </div>
-
-            <div>
-
-              <span>Patient</span>
-
-              <h3>
-                {{ viewFacture.patient }}
-              </h3>
-
-              <p>
-                {{ viewFacture.reference }}
-              </p>
-
-            </div>
-
-          </div>
-
-
+        <div
+          v-if="selectedFacture"
+          class="modal-body"
+        >
           <div class="details-grid">
+            <div class="detail-item">
+              <span>Numéro</span>
+              <strong>{{ selectedFacture.numero }}</strong>
+            </div>
 
             <div class="detail-item">
-
               <span>Date</span>
-
               <strong>
-                {{ formatDate(viewFacture.date) }}
+                {{ formatDate(selectedFacture.date) }}
               </strong>
-
             </div>
 
+            <div class="detail-item">
+              <span>Patient</span>
+              <strong>
+                {{ selectedFacture.patient }}
+              </strong>
+            </div>
 
             <div class="detail-item">
+              <span>Référence</span>
+              <strong>
+                {{ selectedFacture.reference || '—' }}
+              </strong>
+            </div>
 
+            <div class="detail-item">
               <span>Montant total</span>
-
               <strong>
-                {{ formatMoney(viewFacture.montant) }}
+                {{ formatMontant(selectedFacture.montantTotal) }}
               </strong>
-
             </div>
 
+            <div class="detail-item">
+              <span>Remise</span>
+              <strong>
+                {{ formatMontant(selectedFacture.remise) }}
+              </strong>
+            </div>
 
             <div class="detail-item">
+              <span>Montant net</span>
+              <strong>
+                {{ formatMontant(selectedFacture.montant) }}
+              </strong>
+            </div>
 
+            <div class="detail-item">
               <span>Montant payé</span>
-
-              <strong class="green-text">
-                {{ formatMoney(viewFacture.paye) }}
-              </strong>
-
-            </div>
-
-
-            <div class="detail-item">
-
-              <span>Reste à payer</span>
-
-              <strong class="red-text">
-                {{ formatMoney(remaining(viewFacture)) }}
-              </strong>
-
-            </div>
-
-
-            <div class="detail-item">
-
-              <span>Mode de paiement</span>
-
               <strong>
-                {{ viewFacture.modePaiement || 'Non défini' }}
+                {{ formatMontant(selectedFacture.paye) }}
               </strong>
-
             </div>
-
 
             <div class="detail-item">
-
-              <span>Statut</span>
-
-              <span
-                class="status"
-                :class="statusClass(viewFacture.statut)"
-              >
-
-                <span class="status-dot"></span>
-
-                {{ viewFacture.statut }}
-
-              </span>
-
+              <span>Reste</span>
+              <strong>
+                {{ formatMontant(selectedFacture.reste) }}
+              </strong>
             </div>
 
-          </div>
+            <div class="detail-item">
+              <span>Mode de paiement</span>
+              <strong>
+                {{ selectedFacture.modePaiement || '—' }}
+              </strong>
+            </div>
 
+            <div class="detail-item">
+              <span>Statut</span>
+              <strong>
+                {{ getStatusLabel(selectedFacture.statut) }}
+              </strong>
+            </div>
+          </div>
 
           <div class="detail-description">
-
-            <span>Description</span>
+            <span>Observations</span>
 
             <p>
-              {{ viewFacture.description }}
+              {{ selectedFacture.observations || 'Aucune observation.' }}
             </p>
-
           </div>
 
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="secondary-btn"
+              @click="closeViewModal"
+            >
+              Fermer
+            </button>
+
+            <button
+              v-if="
+                selectedFacture.statut !== 'annulee' &&
+                selectedFacture.reste > 0
+              "
+              type="button"
+              class="primary-btn"
+              @click="openPaymentModal(selectedFacture)"
+            >
+              Ajouter un paiement
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL SUPPRESSION
+    ========================================================== -->
+    <div
+      v-if="showDeleteModal"
+      class="modal-overlay"
+      @click.self="closeDeleteModal"
+    >
+      <div class="modal-container modal-small">
+        <div class="modal-header">
+          <div>
+            <h2>Supprimer la facture</h2>
+            <p>Cette action est irréversible.</p>
+          </div>
+
+          <button
+            type="button"
+            class="modal-close"
+            @click="closeDeleteModal"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p>
+            Voulez-vous vraiment supprimer la facture
+            <strong>
+              {{ factureToDelete?.numero }}
+            </strong>
+            ?
+          </p>
 
           <div
-            v-if="viewFacture.notes"
-            class="detail-description"
+            v-if="deleteError"
+            class="form-error"
           >
-
-            <span>Notes</span>
-
-            <p>
-              {{ viewFacture.notes }}
-            </p>
-
+            {{ deleteError }}
           </div>
 
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="secondary-btn"
+              @click="closeDeleteModal"
+            >
+              Annuler
+            </button>
+
+            <button
+              type="button"
+              class="danger-btn"
+              :disabled="deleting"
+              @click="deleteFacture"
+            >
+              {{ deleting ? 'Suppression...' : 'Supprimer' }}
+            </button>
+          </div>
         </div>
-
       </div>
-
     </div>
-
-
-    <!-- =====================================================
-         MODAL PAIEMENT
-    ====================================================== -->
-    <div
-      v-if="paymentFacture"
-      class="modal-overlay"
-      @click.self="closePaymentModal"
-    >
-
-      <div class="small-modal">
-
-        <div class="payment-modal-icon">
-          <i class="fi fi-rr-credit-card"></i>
-        </div>
-
-        <h2>Enregistrer un paiement</h2>
-
-        <p class="small-modal-description">
-          {{ paymentFacture.numero }}
-          ·
-          {{ paymentFacture.patient }}
-        </p>
-
-
-        <div class="payment-summary">
-
-          <div>
-
-            <span>Montant total</span>
-
-            <strong>
-              {{ formatMoney(paymentFacture.montant) }}
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <span>Déjà payé</span>
-
-            <strong class="green-text">
-              {{ formatMoney(paymentFacture.paye) }}
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <span>Reste</span>
-
-            <strong class="red-text">
-              {{ formatMoney(remaining(paymentFacture)) }}
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <div class="payment-form">
-
-          <div class="form-group">
-
-            <label>
-              Montant du paiement
-              <span>*</span>
-            </label>
-
-            <div class="input-money">
-
-              <input
-                v-model.number="paymentAmount"
-                type="number"
-                min="0.01"
-                step="0.01"
-              />
-
-              <span>DH</span>
-
-            </div>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label>
-              Mode de paiement
-              <span>*</span>
-            </label>
-
-            <select v-model="paymentMethod">
-
-              <option value="">
-                Sélectionner
-              </option>
-
-              <option value="Espèces">
-                Espèces
-              </option>
-
-              <option value="Carte bancaire">
-                Carte bancaire
-              </option>
-
-              <option value="Virement">
-                Virement
-              </option>
-
-              <option value="Chèque">
-                Chèque
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-        <div class="small-modal-footer">
-
-          <button
-            class="secondary-btn"
-            @click="closePaymentModal"
-          >
-            Annuler
-          </button>
-
-
-          <button
-            class="payment-btn"
-            @click="confirmPayment"
-          >
-            <i class="fi fi-rr-check"></i>
-            Confirmer le paiement
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         DELETE MODAL
-    ====================================================== -->
-    <div
-      v-if="deleteTarget"
-      class="modal-overlay"
-      @click.self="deleteTarget = null"
-    >
-
-      <div class="small-modal">
-
-        <div class="delete-modal-icon">
-          <i class="fi fi-rr-trash"></i>
-        </div>
-
-        <h2>Supprimer la facture ?</h2>
-
-        <p class="small-modal-description">
-          La facture
-          <strong>{{ deleteTarget.numero }}</strong>
-          sera définitivement supprimée.
-        </p>
-
-
-        <div class="small-modal-footer">
-
-          <button
-            class="secondary-btn"
-            @click="deleteTarget = null"
-          >
-            Annuler
-          </button>
-
-
-          <button
-            class="danger-btn"
-            @click="deleteFacture"
-          >
-            <i class="fi fi-rr-trash"></i>
-            Supprimer
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         NOTIFICATION
-    ====================================================== -->
-    <transition name="toast">
-
-      <div
-        v-if="notification.show"
-        class="notification"
-        :class="notification.type"
-      >
-
-        <div class="notification-icon">
-
-          <i
-            :class="
-              notification.type === 'success'
-                ? 'fi fi-rr-check-circle'
-                : 'fi fi-rr-exclamation'
-            "
-          ></i>
-
-        </div>
-
-
-        <div>
-
-          <strong>
-            {{
-              notification.type === 'success'
-                ? 'Succès'
-                : 'Erreur'
-            }}
-          </strong>
-
-          <span>
-            {{ notification.message }}
-          </span>
-
-        </div>
-
-      </div>
-
-    </transition>
-
   </div>
 </template>
 
-
 <script setup>
-import {
-  ref,
-  computed,
-  watch
-} from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import api, { messageErreur } from '../../api'
 
+/* ============================================================
+   DONNEES
+============================================================ */
 
-/* =========================================================
-   DONNÉES LOCALES - SCRUM 749
-========================================================= */
+const factures = ref([])
+const paiements = ref([])
 
-const factures = ref([
-  {
-    id: 1,
-    numero: 'FAC-2026-001',
-    patient: 'Sara Benali',
-    reference: 'PAT-001',
-    date: '2026-09-18',
-    montant: 850,
-    paye: 850,
-    modePaiement: 'Carte bancaire',
-    statut: 'Payée',
-    description: 'Consultation et examens médicaux',
-    notes: ''
-  },
+const loading = ref(false)
+const saving = ref(false)
+const savingPayment = ref(false)
+const deleting = ref(false)
 
-  {
-    id: 2,
-    numero: 'FAC-2026-002',
-    patient: 'Yassine Amrani',
-    reference: 'PAT-002',
-    date: '2026-09-18',
-    montant: 1500,
-    paye: 500,
-    modePaiement: 'Espèces',
-    statut: 'Partiellement payée',
-    description: 'Hospitalisation',
-    notes: ''
-  },
-
-  {
-    id: 3,
-    numero: 'FAC-2026-003',
-    patient: 'Nadia El Mansouri',
-    reference: 'PAT-003',
-    date: '2026-09-19',
-    montant: 650,
-    paye: 0,
-    modePaiement: '',
-    statut: 'En attente',
-    description: 'Consultation spécialisée',
-    notes: ''
-  },
-
-  {
-    id: 4,
-    numero: 'FAC-2026-004',
-    patient: 'Omar Alaoui',
-    reference: 'PAT-004',
-    date: '2026-09-19',
-    montant: 1200,
-    paye: 1200,
-    modePaiement: 'Virement',
-    statut: 'Payée',
-    description: 'Examens médicaux',
-    notes: ''
-  }
-])
-
-
-/* =========================================================
-   SEARCH / FILTER
-========================================================= */
+const errorMessage = ref('')
+const formError = ref('')
+const paymentError = ref('')
+const deleteError = ref('')
 
 const search = ref('')
-const statusFilter = ref('')
-const paymentFilter = ref('')
-
-const currentPage = ref(1)
-const perPage = 6
-
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-const showFormModal = ref(false)
-
-const editingFacture = ref(null)
-
-const viewFacture = ref(null)
-
-const paymentFacture = ref(null)
-
-const deleteTarget = ref(null)
-
-
-/* =========================================================
-   PAYMENT
-========================================================= */
-
-const paymentAmount = ref('')
-
-const paymentMethod = ref('')
-
-
-/* =========================================================
-   FORM
-========================================================= */
-
-const createEmptyForm = () => ({
-  patient: '',
-  reference: '',
-  date: new Date().toISOString().slice(0, 10),
-  montant: 0,
-  paye: 0,
-  modePaiement: '',
-  description: '',
-  notes: ''
-})
-
-
-const form = ref(createEmptyForm())
-
-
-/* =========================================================
-   NOTIFICATION
-========================================================= */
+const filterStatut = ref('')
 
 const notification = ref({
-  show: false,
-  type: 'success',
-  message: ''
+  message: '',
+  type: 'success'
 })
 
+/* ============================================================
+   MODALS
+============================================================ */
 
-let notificationTimer = null
+const showFormModal = ref(false)
+const showPaymentModal = ref(false)
+const showViewModal = ref(false)
+const showDeleteModal = ref(false)
 
+const isEditing = ref(false)
 
-const showNotification = (
-  message,
-  type = 'success'
-) => {
+const selectedFacture = ref(null)
+const paymentFacture = ref(null)
+const factureToDelete = ref(null)
 
-  clearTimeout(notificationTimer)
+/* ============================================================
+   FORMULAIRE FACTURE
+============================================================ */
 
-  notification.value = {
-    show: true,
-    type,
-    message
-  }
+const defaultForm = () => ({
+  numero_facture: '',
+  date_facture: getToday(),
+  remise: 0,
+  statut_paiement: 'impayee',
+  observations: '',
+  id_consultation: '',
+  id_hospitalisation: ''
+})
 
-  notificationTimer = setTimeout(() => {
+const form = ref(defaultForm())
 
-    notification.value.show = false
+/* ============================================================
+   FORMULAIRE PAIEMENT
+============================================================ */
 
-  }, 3000)
-}
+const defaultPaymentForm = () => ({
+  montant_paye: '',
+  mode_paiement: 'especes',
+  observations: ''
+})
 
+const paymentForm = ref(defaultPaymentForm())
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* ============================================================
+   COMPUTED
+============================================================ */
 
-const remaining = facture => {
+const filteredFactures = computed(() => {
+  const terme = search.value.trim().toLowerCase()
 
-  return Math.max(
-    0,
-    Number(facture?.montant || 0) -
-    Number(facture?.paye || 0)
-  )
-}
+  return factures.value.filter((facture) => {
+    const correspondRecherche =
+      !terme ||
+      String(facture.numero || '')
+        .toLowerCase()
+        .includes(terme) ||
+      String(facture.id || '')
+        .toLowerCase()
+        .includes(terme) ||
+      String(facture.reference || '')
+        .toLowerCase()
+        .includes(terme)
 
+    const correspondStatut =
+      !filterStatut.value ||
+      facture.statut === filterStatut.value
 
-const formatMoney = value => {
+    return correspondRecherche && correspondStatut
+  })
+})
 
-  const number = Number(value || 0)
-
-  return `${number.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })} DH`
-}
-
-
-const formatDate = value => {
-
-  if (!value) {
-    return '—'
-  }
-
-  const date =
-    new Date(`${value}T00:00:00`)
-
-  return date.toLocaleDateString('fr-FR')
-}
-
-
-const initials = name => {
-
-  if (!name) {
-    return '--'
-  }
-
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(word => word.charAt(0))
-    .join('')
-    .toUpperCase()
-}
-
-
-const calculateStatus = facture => {
-
-  const total =
-    Number(facture.montant || 0)
-
-  const paid =
-    Number(facture.paye || 0)
-
-  if (
-    total > 0 &&
-    paid >= total
-  ) {
-    return 'Payée'
-  }
-
-  if (paid > 0) {
-    return 'Partiellement payée'
-  }
-
-  return 'En attente'
-}
-
-
-const statusClass = status => {
-
-  if (status === 'Payée') {
-    return 'paid'
-  }
-
-  if (status === 'Partiellement payée') {
-    return 'partial'
-  }
-
-  return 'pending'
-}
-
-
-/* =========================================================
-   STATISTIQUES
-========================================================= */
-
-const paidCount = computed(() => {
-
+const nombreFacturesPayees = computed(() => {
   return factures.value.filter(
-    facture =>
-      facture.statut === 'Payée'
+    (facture) => facture.statut === 'payee'
   ).length
 })
 
-
-const pendingCount = computed(() => {
-
+const nombreFacturesImpayees = computed(() => {
   return factures.value.filter(
-    facture =>
-      facture.statut !== 'Payée'
+    (facture) => facture.statut === 'impayee'
   ).length
 })
 
-
-const totalRemaining = computed(() => {
-
+const totalPaye = computed(() => {
   return factures.value.reduce(
-    (total, facture) =>
-      total + remaining(facture),
+    (total, facture) => total + Number(facture.paye || 0),
     0
   )
 })
 
+/* ============================================================
+   CHARGEMENT INITIAL
+============================================================ */
 
-/* =========================================================
-   FORM REMAINING
-========================================================= */
-
-const formRemaining = computed(() => {
-
-  return Math.max(
-    0,
-    Number(form.value.montant || 0) -
-    Number(form.value.paye || 0)
-  )
+onMounted(() => {
+  loadData()
 })
 
+/* ============================================================
+   CHARGER FACTURES + PAIEMENTS
+============================================================ */
 
-/* =========================================================
-   FILTERED DATA
-========================================================= */
+async function loadData() {
+  loading.value = true
+  errorMessage.value = ''
 
-const filteredFactures = computed(() => {
+  try {
+    const [facturesResponse, paiementsResponse] =
+      await Promise.all([
+        api.get('/factures'),
+        api.get('/paiements')
+      ])
 
-  const query =
-    search.value
-      .trim()
-      .toLowerCase()
+    const facturesBackend =
+      facturesResponse.data?.factures || []
 
+    const paiementsBackend =
+      paiementsResponse.data?.paiements || []
 
-  return factures.value.filter(
-    facture => {
+    paiements.value = Array.isArray(paiementsBackend)
+      ? paiementsBackend
+      : []
 
-      const searchableText = `
-        ${facture.numero}
-        ${facture.patient}
-        ${facture.reference}
-        ${facture.description}
-        ${facture.modePaiement}
-      `.toLowerCase()
+    factures.value = Array.isArray(facturesBackend)
+      ? facturesBackend.map(normalizeFacture)
+      : []
+  } catch (error) {
+    console.error('Erreur chargement facturation:', error)
 
-
-      const matchesSearch =
-        !query ||
-        searchableText.includes(query)
-
-
-      const matchesStatus =
-        !statusFilter.value ||
-        facture.statut ===
-          statusFilter.value
-
-
-      const matchesPayment =
-        !paymentFilter.value ||
-        facture.modePaiement ===
-          paymentFilter.value
-
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPayment
-      )
-    }
-  )
-})
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-const totalPages = computed(() => {
-
-  return Math.max(
-    1,
-    Math.ceil(
-      filteredFactures.value.length /
-      perPage
+    errorMessage.value = messageErreur(
+      error,
+      'Impossible de charger les données de facturation.'
     )
+  } finally {
+    loading.value = false
+  }
+}
+
+/* ============================================================
+   NORMALISER UNE FACTURE
+============================================================ */
+
+function normalizeFacture(facture) {
+  const id = facture.id_facture
+
+  const paiementsFacture = paiements.value.filter(
+    (paiement) =>
+      Number(paiement.id_facture) === Number(id)
   )
-})
 
-
-const paginatedFactures = computed(() => {
-
-  const start =
-    (currentPage.value - 1) *
-    perPage
-
-  return filteredFactures.value.slice(
-    start,
-    start + perPage
+  const paiementsValides = paiementsFacture.filter(
+    (paiement) => paiement.statut === 'valide'
   )
-})
 
+  const montantPaye = paiementsValides.reduce(
+    (total, paiement) =>
+      total + Number(paiement.montant_paye || 0),
+    0
+  )
 
-const firstItem = computed(() => {
+  const montantNet = Number(facture.montant_net || 0)
+  const montantTotal = Number(facture.montant_total || 0)
+  const remise = Number(facture.remise || 0)
 
+  const reste = Math.max(
+    0,
+    montantNet - montantPaye
+  )
+
+  let statut = facture.statut_paiement
+
+  /*
+   * Le statut backend reste prioritaire.
+   * Si le backend ne l'a pas correctement synchronisé,
+   * on peut déduire le statut à partir des paiements.
+   */
   if (
-    filteredFactures.value.length === 0
+    statut !== 'annulee' &&
+    montantNet > 0
   ) {
-    return 0
+    if (montantPaye >= montantNet) {
+      statut = 'payee'
+    } else if (montantPaye > 0) {
+      statut = 'partielle'
+    } else {
+      statut = 'impayee'
+    }
   }
 
-  return (
-    (currentPage.value - 1) *
-    perPage +
-    1
-  )
-})
+  const dernierPaiement =
+    paiementsValides.length > 0
+      ? paiementsValides[paiementsValides.length - 1]
+      : null
 
+  return {
+    id,
+    numero: facture.numero_facture,
+    date: facture.date_facture,
+    montantTotal,
+    montant: montantNet,
+    remise,
+    paye: montantPaye,
+    reste,
+    statut,
+    observations: facture.observations || '',
+    patient: 'Patient non chargé',
+    reference:
+      facture.id_consultation ||
+      facture.id_hospitalisation ||
+      null,
+    referenceType: facture.id_consultation
+      ? 'Consultation'
+      : facture.id_hospitalisation
+        ? 'Hospitalisation'
+        : '',
+    modePaiement: dernierPaiement
+      ? getModePaiementLabel(
+          dernierPaiement.mode_paiement
+        )
+      : '—',
 
-const lastItem = computed(() => {
-
-  return Math.min(
-    currentPage.value * perPage,
-    filteredFactures.value.length
-  )
-})
-
-
-const previousPage = () => {
-
-  if (currentPage.value > 1) {
-    currentPage.value--
+    /*
+     * On conserve aussi les champs backend
+     * afin de pouvoir modifier la facture.
+     */
+    raw: facture
   }
 }
 
+/* ============================================================
+   CREATION
+============================================================ */
 
-const nextPage = () => {
-
-  if (
-    currentPage.value <
-    totalPages.value
-  ) {
-    currentPage.value++
-  }
-}
-
-
-watch(
-  [
-    search,
-    statusFilter,
-    paymentFilter
-  ],
-  () => {
-
-    currentPage.value = 1
-
-  }
-)
-
-
-/* =========================================================
-   RESET FILTERS
-========================================================= */
-
-const resetFilters = () => {
-
-  search.value = ''
-
-  statusFilter.value = ''
-
-  paymentFilter.value = ''
-
-  currentPage.value = 1
-}
-
-
-/* =========================================================
-   CREATE
-========================================================= */
-
-const openCreateModal = () => {
-
-  editingFacture.value = null
-
-  form.value =
-    createEmptyForm()
+function openCreateModal() {
+  isEditing.value = false
+  formError.value = ''
+  form.value = defaultForm()
 
   showFormModal.value = true
 }
 
+/* ============================================================
+   MODIFICATION
+============================================================ */
 
-/* =========================================================
-   EDIT
-========================================================= */
+function openEditModal(facture) {
+  isEditing.value = true
+  formError.value = ''
 
-const openEditModal = facture => {
-
-  editingFacture.value = facture
+  const raw = facture.raw || {}
 
   form.value = {
-    ...facture
+    numero_facture: raw.numero_facture || '',
+    date_facture: formatDateForInput(
+      raw.date_facture
+    ),
+    remise: Number(raw.remise || 0),
+    statut_paiement:
+      raw.statut_paiement || facture.statut || 'impayee',
+    observations: raw.observations || '',
+    id_consultation:
+      raw.id_consultation || '',
+    id_hospitalisation:
+      raw.id_hospitalisation || ''
   }
 
   showFormModal.value = true
 }
 
+/* ============================================================
+   SAUVEGARDER FACTURE
+============================================================ */
 
-/* =========================================================
-   CLOSE FORM
-========================================================= */
+async function saveFacture() {
+  formError.value = ''
 
-const closeFormModal = () => {
+  const consultationId = toNullableInteger(
+    form.value.id_consultation
+  )
 
-  showFormModal.value = false
+  const hospitalisationId = toNullableInteger(
+    form.value.id_hospitalisation
+  )
 
-  editingFacture.value = null
-
-  form.value =
-    createEmptyForm()
-}
-
-
-/* =========================================================
-   SAVE
-========================================================= */
-
-const saveFacture = () => {
-
-  const total =
-    Number(form.value.montant || 0)
-
-  const paid =
-    Number(form.value.paye || 0)
-
-
-  if (total <= 0) {
-
-    showNotification(
-      'Le montant total doit être supérieur à 0.',
-      'error'
-    )
-
+  /*
+   * Le backend exige au moins une consultation
+   * ou une hospitalisation pour calculer le montant.
+   */
+  if (!consultationId && !hospitalisationId) {
+    formError.value =
+      'Veuillez renseigner un ID de consultation ou un ID d’hospitalisation.'
     return
   }
 
-
-  if (
-    paid < 0 ||
-    paid > total
-  ) {
-
-    showNotification(
-      'Le montant payé est invalide.',
-      'error'
-    )
-
+  if (consultationId && hospitalisationId) {
+    formError.value =
+      'Une facture doit être liée à une consultation ou à une hospitalisation, pas aux deux.'
     return
   }
 
-
-  const data = {
-
-    ...form.value,
-
-    montant: total,
-
-    paye: paid
+  const payload = {
+    numero_facture:
+      form.value.numero_facture,
+    date_facture:
+      form.value.date_facture,
+    remise:
+      Number(form.value.remise || 0),
+    statut_paiement:
+      form.value.statut_paiement,
+    observations:
+      form.value.observations || null,
+    id_consultation:
+      consultationId,
+    id_hospitalisation:
+      hospitalisationId
   }
 
+  saving.value = true
 
-  data.statut =
-    calculateStatus(data)
-
-
-  /* EDIT */
-
-  if (editingFacture.value) {
-
-    const index =
-      factures.value.findIndex(
-        facture =>
-          facture.id ===
-          editingFacture.value.id
+  try {
+    if (isEditing.value && selectedFacture.value) {
+      await api.put(
+        `/factures/${selectedFacture.value.id}`,
+        payload
       )
 
+      showNotification(
+        'Facture modifiée avec succès.',
+        'success'
+      )
+    } else {
+      await api.post(
+        '/factures',
+        payload
+      )
 
-    if (index !== -1) {
-
-      factures.value[index] = {
-
-        ...factures.value[index],
-
-        ...data
-      }
+      showNotification(
+        'Facture créée avec succès.',
+        'success'
+      )
     }
 
+    closeFormModal()
+    await loadData()
+  } catch (error) {
+    console.error('Erreur sauvegarde facture:', error)
 
-    showNotification(
-      'Facture modifiée avec succès.'
+    formError.value = messageErreur(
+      error,
+      'Impossible d’enregistrer la facture.'
     )
-
+  } finally {
+    saving.value = false
   }
-
-  /* CREATE */
-
-  else {
-
-    const newId =
-      Math.max(
-        0,
-        ...factures.value.map(
-          facture => facture.id
-        )
-      ) + 1
-
-
-    const newFacture = {
-
-      id: newId,
-
-      numero:
-        `FAC-2026-${String(newId).padStart(3, '0')}`,
-
-      ...data
-    }
-
-
-    factures.value.unshift(
-      newFacture
-    )
-
-
-    showNotification(
-      'Facture créée avec succès.'
-    )
-  }
-
-
-  closeFormModal()
 }
 
+/* ============================================================
+   PAIEMENT
+============================================================ */
 
-/* =========================================================
-   VIEW
-========================================================= */
+function openPaymentModal(facture) {
+  if (!facture) return
 
-const openViewModal = facture => {
-
-  viewFacture.value = facture
-}
-
-
-/* =========================================================
-   PAYMENT
-========================================================= */
-
-const openPaymentModal = facture => {
+  selectedFacture.value = null
+  paymentError.value = ''
 
   paymentFacture.value = facture
 
-  paymentAmount.value = ''
+  paymentForm.value = defaultPaymentForm()
 
-  paymentMethod.value =
-    facture.modePaiement || ''
+  showViewModal.value = false
+  showPaymentModal.value = true
 }
 
-
-const closePaymentModal = () => {
-
-  paymentFacture.value = null
-
-  paymentAmount.value = ''
-
-  paymentMethod.value = ''
-}
-
-
-const confirmPayment = () => {
+async function savePayment() {
+  paymentError.value = ''
 
   if (!paymentFacture.value) {
+    paymentError.value =
+      'Aucune facture sélectionnée.'
     return
   }
 
+  const montant = Number(
+    paymentForm.value.montant_paye
+  )
 
-  const amount =
-    Number(paymentAmount.value || 0)
+  const reste = Number(
+    paymentFacture.value.reste || 0
+  )
 
-
-  const reste =
-    remaining(paymentFacture.value)
-
-
-  if (
-    amount <= 0 ||
-    amount > reste
-  ) {
-
-    showNotification(
-      'Le montant du paiement est invalide.',
-      'error'
-    )
-
+  if (!montant || montant <= 0) {
+    paymentError.value =
+      'Le montant du paiement doit être supérieur à 0.'
     return
   }
 
-
-  if (!paymentMethod.value) {
-
-    showNotification(
-      'Veuillez sélectionner un mode de paiement.',
-      'error'
-    )
-
+  if (montant > reste) {
+    paymentError.value =
+      'Le montant du paiement dépasse le reste à payer.'
     return
   }
 
+  savingPayment.value = true
 
-  const facture =
-    factures.value.find(
-      item =>
-        item.id ===
+  try {
+    const now = new Date()
+
+    const payload = {
+      date_paiement: formatDateForApi(now),
+      heure_paiement: formatTimeForApi(now),
+      montant_paye: montant,
+      mode_paiement:
+        paymentForm.value.mode_paiement,
+      statut: 'valide',
+      observations:
+        paymentForm.value.observations || null,
+      id_facture:
         paymentFacture.value.id
+    }
+
+    await api.post(
+      '/paiements',
+      payload
     )
 
+    showNotification(
+      'Paiement enregistré avec succès.',
+      'success'
+    )
 
-  if (facture) {
+    closePaymentModal()
+    await loadData()
+  } catch (error) {
+    console.error('Erreur paiement:', error)
 
-    facture.paye =
-      Number(facture.paye || 0) +
-      amount
-
-
-    facture.modePaiement =
-      paymentMethod.value
-
-
-    facture.statut =
-      calculateStatus(facture)
+    paymentError.value = messageErreur(
+      error,
+      'Impossible d’enregistrer le paiement.'
+    )
+  } finally {
+    savingPayment.value = false
   }
+}
 
+/* ============================================================
+   ANNULATION
+============================================================ */
 
-  closePaymentModal()
+async function cancelFacture(facture) {
+  if (!facture?.id) return
 
-
-  showNotification(
-    'Paiement enregistré avec succès.'
+  const confirmation = window.confirm(
+    `Voulez-vous vraiment annuler la facture ${facture.numero} ?`
   )
-}
 
+  if (!confirmation) return
 
-/* =========================================================
-   DELETE
-========================================================= */
-
-const openDeleteModal = facture => {
-
-  deleteTarget.value = facture
-}
-
-
-const deleteFacture = () => {
-
-  if (!deleteTarget.value) {
-    return
-  }
-
-
-  factures.value =
-    factures.value.filter(
-      facture =>
-        facture.id !==
-        deleteTarget.value.id
+  try {
+    await api.patch(
+      `/factures/${facture.id}/annuler`
     )
 
+    showNotification(
+      'Facture annulée avec succès.',
+      'success'
+    )
 
-  deleteTarget.value = null
+    await loadData()
+  } catch (error) {
+    console.error('Erreur annulation facture:', error)
 
+    showNotification(
+      messageErreur(
+        error,
+        'Impossible d’annuler la facture.'
+      ),
+      'error'
+    )
+  }
+}
 
+/* ============================================================
+   SUPPRESSION
+============================================================ */
+
+function openDeleteModal(facture) {
+  factureToDelete.value = facture
+  deleteError.value = ''
+  showDeleteModal.value = true
+}
+
+async function deleteFacture() {
+  if (!factureToDelete.value) return
+
+  deleting.value = true
+  deleteError.value = ''
+
+  try {
+    await api.delete(
+      `/factures/${factureToDelete.value.id}`
+    )
+
+    showNotification(
+      'Facture supprimée avec succès.',
+      'success'
+    )
+
+    closeDeleteModal()
+    await loadData()
+  } catch (error) {
+    console.error('Erreur suppression facture:', error)
+
+    deleteError.value = messageErreur(
+      error,
+      'Impossible de supprimer la facture.'
+    )
+  } finally {
+    deleting.value = false
+  }
+}
+
+/* ============================================================
+   DETAILS
+============================================================ */
+
+function openViewModal(facture) {
+  selectedFacture.value = facture
+  showViewModal.value = true
+}
+
+/* ============================================================
+   FERMETURE MODALS
+============================================================ */
+
+function closeFormModal() {
+  showFormModal.value = false
+  formError.value = ''
+}
+
+function closePaymentModal() {
+  showPaymentModal.value = false
+  paymentError.value = ''
+  paymentFacture.value = null
+}
+
+function closeViewModal() {
+  showViewModal.value = false
+  selectedFacture.value = null
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  deleteError.value = ''
+  factureToDelete.value = null
+}
+
+/* ============================================================
+   FILTRES
+============================================================ */
+
+function resetFilters() {
+  search.value = ''
+  filterStatut.value = ''
+}
+
+/* ============================================================
+   STATUTS
+============================================================ */
+
+function getStatusLabel(statut) {
+  const labels = {
+    impayee: 'Impayée',
+    partielle: 'Partiellement payée',
+    payee: 'Payée',
+    annulee: 'Annulée'
+  }
+
+  return labels[statut] || statut || '—'
+}
+
+function getStatusClass(statut) {
+  const classes = {
+    impayee: 'status-pending',
+    partielle: 'status-partial',
+    payee: 'status-paid',
+    annulee: 'status-cancelled'
+  }
+
+  return classes[statut] || ''
+}
+
+/* ============================================================
+   MODE DE PAIEMENT
+============================================================ */
+
+function getModePaiementLabel(mode) {
+  const labels = {
+    especes: 'Espèces',
+    carte_bancaire: 'Carte bancaire',
+    virement: 'Virement'
+  }
+
+  return labels[mode] || mode || '—'
+}
+
+/* ============================================================
+   NOTIFICATION
+============================================================ */
+
+function showNotification(message, type = 'success') {
+  notification.value = {
+    message,
+    type
+  }
+
+  window.setTimeout(() => {
+    notification.value.message = ''
+  }, 4000)
+}
+
+/* ============================================================
+   FORMATAGE
+============================================================ */
+
+function formatMontant(value) {
+  const montant = Number(value || 0)
+
+  return new Intl.NumberFormat(
+    'fr-FR',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }
+  ).format(montant) + ' DH'
+}
+
+function formatDate(value) {
+  if (!value) return '—'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(
+    'fr-FR'
+  ).format(date)
+}
+
+function formatDateForInput(value) {
+  if (!value) return ''
+
+  if (typeof value === 'string') {
+    return value.substring(0, 10)
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-')
+}
+
+function formatDateForApi(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-')
+}
+
+function formatTimeForApi(date) {
+  return [
+    String(date.getHours()).padStart(2, '0'),
+    String(date.getMinutes()).padStart(2, '0')
+  ].join(':')
+}
+
+function getToday() {
+  return formatDateForApi(new Date())
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function toNullableInteger(value) {
   if (
-    currentPage.value >
-    totalPages.value
+    value === '' ||
+    value === null ||
+    value === undefined
   ) {
-    currentPage.value =
-      totalPages.value
+    return null
   }
 
+  const number = Number(value)
 
-  showNotification(
-    'Facture supprimée avec succès.'
-  )
+  return Number.isInteger(number) && number > 0
+    ? number
+    : null
 }
-
-
-/*
-=========================================================
-SCRUM-750
-
-Quand le Backend Facturation sera disponible :
-
-import api from '../../api'
-
-GET    /factures
-POST   /factures
-PUT    /factures/{id}
-DELETE /factures/{id}
-POST   /factures/{id}/paiements
-
-Les données locales ci-dessus seront alors remplacées
-par les données Laravel / PostgreSQL.
-=========================================================
-*/
 </script>
 
-
-<style
-  scoped
-  src="../../styles/facturation.css"
-></style>
+<style src="../../styles/facturation.css"></style>
