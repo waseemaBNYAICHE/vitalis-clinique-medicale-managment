@@ -10,14 +10,14 @@
       <div class="sidebar-brand">
 
         <img
-          src="../assets/vitalis-ai-logo.png"
+          src="../assets/logo-vitalis.png"
           alt="VITALIS Clinique Médicale"
           class="brand-logo"
         />
 
         <div class="brand-text">
           <h1>VITALIS</h1>
-          <p>Clinique Médicale</p>
+          <p>Gestion intelligente de votre clinique</p>
         </div>
 
       </div>
