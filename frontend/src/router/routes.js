@@ -115,7 +115,6 @@ export const routes = [
         path: 'parametres',
         name: 'parametres',
         component: () => import('../views/Parametres/ParametresView.vue'),
-        meta: { permission: 'roles.manage' }
       }
     ]
   },
